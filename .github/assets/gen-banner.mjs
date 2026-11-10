@@ -29,7 +29,7 @@ const { Resvg } = require(`${groot}/@resvg/resvg-js`);
 const __dir = dirname(fileURLToPath(import.meta.url));
 
 const NAME = "TollRoll";
-const CLAIM = ["Every app checks in.", "One roll keeps the log."];
+const CLAIM = ["Your apps report in. You just unroll."];
 const W = 1600, H = 500;
 const logoInk = 400;                 // the logo's larger ink side
 const logoX = 165;                   // left edge of the logo's ink
