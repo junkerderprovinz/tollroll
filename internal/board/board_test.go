@@ -150,6 +150,18 @@ func TestAnAppNeverReachedShowsItsAddress(t *testing.T) {
 	}
 }
 
+func TestAFortressMemberNeverReachedShowsTheNameOfItsApp(t *testing.T) {
+	w := newWorld(t)
+	w.srcs = append(w.srcs, sources.Source{ID: "m1", Address: sources.FortressPrefix + "m1", Name: "Alpha"})
+	v := w.view()
+	if len(v.Apps) != 1 || v.Apps[0].Name != "Alpha" || v.Apps[0].State != "unreachable" || v.Apps[0].UI != "" {
+		t.Fatalf("rows %+v", v.Apps)
+	}
+	if seen := w.board.Check(context.Background(), "en"); len(seen) != 1 || seen[0].Name != "Alpha" || !seen[0].Down {
+		t.Fatalf("check %+v", seen)
+	}
+}
+
 func TestAnAppThatStopsAnsweringKeepsItsName(t *testing.T) {
 	w := newWorld(t)
 	a := &fakeApp{rep: report("alpha", "Alpha", "1.0.0", status.StateOK)}

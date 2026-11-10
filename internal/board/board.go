@@ -358,7 +358,7 @@ func row(k string, ins []instance) App {
 		}
 	}
 	if a.Name == "" {
-		a.Name = fallbackName(worst.src.Address)
+		a.Name = fallbackName(worst.src)
 	}
 	if worst.known && worst.state != Unreachable {
 		needs := slices.Clone(worst.rep.NeedsYou)
@@ -447,18 +447,23 @@ func (b *Board) Check(ctx context.Context, lang string) []Seen {
 		}
 		seen := Seen{Source: src.ID, Name: in.rep.App.Name, Down: s.down || !in.known, Needs: slices.Clone(in.rep.NeedsYou), Link: link(in)}
 		if seen.Name == "" {
-			seen.Name = fallbackName(src.Address)
+			seen.Name = fallbackName(src)
 		}
 		out = append(out, seen)
 	}
 	return out
 }
 
-func fallbackName(addr string) string {
-	if u, err := url.Parse(addr); err == nil && u.Hostname() != "" {
+// fallbackName names an app that never answered: a fortress member by the app
+// it said it runs, any other source by its address.
+func fallbackName(src sources.Source) string {
+	if src.Name != "" {
+		return src.Name
+	}
+	if u, err := url.Parse(src.Address); err == nil && u.Hostname() != "" {
 		return u.Hostname()
 	}
-	return path.Base(addr)
+	return path.Base(src.Address)
 }
 
 func cut(s string, runes int) string {

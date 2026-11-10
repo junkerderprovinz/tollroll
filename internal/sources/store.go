@@ -32,20 +32,31 @@ const (
 	// KindSocket is an app on this server that answers on a unix socket,
 	// where reaching the socket is the permission.
 	KindSocket Kind = "socket"
+	// KindFortress is a member of the fortress the tile joined, read with
+	// the tile's member key. Its address is FortressPrefix and the member ID.
+	KindFortress Kind = "fortress"
 )
+
+// FortressPrefix starts the address of a fortress member.
+const FortressPrefix = "fortress:"
 
 // Source is one app as the service reads it. Pin is the SHA-256 of the
 // certificate the app showed the first time, for apps whose certificate no
-// public authority vouches for.
+// public authority vouches for. Name is what a fortress member calls its
+// app, shown until it answers; the list on the flash has no fortress members.
 type Source struct {
 	ID      string `json:"id"`
 	Address string `json:"address"`
 	Token   string `json:"token,omitempty"`
 	Pin     string `json:"pin,omitempty"`
+	Name    string `json:"-"`
 }
 
-// Kind tells a socket path from a web address.
+// Kind tells a socket path from a web address and a fortress member.
 func (s Source) Kind() Kind {
+	if strings.HasPrefix(s.Address, FortressPrefix) {
+		return KindFortress
+	}
 	if !strings.Contains(s.Address, "://") {
 		return KindSocket
 	}
