@@ -1,4 +1,9 @@
-<h1 align="center">TollRoll</h1>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/tollroll-banner-dark.png">
+    <img src=".github/assets/tollroll-banner.png" alt="TollRoll" width="100%">
+  </picture>
+</p>
 
 <p align="center">
   <a href="https://github.com/junkerderprovinz/tollroll/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/junkerderprovinz/tollroll/release.yml?label=Build&style=for-the-badge&logo=githubactions&logoColor=white" alt="Build" height="36"></a>&nbsp;

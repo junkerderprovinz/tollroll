@@ -21,7 +21,7 @@ $h = function ($k) use ($L) { return htmlspecialchars(isset($L[$k]) ? $L[$k] : $
 
 <div class="trs">
   <div class="trs-hd">
-    <img class="trs-logo" src="<?autov('/plugins/tollroll/images/tollroll.png')?>" alt="">
+    <img class="trs-logo" src="<?autov('/plugins/tollroll/images/tollroll-unraid.svg')?>" alt="">
     <div>
       <div class="trs-ttl">TollRoll</div>
       <div class="trs-sub"><?=$h('s_sub')?></div>
