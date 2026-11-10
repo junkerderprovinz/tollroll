@@ -1,0 +1,74 @@
+/* Every dashboard tile is a <tbody> in one shared table, so long lines would
+   widen the whole column. max-width:0 makes this cell defer to the column
+   width, and every box inside is border-box so its padding stays inside. */
+.trl-td{max-width:0}
+.trl,.trl *{box-sizing:border-box}
+.trl{
+  --trl-ok:#2f9e5b;--trl-warn:#d97a1c;--trl-fail:#d64545;--trl-idle:#4a8fd9;--trl-off:#8a8a8a;
+  --trl-hover:color-mix(in srgb,currentColor 7%,transparent);
+  --trl-sel:color-mix(in srgb,currentColor 11%,transparent);
+  --trl-chip:color-mix(in srgb,currentColor 9%,transparent);
+  --trl-chip-hover:color-mix(in srgb,currentColor 15%,transparent);
+  container-type:inline-size;width:100%;padding:2px 0 4px;text-align:left}
+.Theme--white .trl,.Theme--azure .trl{--trl-ok:#1f7a43;--trl-warn:#b55d0c;--trl-fail:#b8322f;--trl-idle:#2a6fbd;--trl-off:#767676}
+
+.trl-sub{display:block;font-size:12px;font-weight:400;opacity:.7;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.trl-rows{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;margin:0;padding:0;list-style:none}
+@container (max-width:520px){.trl-rows{grid-template-columns:1fr}}
+.trl-row{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:center;gap:8px;
+  min-width:0;padding:6px 8px;border-radius:6px;cursor:pointer;outline:none}
+.trl-row:hover{background:var(--trl-hover)}
+.trl-row[aria-pressed="true"]{background:var(--trl-sel)}
+.trl-row:focus-visible,.trl-chip:focus-visible,.trl-log:focus-visible{outline:2px solid #f4c63d;outline-offset:1px}
+.trl-name{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:12em}
+.trl-state{display:inline-flex;align-items:center;gap:6px;min-width:0;font-size:12px}
+.trl-state span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trl-ver{font-size:12px;opacity:.65;font-variant-numeric:tabular-nums;white-space:nowrap}
+.trl-dim .trl-mark{filter:grayscale(1);opacity:.6}
+.trl-dim .trl-name,.trl-dim .trl-state{opacity:.55}
+
+.trl-dot{width:8px;height:8px;border-radius:50%;flex:none;background:currentColor}
+.trl-ok{color:var(--trl-ok)}.trl-warn{color:var(--trl-warn)}.trl-fail{color:var(--trl-fail)}
+.trl-idle{color:var(--trl-idle)}.trl-off{color:var(--trl-off)}
+.trl-off .trl-dot{background:none;box-shadow:inset 0 0 0 2px currentColor}
+
+/* An app has no logo in the contract, so its mark is its first letter on a
+   colour taken from its ID: the same app looks the same everywhere. */
+.trl-mark{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;flex:none;
+  background:hsl(var(--h) 52% 42%);color:#fff;font:700 11px/1 system-ui,sans-serif;text-transform:uppercase}
+.trl-mark.trl-small{width:14px;height:14px;font-size:8px}
+
+.trl-chips{display:flex;flex-wrap:wrap;gap:6px;padding:12px 0 10px}
+.trl-chips:empty{display:none}
+.trl-chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border:none !important;border-radius:999px;
+  background:var(--trl-chip) !important;color:inherit !important;font:500 12.5px/1 inherit;white-space:nowrap;cursor:pointer;margin:0 !important;min-width:0 !important}
+.trl-chip:hover{background:var(--trl-chip-hover) !important}
+.trl-chip .trl-n{opacity:.65;font-size:11.5px;font-variant-numeric:tabular-nums}
+/* Fixed colours: themes and scripts on the box restyle generic buttons. */
+.trl-chip[aria-pressed="true"]{background:#f4c63d !important;color:#161616 !important}
+.trl-chip[aria-pressed="true"] .trl-n{opacity:.8}
+
+/* The log brings its own dark background, like a terminal, so it reads the
+   same on every Unraid theme. */
+.trl-log{width:100%;height:260px;overflow-x:hidden;overflow-y:auto;background:#161616;color:#e0e0e0;
+  font-family:Consolas,'Cascadia Mono',Menlo,monospace;font-size:12px;line-height:1.8;
+  padding:8px 12px 10px;border-radius:4px;scrollbar-width:thin;scrollbar-color:#393939 #161616}
+.trl-log::-webkit-scrollbar{width:8px}
+.trl-log::-webkit-scrollbar-thumb{background:#393939;border-radius:4px}
+.trl-log::-webkit-scrollbar-track{background:#161616}
+.trl-line{display:flex;align-items:center;gap:9px;white-space:nowrap;overflow:hidden}
+.trl-t{color:#8d8d8d;flex:none;min-width:5ch;font-variant-numeric:tabular-nums}
+/* Lines from earlier days carry the date, so the time column widens for all
+   of them and the columns below stay aligned. */
+.trl-dated .trl-t{min-width:14ch}
+.trl-g{width:12px;flex:none;display:grid;place-items:center}
+.trl-g svg{width:11px;height:11px}
+.trl-l-info{color:#6fdc8c}.trl-l-warn{color:#ff9f4a}.trl-l-error{color:#ff8389}
+.trl-app{flex:none;width:8.5em;display:inline-flex;align-items:center;gap:6px;color:#a8a8a8;overflow:hidden}
+.trl-app span:last-child{overflow:hidden;text-overflow:ellipsis}
+.trl-m{overflow:hidden;text-overflow:ellipsis}
+.trl-note{color:#8d8d8d;white-space:normal}
+.trl-note a{color:#f4c63d}
+.trl-note.trl-l-error{color:#ff8389}
+@container (max-width:420px){.trl-app span:last-child{display:none}.trl-app{width:auto}}

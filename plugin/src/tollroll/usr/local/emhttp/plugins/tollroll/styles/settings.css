@@ -1,0 +1,57 @@
+/* The page sits on Unraid's own surface and takes its text colour, so it
+   reads on every theme. Cards, fields and buttons are tints of that colour. */
+.trs{--trs-tint:color-mix(in srgb,currentColor 5%,transparent);--trs-line:color-mix(in srgb,currentColor 16%,transparent);
+  --trs-field:color-mix(in srgb,currentColor 4%,transparent);--trs-btn:color-mix(in srgb,currentColor 10%,transparent);
+  --trs-btn-hover:color-mix(in srgb,currentColor 17%,transparent);
+  --trs-ok:#2f9e5b;--trs-err:#d64545;
+  max-width:860px;margin:6px auto 0;font:14px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif}
+.Theme--white .trs,.Theme--azure .trs{--trs-ok:#1f7a43;--trs-err:#b8322f}
+.trs *{box-sizing:border-box}
+
+.trs-hd{display:flex;align-items:center;gap:15px;padding:0 2px 18px;margin-bottom:6px}
+.trs-logo{width:46px;height:46px;flex:none}
+.trs-ttl{font-size:21px;font-weight:700;letter-spacing:.2px}
+.trs-sub{margin-top:3px;opacity:.72;font-size:12.5px;max-width:660px}
+
+.trs-card{background:var(--trs-tint);border-radius:12px;padding:6px 18px 16px;margin-bottom:16px}
+.trs-card > h3{display:flex;align-items:baseline;gap:10px;margin:14px 2px;padding-bottom:10px;border-bottom:1px solid var(--trs-line);
+  font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.trs-card > h3 small{text-transform:none;letter-spacing:0;font-weight:400;opacity:.7;font-size:12px}
+.trs-hint{margin:4px 2px 8px;max-width:680px;font-size:12.5px;opacity:.78}
+.trs-hint b{font-weight:600}
+
+.trs-list{display:flex;flex-direction:column;gap:8px;margin:14px 0 6px}
+.trs-row{border:1px solid var(--trs-line);border-radius:9px;padding:10px 12px}
+.trs-fields{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) auto;gap:8px;align-items:center}
+@media (max-width:760px){.trs-fields{grid-template-columns:1fr}}
+.trs-tokwrap,.trs-rowbtns{display:flex;gap:6px;align-items:center;min-width:0}
+.trs-in{width:100%;min-width:0;margin:0 !important;padding:7px 10px;border:1px solid var(--trs-line) !important;border-radius:7px;
+  background:var(--trs-field) !important;color:inherit !important;font:13px/1.2 Consolas,'Cascadia Mono',Menlo,monospace;outline:none}
+.trs-in:focus{border-color:#f4c63d !important}
+.trs-in:disabled{opacity:.55}
+.trs-empty{margin:6px 2px;opacity:.75;font-size:13px}
+
+/* Fixed colours with !important: themes and scripts on the box restyle
+   generic buttons. Gold with dark text marks the one primary action. */
+.trs-btn{margin:0 !important;min-width:0 !important;padding:8px 15px;border:none !important;border-radius:7px;
+  background:var(--trs-btn) !important;color:inherit !important;font:13px/1.2 inherit;cursor:pointer;white-space:nowrap}
+.trs-btn:hover{background:var(--trs-btn-hover) !important}
+.trs-btn:focus-visible{outline:2px solid #f4c63d;outline-offset:1px}
+.trs-btn.trs-small{padding:7px 11px;font-size:12.5px}
+.trs-btn.trs-ghost{background:transparent !important;opacity:.8}
+.trs-btn.trs-ghost:hover{background:var(--trs-btn) !important;opacity:1}
+.trs-btn.trs-primary{background:#f4c63d !important;color:#161616 !important;font-weight:600}
+.trs-btn.trs-primary:hover{background:#ddb226 !important}
+
+.trs-res{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px;font-size:12.5px}
+.trs-tools .trs-res,.trs-actions .trs-res{margin-top:0}
+.trs .ok{color:var(--trs-ok)}
+.trs .err{color:var(--trs-err)}
+.trs .run{opacity:.75}
+
+.trs-tools,.trs-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 2px 4px}
+.trs-found{margin:12px 2px 0;padding-top:10px;border-top:1px solid var(--trs-line)}
+.trs-found h4{margin:0 0 8px;font-size:12.5px;font-weight:600}
+.trs-found ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.trs-found li{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px}
+.trs-found code{opacity:.75;font-size:12px}

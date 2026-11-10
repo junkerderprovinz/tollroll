@@ -1,0 +1,107 @@
+<?xml version='1.0' standalone='yes'?>
+<!DOCTYPE PLUGIN [
+  <!ENTITY name      "tollroll">
+  <!ENTITY slug      "tollroll">
+  <!ENTITY author    "Junker der Provinz">
+  <!ENTITY version   "0.1.0">
+  <!ENTITY launch    "Settings/tollroll">
+  <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/tollroll/main/plugin">
+  <!ENTITY pluginURL "&gitURL;/&slug;.plg">
+  <!ENTITY pkgURL    "https://github.com/junkerderprovinz/tollroll/releases/download/v&version;">
+  <!ENTITY emhttp    "/usr/local/emhttp/plugins/&slug;">
+  <!ENTITY plgPath   "/boot/config/plugins/&slug;">
+  <!ENTITY txz       "&slug;-&version;-x86_64-1.txz">
+]>
+
+<PLUGIN name="&name;"
+        author="&author;"
+        version="&version;"
+        launch="&launch;"
+        pluginURL="&pluginURL;"
+        min="6.12.0"
+        support="https://github.com/junkerderprovinz/tollroll/issues">
+
+<!-- The name is the lowercase slug so Unraid finds the logo
+     (plugins/<slug>/images/<slug>.png) and the Plugins tab description
+     (plugins/<slug>/README.md); the display name comes from README.md. -->
+<ICON>
+/usr/local/emhttp/plugins/&slug;/images/&slug;.png
+</ICON>
+
+<CHANGES>
+One dashboard tile for the apps on your network: a row per app with how it is
+doing, and one log with the lines of all of them, filtered by a click. It reads
+the status report every app of the family serves, with a read token kept on the
+server or over the app's socket on this server.
+
+### 0.1.0
+✨ **Added**
+- A dashboard tile with a row per app: its state, what needs you and what it is working on, and its version. An app on several servers gets one row.
+- One log for all apps, newest at the bottom. A click on an app or on its button above the log shows only that app's lines.
+- Settings under Utilities: add each app by its address and read token, or search this server for apps that answer on a socket, and test every connection.
+- The address and token of the older single-app dashboard widget are taken over on the first start.
+- Every text in the 26 languages Unraid offers.
+
+🔒 **Security**
+- Read tokens stay on the server. The browser talks only to the WebGUI, and the service behind it listens on a socket, not on a port.
+- A self-signed certificate is trusted on first contact and checked on every later one.
+</CHANGES>
+
+<!-- Pre-install: stop the service, then prune packages of older versions only
+     and keep the current one cached. On a reboot Unraid reinstalls each .plg
+     before the network is up, so the cached &txz; on the flash is what lets the
+     reinstall work offline. mkdir -p first, because on a fresh install the
+     directory does not exist yet and find would end the install. -->
+<FILE Run="/bin/bash">
+<INLINE>
+&emhttp;/scripts/rc.tollroll stop 2>/dev/null
+mkdir -p &plgPath;
+find &plgPath; -maxdepth 1 -name '*.txz' ! -name '&txz;' -delete 2>/dev/null || true
+</INLINE>
+</FILE>
+
+<!-- The package (service binary and webgui files) is built by
+     plugin/pkg_build.sh and attached to the GitHub release "v&version;". CI
+     writes the SHA256 at release. upgradepkg removes files a newer package
+     dropped. -->
+<FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
+  <URL>&pkgURL;/&txz;</URL>
+  <SHA256>0000000000000000000000000000000000000000000000000000000000000000</SHA256>
+</FILE>
+
+<!-- Post-install: start the service. It runs on every boot as well, since
+     Unraid reinstalls every plugin then. -->
+<FILE Run="/bin/bash">
+<INLINE>
+chmod -R u+rwX,go+rX &emhttp; 2>/dev/null
+chmod +x &emhttp;/bin/&slug; &emhttp;/scripts/rc.tollroll 2>/dev/null
+&emhttp;/scripts/rc.tollroll start
+echo ""
+cat &emhttp;/banner.txt 2>/dev/null
+echo ""
+echo "TollRoll is ready!"
+</INLINE>
+</FILE>
+
+<!-- Remove. The plugin manager runs only FILE elements and ignores a bare
+     REMOVE, and the block has to end with exit 0, or Unraid keeps the .plg and
+     reinstalls it on boot. The sources on the flash stay, so a reinstall
+     keeps the apps and their tokens. -->
+<FILE Run="/bin/bash" Method="remove">
+<INLINE>
+cat &emhttp;/banner.txt 2>/dev/null
+echo ""
+echo "Bye!"
+echo ""
+&emhttp;/scripts/rc.tollroll stop 2>/dev/null
+pkg=$(ls /var/log/packages/ 2>/dev/null | grep -E "^&slug;(-[^-]+-[^-]+-[^-]+)?$" | head -n1)
+if [ -n "$pkg" ]; then removepkg "$pkg" 2>/dev/null; fi
+rm -rf &emhttp;
+rm -f &plgPath;/*.txz /var/run/&slug;.pid /var/run/&slug;.sock
+echo "TollRoll removed. Your apps and read tokens in &plgPath;/sources.json"
+echo "were kept; delete that folder if you don't plan to reinstall."
+exit 0
+</INLINE>
+</FILE>
+
+</PLUGIN>

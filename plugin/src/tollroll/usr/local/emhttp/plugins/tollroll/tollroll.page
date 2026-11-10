@@ -1,0 +1,60 @@
+Menu="Utilities"
+Title="TollRoll"
+Icon="tollroll.png"
+---
+<?php
+/* Settings page. The list of apps lives with the service, which this page
+   reads and writes through server/api.php; tokens go in and never come back.
+   No functions here: Unraid may include a .page more than once. */
+$trl_locale = (string)(isset($_SESSION['locale']) ? $_SESSION['locale'] : '');
+$trl_lang   = strtolower(substr($trl_locale, 0, 2));
+$trl_dir    = '/usr/local/emhttp/plugins/tollroll/lang';
+$L = json_decode(@file_get_contents("$trl_dir/en.json"), true) ?: array();
+if (preg_match('/^[a-z]{2}$/', $trl_lang) && $trl_lang !== 'en' && is_file("$trl_dir/$trl_lang.json")) {
+  $trl_tr = json_decode(@file_get_contents("$trl_dir/$trl_lang.json"), true);
+  if (is_array($trl_tr)) $L = array_merge($L, $trl_tr);
+}
+$h = function ($k) use ($L) { return htmlspecialchars(isset($L[$k]) ? $L[$k] : $k, ENT_QUOTES); };
+?>
+<link rel="stylesheet" href="<?autov('/plugins/tollroll/styles/settings.css')?>">
+
+<div class="trs">
+  <div class="trs-hd">
+    <img class="trs-logo" src="<?autov('/plugins/tollroll/images/tollroll.png')?>" alt="">
+    <div>
+      <div class="trs-ttl">TollRoll</div>
+      <div class="trs-sub"><?=$h('s_sub')?></div>
+    </div>
+  </div>
+
+  <section class="trs-card" aria-labelledby="trs-apps-h">
+    <h3 id="trs-apps-h"><?=$h('s_apps')?> <small><?=$h('s_apps_sub')?></small></h3>
+    <p class="trs-hint"><b><?=$h('s_addr')?>:</b> <?=$h('s_addr_hint')?></p>
+    <p class="trs-hint"><b><?=$h('s_token')?>:</b> <?=$h('s_token_hint')?></p>
+    <div id="trs-list" class="trs-list" aria-live="polite"></div>
+    <div class="trs-tools">
+      <button type="button" id="trs-add" class="trs-btn"><?=$h('s_add')?></button>
+      <button type="button" id="trs-find" class="trs-btn"><?=$h('s_find')?></button>
+      <span id="trs-find-res" class="trs-res" role="status"></span>
+    </div>
+    <div id="trs-found" class="trs-found" hidden>
+      <h4><?=$h('s_found')?></h4>
+      <ul id="trs-found-list"></ul>
+    </div>
+  </section>
+
+  <section class="trs-card" aria-labelledby="trs-tile-h">
+    <h3 id="trs-tile-h"><?=$h('s_tile')?> <small><?=$h('s_tile_sub')?></small></h3>
+    <p class="trs-hint"><?=$h('s_tile_hint')?></p>
+  </section>
+
+  <div class="trs-actions">
+    <button type="button" id="trs-apply" class="trs-btn trs-primary"><?=$h('s_apply')?></button>
+    <button type="button" class="trs-btn" onclick="done()"><?=$h('s_done')?></button>
+    <span id="trs-apply-res" class="trs-res" role="status"></span>
+  </div>
+</div>
+
+<script>window.TRS_T = <?=json_encode($L, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)?>; window.TRL_LANG = <?=json_encode(preg_match('/^[a-z]{2}$/', $trl_lang) ? $trl_lang : 'en')?>;</script>
+<script src="<?autov('/plugins/tollroll/scripts/tollroll-core.js')?>"></script>
+<script src="<?autov('/plugins/tollroll/scripts/settings.js')?>"></script>

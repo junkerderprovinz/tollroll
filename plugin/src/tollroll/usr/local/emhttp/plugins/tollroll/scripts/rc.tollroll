@@ -1,0 +1,56 @@
+#!/bin/bash
+# Controls the TollRoll service, which the plugin runs as a host daemon.
+
+NAME="tollroll"
+BIN="/usr/local/emhttp/plugins/${NAME}/bin/${NAME}"
+PIDFILE="/var/run/${NAME}.pid"
+LOG="/var/log/${NAME}.log"
+
+# The service has no login of its own, so it listens on a socket that only
+# root and the WebGUI's proxy (server/api.php) reach.
+SOCKET="/var/run/tollroll.sock"
+SOURCES="/boot/config/plugins/${NAME}/sources.json"
+# The older single-app widget, whose address and token are taken over once.
+LEGACY_CFG="/boot/config/plugins/bombvaultwidget/bombvaultwidget.cfg"
+SOCK_DIR="/var/run"
+
+is_running() { [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null; }
+
+start() {
+  if is_running; then echo "tollroll: already running (pid $(cat "$PIDFILE"))"; return 0; fi
+  # A package built on a filesystem without mode bits lacks the exec bit.
+  [ -f "$BIN" ] && chmod +x "$BIN" 2>/dev/null
+  if [ ! -x "$BIN" ]; then echo "tollroll: binary missing or not executable at $BIN"; return 1; fi
+  export SOCKET SOURCES LEGACY_CFG SOCK_DIR
+  setsid "$BIN" >>"$LOG" 2>&1 &
+  echo $! >"$PIDFILE"
+  echo "tollroll: started (pid $(cat "$PIDFILE"), socket $SOCKET)"
+}
+
+stop() {
+  local pid=""
+  [ -f "$PIDFILE" ] && pid=$(cat "$PIDFILE" 2>/dev/null)
+  if [ -n "$pid" ] && kill "$pid" 2>/dev/null; then
+    # The service closes its socket on SIGTERM, which a following start needs.
+    for _ in $(seq 1 20); do
+      kill -0 "$pid" 2>/dev/null || break
+      sleep 0.25
+    done
+    kill -9 "$pid" 2>/dev/null
+  fi
+  rm -f "$PIDFILE"
+  echo "tollroll: stopped"
+}
+
+status() {
+  if is_running; then echo "tollroll: running (pid $(cat "$PIDFILE"), socket $SOCKET)";
+  else echo "tollroll: stopped"; fi
+}
+
+case "$1" in
+  start)   start ;;
+  stop)    stop ;;
+  restart) stop; start ;;
+  status)  status ;;
+  *) echo "usage: $0 {start|stop|restart|status}"; exit 1 ;;
+esac
