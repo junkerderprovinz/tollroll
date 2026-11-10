@@ -1,4 +1,9 @@
-<h1 align="center">TollRoll</h1>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/tollroll-banner-dark.png">
+    <img src=".github/assets/tollroll-banner.png" alt="TollRoll" width="100%">
+  </picture>
+</p>
 
 <p align="center">
   <a href="https://github.com/junkerderprovinz/tollroll/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/junkerderprovinz/tollroll/release.yml?label=Build&style=for-the-badge&logo=githubactions&logoColor=white" alt="Build" height="36"></a>&nbsp;
@@ -52,11 +57,13 @@ If it has earned a place on your server or computer, toss a coin to your knight:
 
 An Unraid plugin that adds a dashboard tile named **TollRoll**. It shows up in Unraid's tile management like the built-in tiles, so you can hide it, move it or collapse it.
 
-The tile reads every app that serves the family's status report. Each app gets a row with a coloured mark, its name, a dot and a short line, and its version. The line is the app's own words when it has something to say (what needs you, or what it is working on right now) and otherwise its state: running, starting, needs a look, overdue, failed or not reachable. An app that runs on two servers gets one row that says so and shows the worse of the two states.
+The tile reads every app that serves the family's status report. Each app gets a row with its logo, its name, a dot and a short line, and its version. An app whose report carries no logo gets its first letter on a colour of its own. The line is the app's own words when it has something to say (what needs you, or what it is working on right now) and otherwise its state: running, starting, needs a look, overdue, failed or not reachable. An app that runs on two servers gets one row that says so and shows the worse of the two states.
 
 Under the rows sits one log for all apps, newest at the bottom, in the dark terminal look it keeps on every Unraid theme. Click a row, or one of the buttons above the log, and the log shows only that app's lines. Once the filter names an app, the tile header gets a button that opens that app's web page.
 
 The tile and the settings page speak the language you picked in Unraid, in all 26 languages Unraid offers. The texts that come from the apps arrive in that language too, as far as each app has them.
+
+TollRoll can also tell you when something changes. Switch on Unraid's notifications, an Apprise URL or a Matrix room in the settings, and it sends a message when an app has not answered for a few minutes, when it answers again and when it shows something new that needs you. Each of these goes out once, not on every check. Pick **Only problems** to leave out the good news and the plain hints.
 
 If the older single-app dashboard widget of this family is installed, TollRoll takes over its address and token on the first start, so that app appears without any setup.
 
@@ -66,7 +73,7 @@ If the older single-app dashboard widget of this family is installed, TollRoll t
 
 The plugin has three parts.
 
-- **A small service** (`tollroll`, written in Go) runs on the host. It listens on the unix socket `/var/run/tollroll.sock` and opens no network port. When the tile asks, it reads every configured app side by side: its status report from `/api/fortress/v1/status` and its log from `/api/fortress/v1/log`, picking up the log where the last read stopped. It keeps the result for ten seconds, so several open dashboards do not multiply the traffic, and it reads nothing while nobody is looking.
+- **A small service** (`tollroll`, written in Go) runs on the host. It listens on the unix socket `/var/run/tollroll.sock` and opens no network port. When the tile asks, it reads every configured app side by side: its status report from `/api/fortress/v1/status` and its log from `/api/fortress/v1/log`, picking up the log where the last read stopped. It keeps the result for ten seconds, so several open dashboards do not multiply the traffic. While nobody is looking it reads nothing, unless a notification channel is on: then it checks every app once a minute.
 - **A PHP proxy** (`server/api.php`) sits behind the Unraid login and passes a fixed list of calls to that socket. Nothing else in the plugin talks to the service.
 - **The tile and the settings page** call the proxy from the browser. The tile asks again every 15 seconds while the dashboard is visible.
 
@@ -79,6 +86,8 @@ An app is reached in one of two ways. Most apps run in a container and answer at
 - **No open port.** The service listens only on its socket, which belongs to root. The browser reaches it through the WebGUI and its login. Every write is a POST, which Unraid checks for its CSRF token.
 - **Tokens stay on the server.** They are saved in `/boot/config/plugins/tollroll/sources.json` and sent only to the address they were saved for. No answer to the browser carries a token, the settings page only learns whether one is saved. Change an app's address and TollRoll asks for its token again. Redirects are never followed.
 - **Certificates.** Apps on a home network usually show a self-signed certificate. TollRoll trusts the certificate an app shows on first contact and from then on accepts only that one. An app whose certificate a public authority vouches for has to keep showing such a certificate. When a certificate changes, the settings page says so and asks before trusting the new one.
+- **Notification secrets stay on the server too.** The channels are saved in `/boot/config/plugins/tollroll/notify.json`, which only root can read. The settings page gets a Matrix token back masked, and a saved token goes only to the homeserver it was saved for.
+- **A logo is a picture and nothing more.** An app's logo arrives in its status report as an SVG of at most 16 KiB. TollRoll drops one that holds a script, an event handler or a reference to anything outside it, and the tile shows a logo only as an image, where the browser runs no script anyway.
 - **App data is text.** Everything an app sends is drawn as plain text, links open only for http and https addresses on the app's own host, and long names and lines are cut short.
 - **Keep in mind:** an `http://` address sends the token unencrypted over your network, so prefer `https://`. The sources file lives on the flash drive like every plugin's settings, so do not export the flash share publicly.
 
@@ -102,7 +111,8 @@ TollRoll needs Unraid 6.12 or newer.
 2. In Unraid, open **Settings → Utilities → TollRoll**. Click **Add an app**, enter the app's address, for example `https://192.168.1.10:3443`, and paste the token.
 3. For apps that run as a plugin on this server, click **Search this server** and add what it finds.
 4. Click **Test** next to an app to see whether it answers, then **Apply**.
-5. Open the **Dashboard**. The TollRoll tile sits in the middle column.
+5. To get notified, fill in a channel under **Notifications**, try it with **Send a test message** and click **Apply**.
+6. Open the **Dashboard**. The TollRoll tile sits in the middle column.
 
 <br>
 

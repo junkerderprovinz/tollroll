@@ -33,11 +33,14 @@
 .trl-idle{color:var(--trl-idle)}.trl-off{color:var(--trl-off)}
 .trl-off .trl-dot{background:none;box-shadow:inset 0 0 0 2px currentColor}
 
-/* An app has no logo in the contract, so its mark is its first letter on a
-   colour taken from its ID: the same app looks the same everywhere. */
-.trl-mark{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;flex:none;
+/* An app's mark is its own logo when its report carries one, otherwise its
+   first letter on its own colour or on a colour taken from its ID, so the same
+   app looks the same everywhere. The logo is only ever an img of fixed size. */
+.trl-mark{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;flex:none;overflow:hidden;
   background:hsl(var(--h) 52% 42%);color:#fff;font:700 11px/1 system-ui,sans-serif;text-transform:uppercase}
 .trl-mark.trl-small{width:14px;height:14px;font-size:8px}
+.trl-mark.trl-logo{background:none;border-radius:0}
+.trl-mark img{display:block;width:100%;height:100%;max-width:20px;max-height:20px;object-fit:contain;pointer-events:none}
 
 .trl-chips{display:flex;flex-wrap:wrap;gap:6px;padding:12px 0 10px}
 .trl-chips:empty{display:none}

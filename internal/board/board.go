@@ -10,6 +10,8 @@ package board
 import (
 	"cmp"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"net/url"
 	"path"
@@ -61,6 +63,8 @@ type View struct {
 
 // App is one row. Key is the app's ID from its report, or "source:" and the
 // source ID while the app has never answered. UI is an http(s) link or empty.
+// Color is the app's own #rrggbb and Icon the ID of its logo in Icons, both
+// empty when the app names none.
 type App struct {
 	Key       string `json:"key"`
 	Name      string `json:"name"`
@@ -70,6 +74,8 @@ type App struct {
 	Need      *Need  `json:"need,omitempty"`
 	Work      *Work  `json:"work,omitempty"`
 	UI        string `json:"ui,omitempty"`
+	Color     string `json:"color,omitempty"`
+	Icon      string `json:"icon,omitempty"`
 }
 
 // Need is the most urgent thing an app asks the user to look at.
@@ -205,6 +211,12 @@ func (b *Board) readOne(ctx context.Context, src sources.Source, s *source, lang
 	s.down = false
 	rep.App.ID = clip(rep.App.ID)
 	rep.App.Name, rep.App.Version = cut(rep.App.Name, maxName), cut(rep.App.Version, maxName)
+	if status.CheckColor(rep.App.Color) != nil {
+		rep.App.Color = ""
+	}
+	if status.CheckIcon(rep.App.Icon) != nil {
+		rep.App.Icon = ""
+	}
 	if _, ok := rank[string(rep.State)]; !ok {
 		rep.State = Unreachable
 	}
@@ -338,6 +350,12 @@ func row(k string, ins []instance) App {
 		if a.UI == "" {
 			a.UI = link(in)
 		}
+		if a.Color == "" {
+			a.Color = in.rep.App.Color
+		}
+		if a.Icon == "" && in.rep.App.Icon != "" {
+			a.Icon = iconID(in.rep.App.Icon)
+		}
 	}
 	if a.Name == "" {
 		a.Name = fallbackName(worst.src.Address)
@@ -355,13 +373,17 @@ func row(k string, ins []instance) App {
 	return a
 }
 
-// link is where the tile's open button leads: the UI the app names, or the
-// address it was added with, and only ever an http(s) URL. An app reached
-// over the network may name a UI on its own host only, so it cannot point a
-// row it shares with another instance at some other site.
+// link is where the tile's open button and a notification lead: the UI the
+// app names, or the address it was added with, and only ever an http(s) URL
+// without quotes, spaces or markup. An app reached over the network may name
+// a UI on its own host only, so it cannot point a row it shares with another
+// instance at some other site.
 func link(in instance) string {
 	src, _ := url.Parse(in.src.Address)
 	for _, cand := range []string{in.rep.App.UI, in.src.Address} {
+		if strings.ContainsAny(cand, "\"'<>\\ \t\r\n") {
+			continue
+		}
 		u, err := url.Parse(cand)
 		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || u.User != nil {
 			continue
@@ -372,6 +394,64 @@ func link(in instance) string {
 		return cand
 	}
 	return ""
+}
+
+// Icons returns the logos of the apps on the board by the ID their rows carry,
+// as data URIs that passed status.CheckIcon. The tile asks for them only when
+// a row names one it has not seen, so the board stays small on every poll.
+func (b *Board) Icons() map[string]string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	out := map[string]string{}
+	for _, s := range b.state {
+		for _, rep := range s.reports {
+			if rep.App.Icon != "" {
+				out[iconID(rep.App.Icon)] = rep.App.Icon
+			}
+		}
+	}
+	return out
+}
+
+func iconID(icon string) string {
+	sum := sha256.Sum256([]byte(icon))
+	return hex.EncodeToString(sum[:8])
+}
+
+// Seen is how one source looked at its last read. Needs are those of its last
+// answer and stay while the app is down, so a reader can tell a returning need
+// from a new one.
+type Seen struct {
+	Source string
+	Name   string
+	Down   bool
+	Needs  []status.Need
+	Link   string
+}
+
+// Check reads the sources as View does and returns each one in list order.
+func (b *Board) Check(ctx context.Context, lang string) []Seen {
+	b.View(ctx, lang)
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	srcs := b.list()
+	out := make([]Seen, 0, len(srcs))
+	for _, src := range srcs {
+		s, ok := b.state[key(src)]
+		if !ok {
+			continue
+		}
+		in := instance{src: src}
+		if rep, ok := s.reports[lang]; ok {
+			in.rep, in.known = rep, true
+		}
+		seen := Seen{Source: src.ID, Name: in.rep.App.Name, Down: s.down || !in.known, Needs: slices.Clone(in.rep.NeedsYou), Link: link(in)}
+		if seen.Name == "" {
+			seen.Name = fallbackName(src.Address)
+		}
+		out = append(out, seen)
+	}
+	return out
 }
 
 func fallbackName(addr string) string {

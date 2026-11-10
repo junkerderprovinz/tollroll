@@ -425,3 +425,17 @@ func TestOnlyAFewLanguagesAreKept(t *testing.T) {
 		}
 	}
 }
+
+func TestALinkWithQuotesOrMarkupIsDropped(t *testing.T) {
+	w := newWorld(t)
+	for i, ui := range []string{`http://a.lan/x"><img src=x onerror=alert(1)>`, `http://a.lan/x'y`, `http://a.lan/a b`, `http://a.lan/a\b`} {
+		rep := report(fmt.Sprint("app", i), "App", "1", status.StateOK)
+		rep.App.UI = ui
+		w.add(fmt.Sprint("/var/run/app", i, ".sock"), &fakeApp{rep: rep})
+	}
+	for _, a := range w.view().Apps {
+		if a.UI != "" {
+			t.Errorf("%s links to %q", a.Key, a.UI)
+		}
+	}
+}

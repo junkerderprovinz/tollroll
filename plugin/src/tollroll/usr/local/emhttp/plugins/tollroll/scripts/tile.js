@@ -20,6 +20,9 @@
   };
 
   var view = null, filter = 'all', follow = true, timer = null;
+  // Logos by the ID a row carries. They come in a request of their own, made
+  // only when a row names one not seen yet, so a poll stays small.
+  var icons = {}, iconsAsked = {};
   try { filter = localStorage.getItem(STORE) || 'all'; } catch (e) { /* private window */ }
 
   function el(tag, cls, text) {
@@ -29,11 +32,46 @@
     return n;
   }
 
+  // A logo goes in as an img only, never into the DOM as markup, so nothing
+  // in it can run.
   function mark(app, small) {
-    var m = el('span', 'trl-mark' + (small ? ' trl-small' : ''), C.mark(app.name));
-    m.style.setProperty('--h', String(C.hue(app.key)));
+    var src = C.safeIcon(icons[app.icon]);
+    var m = el('span', 'trl-mark' + (small ? ' trl-small' : '') + (src ? ' trl-logo' : ''), src ? null : C.mark(app.name));
     m.setAttribute('aria-hidden', 'true');
+    if (src) {
+      var img = el('img');
+      img.alt = '';
+      img.src = src;
+      img.width = img.height = small ? 14 : 20;
+      img.decoding = 'async';
+      img.draggable = false;
+      m.appendChild(img);
+      return m;
+    }
+    var colors = C.markColors(app.color);
+    if (colors) {
+      m.style.background = colors.bg;
+      m.style.color = colors.fg;
+    } else {
+      m.style.setProperty('--h', String(C.hue(app.key)));
+    }
     return m;
+  }
+
+  function loadIcons() {
+    var missing = view.apps.some(function (a) { return a.icon && !(a.icon in icons) && !iconsAsked[a.icon]; });
+    if (!missing) return;
+    view.apps.forEach(function (a) { if (a.icon) iconsAsked[a.icon] = true; });
+    fetch('/plugins/tollroll/server/api.php?path=icons', { cache: 'no-store', headers: { Accept: 'application/json' } })
+      .then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+      .then(function (v) {
+        icons = {};
+        Object.keys(v.icons || {}).forEach(function (id) {
+          if (C.safeIcon(v.icons[id])) icons[id] = v.icons[id];
+        });
+        draw();
+      })
+      .catch(function () { /* the letters stay */ });
   }
 
   function byKey() {
@@ -184,6 +222,7 @@
       .then(function (v) {
         view = { apps: v.apps || [], log: v.log || [] };
         draw();
+        loadIcons();
       })
       .catch(function () {
         if (!view) note(L.t_engine, 'trl-l-error');

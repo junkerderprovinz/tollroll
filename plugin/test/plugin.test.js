@@ -59,7 +59,7 @@ test('the service, the proxy and the removal share one socket', () => {
 
 test('the proxy forwards only what the pages use', () => {
   const proxy = read('server', 'api.php');
-  for (const route of ['/api/board', '/api/sources', '/api/discover', '/api/test']) {
+  for (const route of ['/api/board', '/api/icons', '/api/sources', '/api/discover', '/api/test', '/api/notify', '/api/notify/test']) {
     assert.ok(proxy.includes(`'${route}'`), route);
   }
   assert.doesNotMatch(proxy, /\$_(GET|POST)\[[^\]]+\]\s*\.\s*['"]?\//, 'a request value builds a path');
@@ -91,4 +91,19 @@ test('no page ever writes a token into the browser', () => {
   for (const f of ['tollroll.page', 'tollroll.Dashboard.page', 'scripts/tile.js', 'scripts/settings.js']) {
     assert.doesNotMatch(read(f), /parse_plugin_cfg|sources\.json/, f);
   }
+});
+
+test('a logo reaches the tile only as the source of an img', () => {
+  const tile = read('scripts', 'tile.js');
+  for (const m of tile.match(/\.innerHTML\s*=[^;]+/g) || []) {
+    assert.match(m, /=\s*GLYPH\[/, 'innerHTML takes something else than a glyph: ' + m);
+  }
+  assert.match(tile, /img\.src = src/);
+  assert.match(tile, /var src = C\.safeIcon\(/);
+  assert.doesNotMatch(tile, /insertAdjacentHTML|outerHTML|DOMParser|<object|<iframe|<embed/);
+});
+
+test('the tile gets no settings or notification texts', () => {
+  const page = read('tollroll.Dashboard.page');
+  assert.match(page, /strncmp\(\$trl_k, 's_', 2\) !== 0 && strncmp\(\$trl_k, 'n_', 2\) !== 0/);
 });

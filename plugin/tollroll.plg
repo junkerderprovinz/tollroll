@@ -40,11 +40,14 @@ server or over the app's socket on this server.
 - One log for all apps, newest at the bottom. A click on an app or on its button above the log shows only that app's lines.
 - Settings under Utilities: add each app by its address and read token, or search this server for apps that answer on a socket, and test every connection.
 - The address and token of the older single-app dashboard widget are taken over on the first start.
+- Each row shows the app's own logo and colour when its status report carries them, and its first letter otherwise.
+- Notifications through Unraid, Apprise or Matrix when an app stops answering, answers again or newly needs you. Each one is sent once.
 - Every text in the 26 languages Unraid offers.
 
 🔒 **Security**
 - Read tokens stay on the server. The browser talks only to the WebGUI, and the service behind it listens on a socket, not on a port.
 - A self-signed certificate is trusted on first contact and checked on every later one.
+- An app's logo is checked and only ever shown as an image, so nothing in it can run.
 </CHANGES>
 
 <!-- Pre-install: stop the service, then prune packages of older versions only
@@ -98,8 +101,8 @@ pkg=$(ls /var/log/packages/ 2>/dev/null | grep -E "^&slug;(-[^-]+-[^-]+-[^-]+)?$
 if [ -n "$pkg" ]; then removepkg "$pkg" 2>/dev/null; fi
 rm -rf &emhttp;
 rm -f &plgPath;/*.txz /var/run/&slug;.pid /var/run/&slug;.sock
-echo "TollRoll removed. Your apps and read tokens in &plgPath;/sources.json"
-echo "were kept; delete that folder if you don't plan to reinstall."
+echo "TollRoll removed. Your apps, read tokens and notification channels in"
+echo "&plgPath; were kept. Delete that folder if you do not plan to reinstall."
 exit 0
 </INLINE>
 </FILE>

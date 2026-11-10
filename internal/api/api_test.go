@@ -11,9 +11,12 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/junkerderprovinz/parleyport/kit/notify"
 	"github.com/junkerderprovinz/parleyport/kit/status"
 
+	"github.com/junkerderprovinz/tollroll/internal/alert"
 	"github.com/junkerderprovinz/tollroll/internal/board"
+	"github.com/junkerderprovinz/tollroll/internal/channels"
 	"github.com/junkerderprovinz/tollroll/internal/fetch"
 	"github.com/junkerderprovinz/tollroll/internal/sources"
 )
@@ -45,11 +48,12 @@ func (f *fake) Log(context.Context, sources.Source, string, string, int) (status
 }
 
 type env struct {
-	t     *testing.T
-	f     *fake
-	store *sources.Store
-	h     http.Handler
-	dir   string
+	t      *testing.T
+	f      *fake
+	store  *sources.Store
+	h      http.Handler
+	dir    string
+	runner *runner
 }
 
 func newEnv(t *testing.T) *env {
@@ -63,7 +67,15 @@ func newEnv(t *testing.T) *env {
 	socks := filepath.Join(dir, "run")
 	_ = os.Mkdir(socks, 0o700)
 	b := board.New(store.List, f)
-	return &env{t: t, f: f, store: store, dir: socks, h: New(store, b, f, socks)}
+	r := &runner{}
+	ch, err := channels.Open(filepath.Join(dir, "notify.json"), notify.Options{Unraid: r})
+	if err != nil {
+		t.Fatal(err)
+	}
+	texts := func() (string, alert.Texts) {
+		return "en", alert.Texts{"n_test_title": "TollRoll test", "n_test_body": "It works."}
+	}
+	return &env{t: t, f: f, store: store, dir: socks, runner: r, h: New(store, b, f, socks, ch, texts)}
 }
 
 func (e *env) do(method, target, body string) (int, map[string]any) {

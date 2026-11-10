@@ -25,7 +25,8 @@ func socketPath(t *testing.T) string {
 func TestTheServiceAnswersOnItsSocket(t *testing.T) {
 	sock := socketPath(t)
 	dir := t.TempDir()
-	cfg := config{Socket: sock, Sources: filepath.Join(dir, "sources.json"), SockDir: dir}
+	cfg := config{Socket: sock, Sources: filepath.Join(dir, "sources.json"), SockDir: dir,
+		Notify: filepath.Join(dir, "notify.json"), LangDir: dir, Dynamix: filepath.Join(dir, "dynamix.cfg")}
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
 	go func() { done <- run(ctx, cfg) }()
@@ -56,6 +57,26 @@ func TestTheServiceAnswersOnItsSocket(t *testing.T) {
 	_ = resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("status %d", resp.StatusCode)
+	}
+	resp, err = hc.Get("http://tollroll/api/notify")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("notify: status %d", resp.StatusCode)
+	}
+}
+
+func TestABrokenChannelFileStopsTheStart(t *testing.T) {
+	dir := t.TempDir()
+	notify := filepath.Join(dir, "notify.json")
+	if err := os.WriteFile(notify, []byte("["), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg := config{Socket: socketPath(t), Sources: filepath.Join(dir, "sources.json"), SockDir: dir, Notify: notify}
+	if err := run(context.Background(), cfg); err == nil {
+		t.Fatal("the service started on a channel file it cannot read")
 	}
 }
 
@@ -95,7 +116,8 @@ func TestSettingsComeFromTheEnvironment(t *testing.T) {
 	t.Setenv("SOURCES", "")
 	cfg := configFromEnv()
 	if cfg.Socket != "/tmp/x.sock" || cfg.Sources != "/boot/config/plugins/tollroll/sources.json" ||
-		cfg.Legacy != "" || cfg.SockDir != "/var/run" {
+		cfg.Legacy != "" || cfg.SockDir != "/var/run" || cfg.Notify != "/boot/config/plugins/tollroll/notify.json" ||
+		cfg.LangDir != "/usr/local/emhttp/plugins/tollroll/lang" || cfg.Dynamix != "/boot/config/plugins/dynamix/dynamix.cfg" {
 		t.Fatalf("config %+v", cfg)
 	}
 }
