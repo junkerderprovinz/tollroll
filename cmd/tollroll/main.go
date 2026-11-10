@@ -1,6 +1,7 @@
 // Command tollroll is the service behind the TollRoll tile. It reads the
-// status contract of every configured app and answers the plugin's PHP proxy
-// on a unix socket. It opens no TCP port.
+// status contract of every configured app and of every member of the
+// fortress it joined, and answers the plugin's PHP proxy on a unix socket.
+// It opens no TCP port.
 package main
 
 import (
@@ -23,28 +24,34 @@ import (
 	"github.com/junkerderprovinz/tollroll/internal/board"
 	"github.com/junkerderprovinz/tollroll/internal/channels"
 	"github.com/junkerderprovinz/tollroll/internal/fetch"
+	"github.com/junkerderprovinz/tollroll/internal/fortress"
 	"github.com/junkerderprovinz/tollroll/internal/sources"
 )
 
 type config struct {
-	Socket  string
-	Sources string
-	Legacy  string
-	SockDir string
-	Notify  string
-	LangDir string
-	Dynamix string
+	Socket   string
+	Sources  string
+	Legacy   string
+	SockDir  string
+	Notify   string
+	LangDir  string
+	Dynamix  string
+	Fortress string
 }
+
+// version is set at build time.
+var version = "dev"
 
 func configFromEnv() config {
 	return config{
-		Socket:  cmp.Or(os.Getenv("SOCKET"), "/var/run/tollroll.sock"),
-		Sources: cmp.Or(os.Getenv("SOURCES"), "/boot/config/plugins/tollroll/sources.json"),
-		Legacy:  os.Getenv("LEGACY_CFG"),
-		SockDir: cmp.Or(os.Getenv("SOCK_DIR"), "/var/run"),
-		Notify:  cmp.Or(os.Getenv("NOTIFY"), "/boot/config/plugins/tollroll/notify.json"),
-		LangDir: cmp.Or(os.Getenv("LANG_DIR"), "/usr/local/emhttp/plugins/tollroll/lang"),
-		Dynamix: cmp.Or(os.Getenv("DYNAMIX_CFG"), "/boot/config/plugins/dynamix/dynamix.cfg"),
+		Socket:   cmp.Or(os.Getenv("SOCKET"), "/var/run/tollroll.sock"),
+		Sources:  cmp.Or(os.Getenv("SOURCES"), "/boot/config/plugins/tollroll/sources.json"),
+		Legacy:   os.Getenv("LEGACY_CFG"),
+		SockDir:  cmp.Or(os.Getenv("SOCK_DIR"), "/var/run"),
+		Notify:   cmp.Or(os.Getenv("NOTIFY"), "/boot/config/plugins/tollroll/notify.json"),
+		LangDir:  cmp.Or(os.Getenv("LANG_DIR"), "/usr/local/emhttp/plugins/tollroll/lang"),
+		Dynamix:  cmp.Or(os.Getenv("DYNAMIX_CFG"), "/boot/config/plugins/dynamix/dynamix.cfg"),
+		Fortress: cmp.Or(os.Getenv("FORTRESS"), "/boot/config/plugins/tollroll/fortress"),
 	}
 }
 
@@ -70,8 +77,15 @@ func run(ctx context.Context, cfg config) error {
 	if err != nil {
 		return err
 	}
-	reader := fetch.New(store.Learn)
-	b := board.New(store.List, reader)
+	device, _ := os.Hostname()
+	fort, err := fortress.Open(fortress.Options{Dir: cfg.Fortress, Device: device, Version: version, LAN: true})
+	if err != nil {
+		return err
+	}
+	defer func() { _ = fort.Close() }()
+	reader := fort.Reader(fetch.New(store.Learn))
+	list := func() []sources.Source { return append(store.List(), fort.Sources()...) }
+	b := board.New(list, reader)
 	texts := func() (string, alert.Texts) {
 		lang := alert.Language(cfg.Dynamix)
 		return lang, alert.LoadTexts(cfg.LangDir, lang)
@@ -81,7 +95,7 @@ func run(ctx context.Context, cfg config) error {
 		return err
 	}
 	srv := &http.Server{
-		Handler:           api.New(store, b, reader, cfg.SockDir, ch, texts),
+		Handler:           api.New(store, b, reader, cfg.SockDir, ch, texts, fort),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 	w := &alert.Watcher{Every: checkEvery, Check: b.Check, Channels: ch, Texts: texts}

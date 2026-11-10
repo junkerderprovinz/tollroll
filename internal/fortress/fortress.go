@@ -42,7 +42,9 @@ var ErrPhrase = errors.New("fortress: the phrase is not valid")
 
 // Options say where the membership is kept and how the members are reached.
 type Options struct {
-	Dir     string
+	Dir string
+	// Device is the name of this server, which the other members show.
+	Device  string
 	Version string
 	// Relay is "" for the project's relay, "off" or the address of an own one.
 	Relay string
@@ -110,10 +112,9 @@ func Open(o Options) (*Service, error) {
 	return s, nil
 }
 
-// Join takes the tile into the fortress of words, as device. A tile in
-// another fortress leaves it first, which is also how it follows a changed
-// phrase.
-func (s *Service) Join(words, device string) error {
+// Join takes the tile into the fortress of words. A tile in another fortress
+// leaves it first, which is also how it follows a changed phrase.
+func (s *Service) Join(words string) error {
 	secret, err := phrase.Decode(words)
 	if err != nil {
 		return ErrPhrase
@@ -124,7 +125,7 @@ func (s *Service) Join(words, device string) error {
 	if err := os.RemoveAll(next); err != nil {
 		return err
 	}
-	if err := kit.Join(next, secret, kit.Membership{App: AppID, Device: device, Relay: s.opt.Relay, LAN: s.opt.LAN}); err != nil {
+	if err := kit.Join(next, secret, kit.Membership{App: AppID, Device: s.opt.Device, Relay: s.opt.Relay, LAN: s.opt.LAN}); err != nil {
 		_ = os.RemoveAll(next)
 		return err
 	}

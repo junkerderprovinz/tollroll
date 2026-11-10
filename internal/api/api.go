@@ -20,6 +20,7 @@ import (
 	"github.com/junkerderprovinz/tollroll/internal/board"
 	"github.com/junkerderprovinz/tollroll/internal/channels"
 	"github.com/junkerderprovinz/tollroll/internal/fetch"
+	"github.com/junkerderprovinz/tollroll/internal/fortress"
 	"github.com/junkerderprovinz/tollroll/internal/sources"
 )
 
@@ -34,13 +35,21 @@ type handler struct {
 	sockDir  string
 	channels *channels.Store
 	texts    func() (string, alert.Texts)
+	fortress Fortress
+}
+
+// Fortress is the tile's membership in a fortress.
+type Fortress interface {
+	Map() fortress.Map
+	Join(words string) error
+	Leave() error
 }
 
 // New returns the handler. reader serves the connection test and the search
 // for apps on the sockets in sockDir. texts gives the words of a channel's
 // test message.
-func New(store *sources.Store, b *board.Board, reader board.Reader, sockDir string, ch *channels.Store, texts func() (string, alert.Texts)) http.Handler {
-	h := &handler{store: store, board: b, reader: reader, sockDir: sockDir, channels: ch, texts: texts}
+func New(store *sources.Store, b *board.Board, reader board.Reader, sockDir string, ch *channels.Store, texts func() (string, alert.Texts), fort Fortress) http.Handler {
+	h := &handler{store: store, board: b, reader: reader, sockDir: sockDir, channels: ch, texts: texts, fortress: fort}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/board", h.view)
 	mux.HandleFunc("GET /api/icons", h.icons)
@@ -51,7 +60,42 @@ func New(store *sources.Store, b *board.Board, reader board.Reader, sockDir stri
 	mux.HandleFunc("PUT /api/sources", h.replace)
 	mux.HandleFunc("POST /api/test", h.test)
 	mux.HandleFunc("GET /api/discover", h.discover)
+	mux.HandleFunc("GET /api/fortress", h.fortressMap)
+	mux.HandleFunc("POST /api/fortress/join", h.join)
+	mux.HandleFunc("POST /api/fortress/leave", h.leave)
 	return mux
+}
+
+func (h *handler) fortressMap(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, h.fortress.Map())
+}
+
+// join takes the tile into the fortress of the phrase it is given. The
+// phrase goes no further than the membership, which keeps only the keys.
+func (h *handler) join(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Phrase string `json:"phrase"`
+	}
+	if !readJSON(w, r, &body) {
+		return
+	}
+	err := h.fortress.Join(body.Phrase)
+	switch {
+	case errors.Is(err, fortress.ErrPhrase):
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "phrase_invalid"})
+	case err != nil:
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "join_failed"})
+	default:
+		writeJSON(w, http.StatusOK, h.fortress.Map())
+	}
+}
+
+func (h *handler) leave(w http.ResponseWriter, _ *http.Request) {
+	if err := h.fortress.Leave(); err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "leave_failed"})
+		return
+	}
+	writeJSON(w, http.StatusOK, h.fortress.Map())
 }
 
 func (h *handler) view(w http.ResponseWriter, r *http.Request) {

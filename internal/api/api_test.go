@@ -54,6 +54,7 @@ type env struct {
 	h      http.Handler
 	dir    string
 	runner *runner
+	fort   *fakeFortress
 }
 
 func newEnv(t *testing.T) *env {
@@ -75,7 +76,8 @@ func newEnv(t *testing.T) *env {
 	texts := func() (string, alert.Texts) {
 		return "en", alert.Texts{"n_test_title": "TollRoll test", "n_test_body": "It works."}
 	}
-	return &env{t: t, f: f, store: store, dir: socks, runner: r, h: New(store, b, f, socks, ch, texts)}
+	fort := &fakeFortress{}
+	return &env{t: t, f: f, store: store, dir: socks, runner: r, fort: fort, h: New(store, b, f, socks, ch, texts, fort)}
 }
 
 func (e *env) do(method, target, body string) (int, map[string]any) {

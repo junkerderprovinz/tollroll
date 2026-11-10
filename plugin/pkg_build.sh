@@ -22,7 +22,7 @@ cp -a "$PLUGIN_SRC/." "$PKGROOT/"
 
 echo "==> building the service (linux/amd64)"
 ( cd "$ROOT" && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-  go build -trimpath -ldflags "-s -w" -o "$PKGROOT/$BIN_REL" ./cmd/tollroll )
+  go build -trimpath -ldflags "-s -w -X main.version=$VERSION" -o "$PKGROOT/$BIN_REL" ./cmd/tollroll )
 chmod +x "$PKGROOT/$BIN_REL" "$PKGROOT/usr/local/emhttp/plugins/tollroll/scripts/rc.tollroll"
 
 # Unraid's PageBuilder drops a CRLF .page, and a trailing CR breaks shebangs.

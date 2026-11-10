@@ -9,21 +9,25 @@
  *   GET  api.php?path=sources                -> GET  /api/sources
  *   GET  api.php?path=discover               -> GET  /api/discover
  *   GET  api.php?path=notify                 -> GET  /api/notify
+ *   GET  api.php?path=fortress               -> GET  /api/fortress
  *   POST api.php  path=sources     data=JSON  -> PUT  /api/sources
  *   POST api.php  path=test        data=JSON  -> POST /api/test
  *   POST api.php  path=notify      data=JSON  -> PUT  /api/notify
  *   POST api.php  path=notify_test data=JSON  -> POST /api/notify/test
+ *   POST api.php  path=join        data=JSON  -> POST /api/fortress/join
+ *   POST api.php  path=leave                  -> POST /api/fortress/leave
  *
- * Read tokens and notification secrets go in through a POST and never come
- * back out: the service answers with whether a token is saved, and with
+ * Read tokens, notification secrets and the phrase go in through a POST and
+ * never come back out: the service answers with whether a token is saved, and with
  * channels whose tokens, passwords and header values are masked.
  */
 
 $sock   = '/var/run/tollroll.sock';
 $reads  = ['board' => '/api/board', 'icons' => '/api/icons', 'sources' => '/api/sources', 'discover' => '/api/discover',
-           'notify' => '/api/notify'];
+           'notify' => '/api/notify', 'fortress' => '/api/fortress'];
 $writes = ['sources' => ['PUT', '/api/sources'], 'test' => ['POST', '/api/test'],
-           'notify' => ['PUT', '/api/notify'], 'notify_test' => ['POST', '/api/notify/test']];
+           'notify' => ['PUT', '/api/notify'], 'notify_test' => ['POST', '/api/notify/test'],
+           'join' => ['POST', '/api/fortress/join'], 'leave' => ['POST', '/api/fortress/leave']];
 
 $fail = function ($code, $error) {
     http_response_code($code);

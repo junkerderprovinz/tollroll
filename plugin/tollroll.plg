@@ -89,7 +89,7 @@ echo "TollRoll is ready!"
 <!-- Remove. The plugin manager runs only FILE elements and ignores a bare
      REMOVE, and the block has to end with exit 0, or Unraid keeps the .plg and
      reinstalls it on boot. The sources on the flash stay, so a reinstall
-     keeps the apps and their tokens. -->
+     keeps the apps, their tokens and the fortress membership. -->
 <FILE Run="/bin/bash" Method="remove">
 <INLINE>
 cat &emhttp;/banner.txt 2>/dev/null
@@ -101,8 +101,9 @@ pkg=$(ls /var/log/packages/ 2>/dev/null | grep -E "^&slug;(-[^-]+-[^-]+-[^-]+)?$
 if [ -n "$pkg" ]; then removepkg "$pkg" 2>/dev/null; fi
 rm -rf &emhttp;
 rm -f &plgPath;/*.txz /var/run/&slug;.pid /var/run/&slug;.sock
-echo "TollRoll removed. Your apps, read tokens and notification channels in"
-echo "&plgPath; were kept. Delete that folder if you do not plan to reinstall."
+echo "TollRoll removed. Your apps, read tokens, notification channels and the"
+echo "fortress membership in &plgPath; were kept. Delete that folder if you do"
+echo "not plan to reinstall."
 exit 0
 </INLINE>
 </FILE>

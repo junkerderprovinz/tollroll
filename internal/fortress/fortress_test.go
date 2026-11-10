@@ -118,7 +118,7 @@ func openApp(t *testing.T, url string, secret []byte, id, name, device string, s
 
 func openService(t *testing.T, dir, url string) *Service {
 	t.Helper()
-	s, err := Open(Options{Dir: dir, Version: "0.2.0", Relay: url})
+	s, err := Open(Options{Dir: dir, Device: "tower", Version: "0.2.0", Relay: url})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -156,7 +156,7 @@ func TestThePhraseShowsEveryAppOfTheFortress(t *testing.T) {
 	if s.Map().Joined {
 		t.Fatal("joined before the phrase was given")
 	}
-	if err := s.Join(words, "tower"); err != nil {
+	if err := s.Join(words); err != nil {
 		t.Fatal(err)
 	}
 	waitFor(t, "both apps", func() bool { return len(s.Sources()) == 2 })
@@ -185,7 +185,7 @@ func TestTheLogIsReadOnFromTheCursor(t *testing.T) {
 	secret, words := newPhrase(t)
 	openApp(t, url, secret, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
 	s := openService(t, filepath.Join(t.TempDir(), "fortress"), url)
-	if err := s.Join(words, "tower"); err != nil {
+	if err := s.Join(words); err != nil {
 		t.Fatal(err)
 	}
 	waitFor(t, "alpha", func() bool { return len(s.Sources()) == 1 })
@@ -236,7 +236,7 @@ func TestAMemberWithoutAStatusLeavesTheTile(t *testing.T) {
 	openApp(t, url, secret, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
 	openApp(t, url, secret, "squire", "Squire", "tower", nil)
 	s := openService(t, filepath.Join(t.TempDir(), "fortress"), url)
-	if err := s.Join(words, "tower"); err != nil {
+	if err := s.Join(words); err != nil {
 		t.Fatal(err)
 	}
 	waitFor(t, "both apps", func() bool { return len(s.Sources()) == 2 })
@@ -263,7 +263,7 @@ func TestTheMapShowsDevicesAppsAndHowEachIsReached(t *testing.T) {
 	openApp(t, url, secret, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
 	openApp(t, url, secret, "bravo", "Bravo", "attic", app{id: "bravo", name: "Bravo"})
 	s := openService(t, filepath.Join(t.TempDir(), "fortress"), url)
-	if err := s.Join(words, "tower"); err != nil {
+	if err := s.Join(words); err != nil {
 		t.Fatal(err)
 	}
 	waitFor(t, "both apps on the map", func() bool {
@@ -305,7 +305,7 @@ func TestAWrongPhraseIsRefusedAndNothingKept(t *testing.T) {
 	w := strings.Fields(words)
 	w[0], w[1] = w[1], w[0]
 	for _, bad := range []string{"", "one two three", strings.Join(w, " ")} {
-		if err := s.Join(bad, "tower"); !errors.Is(err, ErrPhrase) {
+		if err := s.Join(bad); !errors.Is(err, ErrPhrase) {
 			t.Errorf("Join(%q) = %v, want ErrPhrase", bad, err)
 		}
 	}
@@ -323,7 +323,7 @@ func TestTheMembershipOutlivesARestartAndKeepsNoPhrase(t *testing.T) {
 	openApp(t, url, secret, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
 	dir := filepath.Join(t.TempDir(), "fortress")
 	s := openService(t, dir, url)
-	if err := s.Join(words, "tower"); err != nil {
+	if err := s.Join(words); err != nil {
 		t.Fatal(err)
 	}
 	waitFor(t, "alpha", func() bool { return len(s.Sources()) == 1 })
@@ -356,12 +356,12 @@ func TestAnotherPhraseMovesToAnotherFortress(t *testing.T) {
 	openApp(t, url, first, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
 	openApp(t, url, second, "bravo", "Bravo", "attic", app{id: "bravo", name: "Bravo"})
 	s := openService(t, filepath.Join(t.TempDir(), "fortress"), url)
-	if err := s.Join(firstWords, "tower"); err != nil {
+	if err := s.Join(firstWords); err != nil {
 		t.Fatal(err)
 	}
 	waitFor(t, "alpha", func() bool { return len(s.Sources()) == 1 })
 
-	if err := s.Join(secondWords, "tower"); err != nil {
+	if err := s.Join(secondWords); err != nil {
 		t.Fatal(err)
 	}
 	waitFor(t, "bravo alone", func() bool {
@@ -378,7 +378,7 @@ func TestLeavingForgetsTheFortress(t *testing.T) {
 	openApp(t, url, secret, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
 	dir := filepath.Join(t.TempDir(), "fortress")
 	s := openService(t, dir, url)
-	if err := s.Join(words, "tower"); err != nil {
+	if err := s.Join(words); err != nil {
 		t.Fatal(err)
 	}
 	waitFor(t, "alpha", func() bool { return len(s.Sources()) == 1 })
@@ -403,7 +403,7 @@ func TestRemovedByAnotherMemberTheTileLeaves(t *testing.T) {
 	a := openApp(t, url, secret, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
 	dir := filepath.Join(t.TempDir(), "fortress")
 	s := openService(t, dir, url)
-	if err := s.Join(words, "tower"); err != nil {
+	if err := s.Join(words); err != nil {
 		t.Fatal(err)
 	}
 	var self string
@@ -423,7 +423,7 @@ func TestRemovedByAnotherMemberTheTileLeaves(t *testing.T) {
 	if _, err := os.Stat(dir); !errors.Is(err, os.ErrNotExist) {
 		t.Errorf("a removed tile kept %s: %v", dir, err)
 	}
-	if err := s.Join(words, "tower"); err != nil {
+	if err := s.Join(words); err != nil {
 		t.Fatal(err)
 	}
 	if m := s.Map(); !m.Joined || m.Removed {

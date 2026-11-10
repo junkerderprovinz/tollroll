@@ -26,7 +26,8 @@ func TestTheServiceAnswersOnItsSocket(t *testing.T) {
 	sock := socketPath(t)
 	dir := t.TempDir()
 	cfg := config{Socket: sock, Sources: filepath.Join(dir, "sources.json"), SockDir: dir,
-		Notify: filepath.Join(dir, "notify.json"), LangDir: dir, Dynamix: filepath.Join(dir, "dynamix.cfg")}
+		Notify: filepath.Join(dir, "notify.json"), LangDir: dir, Dynamix: filepath.Join(dir, "dynamix.cfg"),
+		Fortress: filepath.Join(dir, "fortress")}
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
 	go func() { done <- run(ctx, cfg) }()
@@ -65,6 +66,30 @@ func TestTheServiceAnswersOnItsSocket(t *testing.T) {
 	_ = resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("notify: status %d", resp.StatusCode)
+	}
+	resp, err = hc.Get("http://tollroll/api/fortress")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("fortress: status %d", resp.StatusCode)
+	}
+}
+
+func TestADamagedMembershipStopsTheStart(t *testing.T) {
+	dir := t.TempDir()
+	fort := filepath.Join(dir, "fortress")
+	if err := os.MkdirAll(fort, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(fort, "fortress.json"), []byte("{"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg := config{Socket: socketPath(t), Sources: filepath.Join(dir, "sources.json"), SockDir: dir,
+		Notify: filepath.Join(dir, "notify.json"), Fortress: fort}
+	if err := run(context.Background(), cfg); err == nil {
+		t.Fatal("the service started on a membership it cannot read")
 	}
 }
 
@@ -117,7 +142,8 @@ func TestSettingsComeFromTheEnvironment(t *testing.T) {
 	cfg := configFromEnv()
 	if cfg.Socket != "/tmp/x.sock" || cfg.Sources != "/boot/config/plugins/tollroll/sources.json" ||
 		cfg.Legacy != "" || cfg.SockDir != "/var/run" || cfg.Notify != "/boot/config/plugins/tollroll/notify.json" ||
-		cfg.LangDir != "/usr/local/emhttp/plugins/tollroll/lang" || cfg.Dynamix != "/boot/config/plugins/dynamix/dynamix.cfg" {
+		cfg.LangDir != "/usr/local/emhttp/plugins/tollroll/lang" || cfg.Dynamix != "/boot/config/plugins/dynamix/dynamix.cfg" ||
+		cfg.Fortress != "/boot/config/plugins/tollroll/fortress" {
 		t.Fatalf("config %+v", cfg)
 	}
 }
