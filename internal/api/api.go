@@ -14,7 +14,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/junkerderprovinz/parleyport/kit/notify"
+
+	"github.com/junkerderprovinz/tollroll/internal/alert"
 	"github.com/junkerderprovinz/tollroll/internal/board"
+	"github.com/junkerderprovinz/tollroll/internal/channels"
 	"github.com/junkerderprovinz/tollroll/internal/fetch"
 	"github.com/junkerderprovinz/tollroll/internal/sources"
 )
@@ -24,18 +28,25 @@ const maxBody = 64 << 10
 var langTag = regexp.MustCompile(`^[a-zA-Z]{2,3}([-_][a-zA-Z0-9]{2,8})?$`)
 
 type handler struct {
-	store   *sources.Store
-	board   *board.Board
-	reader  board.Reader
-	sockDir string
+	store    *sources.Store
+	board    *board.Board
+	reader   board.Reader
+	sockDir  string
+	channels *channels.Store
+	texts    func() (string, alert.Texts)
 }
 
 // New returns the handler. reader serves the connection test and the search
-// for apps on the sockets in sockDir.
-func New(store *sources.Store, b *board.Board, reader board.Reader, sockDir string) http.Handler {
-	h := &handler{store: store, board: b, reader: reader, sockDir: sockDir}
+// for apps on the sockets in sockDir. texts gives the words of a channel's
+// test message.
+func New(store *sources.Store, b *board.Board, reader board.Reader, sockDir string, ch *channels.Store, texts func() (string, alert.Texts)) http.Handler {
+	h := &handler{store: store, board: b, reader: reader, sockDir: sockDir, channels: ch, texts: texts}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/board", h.view)
+	mux.HandleFunc("GET /api/icons", h.icons)
+	mux.HandleFunc("GET /api/notify", h.listChannels)
+	mux.HandleFunc("PUT /api/notify", h.replaceChannels)
+	mux.HandleFunc("POST /api/notify/test", h.testChannel)
 	mux.HandleFunc("GET /api/sources", h.list)
 	mux.HandleFunc("PUT /api/sources", h.replace)
 	mux.HandleFunc("POST /api/test", h.test)
@@ -49,6 +60,53 @@ func (h *handler) view(w http.ResponseWriter, r *http.Request) {
 		lang = ""
 	}
 	writeJSON(w, http.StatusOK, h.board.View(r.Context(), lang))
+}
+
+func (h *handler) icons(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"icons": h.board.Icons()})
+}
+
+func (h *handler) listChannels(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"channels": h.channels.Public()})
+}
+
+func (h *handler) replaceChannels(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Channels []notify.Channel `json:"channels"`
+	}
+	if !readJSON(w, r, &body) {
+		return
+	}
+	pub, err := h.channels.Replace(body.Channels)
+	var ps notify.Problems
+	switch {
+	case errors.As(err, &ps):
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid", "problems": ps})
+	case err != nil:
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "save_failed"})
+	default:
+		writeJSON(w, http.StatusOK, map[string]any{"channels": pub})
+	}
+}
+
+// testChannel sends the test message to one channel as the settings page has
+// it. A channel takes its saved secrets along only to its saved address.
+func (h *handler) testChannel(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Channel notify.Channel `json:"channel"`
+	}
+	if !readJSON(w, r, &body) {
+		return
+	}
+	_, tx := h.texts()
+	res := h.channels.Test(r.Context(), body.Channel, notify.Event{
+		Kind: "test", Severity: notify.SeverityInfo, Title: tx.Get("n_test_title", ""), Body: tx.Get("n_test_body", ""),
+	})
+	if !res.OK() {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": res.Code})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 }
 
 type listed struct {

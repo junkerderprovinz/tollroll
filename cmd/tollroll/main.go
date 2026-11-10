@@ -16,8 +16,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/junkerderprovinz/parleyport/kit/notify"
+
+	"github.com/junkerderprovinz/tollroll/internal/alert"
 	"github.com/junkerderprovinz/tollroll/internal/api"
 	"github.com/junkerderprovinz/tollroll/internal/board"
+	"github.com/junkerderprovinz/tollroll/internal/channels"
 	"github.com/junkerderprovinz/tollroll/internal/fetch"
 	"github.com/junkerderprovinz/tollroll/internal/sources"
 )
@@ -27,6 +31,9 @@ type config struct {
 	Sources string
 	Legacy  string
 	SockDir string
+	Notify  string
+	LangDir string
+	Dynamix string
 }
 
 func configFromEnv() config {
@@ -35,8 +42,15 @@ func configFromEnv() config {
 		Sources: cmp.Or(os.Getenv("SOURCES"), "/boot/config/plugins/tollroll/sources.json"),
 		Legacy:  os.Getenv("LEGACY_CFG"),
 		SockDir: cmp.Or(os.Getenv("SOCK_DIR"), "/var/run"),
+		Notify:  cmp.Or(os.Getenv("NOTIFY"), "/boot/config/plugins/tollroll/notify.json"),
+		LangDir: cmp.Or(os.Getenv("LANG_DIR"), "/usr/local/emhttp/plugins/tollroll/lang"),
+		Dynamix: cmp.Or(os.Getenv("DYNAMIX_CFG"), "/boot/config/plugins/dynamix/dynamix.cfg"),
 	}
 }
+
+// checkEvery is how often the apps are read for notifications while a
+// channel is on, with or without anyone looking at the tile.
+const checkEvery = time.Minute
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -52,16 +66,26 @@ func run(ctx context.Context, cfg config) error {
 	if err != nil {
 		return err
 	}
+	ch, err := channels.Open(cfg.Notify, notify.Options{})
+	if err != nil {
+		return err
+	}
 	reader := fetch.New(store.Learn)
 	b := board.New(store.List, reader)
+	texts := func() (string, alert.Texts) {
+		lang := alert.Language(cfg.Dynamix)
+		return lang, alert.LoadTexts(cfg.LangDir, lang)
+	}
 	ln, err := listen(cfg.Socket)
 	if err != nil {
 		return err
 	}
 	srv := &http.Server{
-		Handler:           api.New(store, b, reader, cfg.SockDir),
+		Handler:           api.New(store, b, reader, cfg.SockDir, ch, texts),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
+	w := &alert.Watcher{Every: checkEvery, Check: b.Check, Channels: ch, Texts: texts}
+	go w.Run(ctx)
 	go func() {
 		<-ctx.Done()
 		shut, cancel := context.WithTimeout(context.Background(), 5*time.Second)

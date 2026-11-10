@@ -26,7 +26,7 @@ if (preg_match('/^[a-z]{2}$/', $trl_lang) && $trl_lang !== 'en' && is_file("$trl
 }
 $trl_js = array();
 foreach ($trl_L as $trl_k => $trl_v) {
-  if (strncmp($trl_k, 's_', 2) !== 0) $trl_js[$trl_k] = $trl_v;
+  if (strncmp($trl_k, 's_', 2) !== 0 && strncmp($trl_k, 'n_', 2) !== 0) $trl_js[$trl_k] = $trl_v;
 }
 $trl_settings = htmlspecialchars($trl_L['t_settings'], ENT_QUOTES);
 $trl_filter   = htmlspecialchars($trl_L['t_filter'], ENT_QUOTES);

@@ -4,19 +4,26 @@
  * reaches this script, and Unraid checks the csrf_token of every POST before
  * it runs, so every write comes in as a POST.
  *
- *   GET  api.php?path=board&lang=<tag>   -> GET  /api/board
- *   GET  api.php?path=sources            -> GET  /api/sources
- *   GET  api.php?path=discover           -> GET  /api/discover
- *   POST api.php  path=sources data=JSON  -> PUT  /api/sources
- *   POST api.php  path=test    data=JSON  -> POST /api/test
+ *   GET  api.php?path=board&lang=<tag>       -> GET  /api/board
+ *   GET  api.php?path=icons                  -> GET  /api/icons
+ *   GET  api.php?path=sources                -> GET  /api/sources
+ *   GET  api.php?path=discover               -> GET  /api/discover
+ *   GET  api.php?path=notify                 -> GET  /api/notify
+ *   POST api.php  path=sources     data=JSON  -> PUT  /api/sources
+ *   POST api.php  path=test        data=JSON  -> POST /api/test
+ *   POST api.php  path=notify      data=JSON  -> PUT  /api/notify
+ *   POST api.php  path=notify_test data=JSON  -> POST /api/notify/test
  *
- * Read tokens go in through a POST and never come back out: the service
- * answers with whether a token is saved, not with the token.
+ * Read tokens and notification secrets go in through a POST and never come
+ * back out: the service answers with whether a token is saved, and with
+ * channels whose tokens, passwords and header values are masked.
  */
 
 $sock   = '/var/run/tollroll.sock';
-$reads  = ['board' => '/api/board', 'sources' => '/api/sources', 'discover' => '/api/discover'];
-$writes = ['sources' => ['PUT', '/api/sources'], 'test' => ['POST', '/api/test']];
+$reads  = ['board' => '/api/board', 'icons' => '/api/icons', 'sources' => '/api/sources', 'discover' => '/api/discover',
+           'notify' => '/api/notify'];
+$writes = ['sources' => ['PUT', '/api/sources'], 'test' => ['POST', '/api/test'],
+           'notify' => ['PUT', '/api/notify'], 'notify_test' => ['POST', '/api/notify/test']];
 
 $fail = function ($code, $error) {
     http_response_code($code);
@@ -56,8 +63,8 @@ curl_setopt_array($ch, [
     CURLOPT_HTTPHEADER       => ['Content-Type: application/json', 'Accept: application/json'],
     CURLOPT_RETURNTRANSFER   => true,
     CURLOPT_CONNECTTIMEOUT   => 3,
-    // The service reads every app with a five second limit, side by side.
-    CURLOPT_TIMEOUT          => 15,
+    // A channel test may take the fifteen seconds a channel gets per attempt.
+    CURLOPT_TIMEOUT          => 20,
 ]);
 if ($body !== null) {
     curl_setopt($ch, CURLOPT_POSTFIELDS, $body);

@@ -3,8 +3,9 @@ Title="TollRoll"
 Icon="tollroll.png"
 ---
 <?php
-/* Settings page. The list of apps lives with the service, which this page
-   reads and writes through server/api.php; tokens go in and never come back.
+/* Settings page. The list of apps and the notification channels live with
+   the service, which this page reads and writes through server/api.php.
+   Tokens go in and never come back.
    No functions here: Unraid may include a .page more than once. */
 $trl_locale = (string)(isset($_SESSION['locale']) ? $_SESSION['locale'] : '');
 $trl_lang   = strtolower(substr($trl_locale, 0, 2));
@@ -40,6 +41,37 @@ $h = function ($k) use ($L) { return htmlspecialchars(isset($L[$k]) ? $L[$k] : $
     <div id="trs-found" class="trs-found" hidden>
       <h4><?=$h('s_found')?></h4>
       <ul id="trs-found-list"></ul>
+    </div>
+  </section>
+
+  <section class="trs-card" aria-labelledby="trs-notify-h">
+    <h3 id="trs-notify-h"><?=$h('s_notify')?> <small><?=$h('s_notify_sub')?></small></h3>
+    <p class="trs-hint"><?=$h('s_notify_hint')?></p>
+    <div class="trs-grid">
+      <label for="trs-n-unraid"><?=$h('s_n_unraid')?></label>
+      <div><input type="checkbox" id="trs-n-unraid"></div>
+      <label for="trs-n-apprise"><?=$h('s_n_apprise')?></label>
+      <div>
+        <input type="text" class="trs-in" id="trs-n-apprise" placeholder="http://192.168.1.10:8000/notify/tollroll" spellcheck="false" autocomplete="off">
+        <p class="trs-hint"><?=$h('s_n_apprise_hint')?></p>
+      </div>
+      <label for="trs-n-hs"><?=$h('s_n_matrix')?></label>
+      <div class="trs-matrix">
+        <input type="text" class="trs-in" id="trs-n-hs" placeholder="https://matrix.org" aria-label="<?=$h('s_n_hs')?>" spellcheck="false" autocomplete="off">
+        <input type="text" class="trs-in" id="trs-n-room" placeholder="!room:matrix.org" aria-label="<?=$h('s_n_room')?>" spellcheck="false" autocomplete="off">
+        <input type="password" class="trs-in" id="trs-n-token" aria-label="<?=$h('s_n_token')?>" autocomplete="new-password">
+      </div>
+      <label for="trs-n-on"><?=$h('s_n_on')?></label>
+      <div>
+        <select id="trs-n-on" class="trs-in trs-select">
+          <option value="always"><?=$h('s_n_on_always')?></option>
+          <option value="failure"><?=$h('s_n_on_failure')?></option>
+        </select>
+      </div>
+    </div>
+    <div class="trs-tools">
+      <button type="button" id="trs-n-test" class="trs-btn"><?=$h('s_n_test')?></button>
+      <span id="trs-n-res" class="trs-res" role="status"></span>
     </div>
   </section>
 
