@@ -33,13 +33,12 @@ type Store struct {
 // Open reads the channels from path. A missing file means no channels; a
 // file that does not parse or holds an invalid channel is an error. Unraid
 // notifications go through opt.Unraid, or the local notify script without
-// one, one at a time.
+// one.
 func Open(path string, opt notify.Options) (*Store, error) {
 	opt.Source = Source
 	if opt.Unraid == nil {
 		opt.Unraid = local{}
 	}
-	opt.Unraid = &spaced{next: opt.Unraid, gap: unraidGap}
 	s := &Store{path: path, opt: opt}
 	var list []notify.Channel
 	b, err := os.ReadFile(path)

@@ -1,5 +1,5 @@
-github.com/junkerderprovinz/parleyport/kit v0.0.0-20261110013923-c707c846720d h1:4JgwypFTeNR70YJMwICmknPHo7bGklspLNwGyMzgYIo=
-github.com/junkerderprovinz/parleyport/kit v0.0.0-20261110013923-c707c846720d/go.mod h1:/GHVd/HB+Br/336IHKuQBYSc4UGG3NXAfowh1q/DYx8=
+github.com/junkerderprovinz/parleyport/kit v0.0.0-20261110025256-44d3847091ce h1:z9Ug5RI8BKskX2vzJJ2aA7CnmicBKsCsxpIkspXfPi4=
+github.com/junkerderprovinz/parleyport/kit v0.0.0-20261110025256-44d3847091ce/go.mod h1:/GHVd/HB+Br/336IHKuQBYSc4UGG3NXAfowh1q/DYx8=
 github.com/santhosh-tekuri/jsonschema/v6 v6.0.3 h1:1EYB5IzjZawrrnELUi78f9fPu57HuXjmddZPjrls/28=
 github.com/santhosh-tekuri/jsonschema/v6 v6.0.3/go.mod h1:JXeL+ps8p7/KNMjDQk3TCwPpBy0wYklyWTfbkIzdIFU=
 golang.org/x/text v0.43.0 h1:1QivrlhwAsnMOcqgOdl9my7s9OyZl8O5/UGUTJVXoWc=
