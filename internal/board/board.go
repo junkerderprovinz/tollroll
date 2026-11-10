@@ -100,11 +100,14 @@ type Line struct {
 }
 
 // Outcome is how the last read of one source went, for the settings page.
+// Twin says the same instance also comes from the fortress, so the board
+// leaves this source out and the entry can go.
 type Outcome struct {
 	Name    string    `json:"name,omitempty"`
 	Version string    `json:"version,omitempty"`
 	Error   string    `json:"error,omitempty"`
 	At      time.Time `json:"at"`
+	Twin    bool      `json:"twin,omitempty"`
 }
 
 // Board builds views. It is safe for concurrent use.
@@ -117,6 +120,7 @@ type Board struct {
 	mu     sync.Mutex
 	state  map[string]*source
 	cached map[string]cached
+	twins  map[string]bool
 }
 
 type cached struct {
@@ -165,7 +169,9 @@ func (b *Board) Outcomes() map[string]Outcome {
 	out := map[string]Outcome{}
 	for _, src := range b.list() {
 		if s, ok := b.state[key(src)]; ok {
-			out[src.ID] = s.outcome
+			o := s.outcome
+			o.Twin = b.twins[key(src)]
+			out[src.ID] = o
 		}
 	}
 	return out
@@ -283,7 +289,34 @@ type instance struct {
 	state string
 }
 
+// findTwins marks the sources added by hand whose instance the fortress
+// reaches too, by the app and instance IDs their reports carry.
+func (b *Board) findTwins(srcs []sources.Source) {
+	ident := func(src sources.Source) string {
+		for _, rep := range b.state[key(src)].reports {
+			if rep.Instance.ID != "" {
+				return rep.App.ID + "/" + rep.Instance.ID
+			}
+		}
+		return ""
+	}
+	inFortress := map[string]bool{}
+	for _, src := range srcs {
+		if id := ident(src); id != "" && src.Kind() == sources.KindFortress {
+			inFortress[id] = true
+		}
+	}
+	b.twins = map[string]bool{}
+	for _, src := range srcs {
+		if src.Kind() != sources.KindFortress && inFortress[ident(src)] {
+			b.twins[key(src)] = true
+		}
+	}
+}
+
 func (b *Board) build(srcs []sources.Source, lang string, now time.Time) View {
+	b.findTwins(srcs)
+	srcs = slices.DeleteFunc(slices.Clone(srcs), func(src sources.Source) bool { return b.twins[key(src)] })
 	rows := map[string][]instance{}
 	var order []string
 	keys := map[string]string{}
@@ -438,7 +471,7 @@ func (b *Board) Check(ctx context.Context, lang string) []Seen {
 	out := make([]Seen, 0, len(srcs))
 	for _, src := range srcs {
 		s, ok := b.state[key(src)]
-		if !ok {
+		if !ok || b.twins[key(src)] {
 			continue
 		}
 		in := instance{src: src}

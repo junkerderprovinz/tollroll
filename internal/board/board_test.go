@@ -162,6 +162,32 @@ func TestAFortressMemberNeverReachedShowsTheNameOfItsApp(t *testing.T) {
 	}
 }
 
+func TestAnAppAddedByHandAndInTheFortressCountsOnce(t *testing.T) {
+	w := newWorld(t)
+	rep := report("alpha", "Alpha", "1.0.0", status.StateOK)
+	rep.Instance.ID = "cellar"
+	other := report("alpha", "Alpha", "1.0.0", status.StateOK)
+	other.Instance.ID = "attic"
+	w.add("https://a.lan", &fakeApp{rep: rep, log: entries(2, t0)})
+	w.srcs = append(w.srcs, sources.Source{ID: "m1", Address: sources.FortressPrefix + "m1"}, sources.Source{ID: "m2", Address: sources.FortressPrefix + "m2"})
+	w.f.apps[sources.FortressPrefix+"m1"] = &fakeApp{rep: rep, log: entries(2, t0)}
+	w.f.apps[sources.FortressPrefix+"m2"] = &fakeApp{rep: other}
+	v := w.view()
+	if len(v.Apps) != 1 || v.Apps[0].Instances != 2 {
+		t.Fatalf("rows %+v", v.Apps)
+	}
+	if len(v.Log) != 2 {
+		t.Errorf("the log shows %d lines, want each line once", len(v.Log))
+	}
+	out := w.board.Outcomes()
+	if !out["id-https://a.lan"].Twin || out["m1"].Twin {
+		t.Errorf("outcomes %+v", out)
+	}
+	if seen := w.board.Check(context.Background(), "en"); len(seen) != 2 {
+		t.Errorf("notifications would watch %d sources, want the two members: %+v", len(seen), seen)
+	}
+}
+
 func TestAnAppThatStopsAnsweringKeepsItsName(t *testing.T) {
 	w := newWorld(t)
 	a := &fakeApp{rep: report("alpha", "Alpha", "1.0.0", status.StateOK)}
