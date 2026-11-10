@@ -18,6 +18,7 @@ import (
 	"github.com/junkerderprovinz/tollroll/internal/board"
 	"github.com/junkerderprovinz/tollroll/internal/channels"
 	"github.com/junkerderprovinz/tollroll/internal/fetch"
+	"github.com/junkerderprovinz/tollroll/internal/prefs"
 	"github.com/junkerderprovinz/tollroll/internal/sources"
 )
 
@@ -77,7 +78,7 @@ func newEnv(t *testing.T) *env {
 		return "en", alert.Texts{"n_test_title": "TollRoll test", "n_test_body": "It works."}
 	}
 	fort := &fakeFortress{}
-	return &env{t: t, f: f, store: store, dir: socks, runner: r, fort: fort, h: New(store, b, f, socks, ch, texts, fort)}
+	return &env{t: t, f: f, store: store, dir: socks, runner: r, fort: fort, h: New(store, b, f, socks, ch, texts, fort, prefs.Open(filepath.Join(dir, "tile.json")))}
 }
 
 func (e *env) do(method, target, body string) (int, map[string]any) {

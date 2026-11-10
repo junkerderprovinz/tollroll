@@ -21,6 +21,7 @@ import (
 	"github.com/junkerderprovinz/tollroll/internal/channels"
 	"github.com/junkerderprovinz/tollroll/internal/fetch"
 	"github.com/junkerderprovinz/tollroll/internal/fortress"
+	"github.com/junkerderprovinz/tollroll/internal/prefs"
 	"github.com/junkerderprovinz/tollroll/internal/sources"
 )
 
@@ -36,6 +37,7 @@ type handler struct {
 	channels *channels.Store
 	texts    func() (string, alert.Texts)
 	fortress Fortress
+	prefs    *prefs.Store
 }
 
 // Fortress is the tile's membership in a fortress.
@@ -48,8 +50,8 @@ type Fortress interface {
 // New returns the handler. reader serves the connection test and the search
 // for apps on the sockets in sockDir. texts gives the words of a channel's
 // test message.
-func New(store *sources.Store, b *board.Board, reader board.Reader, sockDir string, ch *channels.Store, texts func() (string, alert.Texts), fort Fortress) http.Handler {
-	h := &handler{store: store, board: b, reader: reader, sockDir: sockDir, channels: ch, texts: texts, fortress: fort}
+func New(store *sources.Store, b *board.Board, reader board.Reader, sockDir string, ch *channels.Store, texts func() (string, alert.Texts), fort Fortress, p *prefs.Store) http.Handler {
+	h := &handler{store: store, board: b, reader: reader, sockDir: sockDir, channels: ch, texts: texts, fortress: fort, prefs: p}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/board", h.view)
 	mux.HandleFunc("GET /api/icons", h.icons)
@@ -63,7 +65,29 @@ func New(store *sources.Store, b *board.Board, reader board.Reader, sockDir stri
 	mux.HandleFunc("GET /api/fortress", h.fortressMap)
 	mux.HandleFunc("POST /api/fortress/join", h.join)
 	mux.HandleFunc("POST /api/fortress/leave", h.leave)
+	mux.HandleFunc("GET /api/tile", h.tile)
+	mux.HandleFunc("PUT /api/tile", h.setTile)
 	return mux
+}
+
+func (h *handler) tile(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, h.prefs.Get())
+}
+
+func (h *handler) setTile(w http.ResponseWriter, r *http.Request) {
+	var body prefs.Prefs
+	if !readJSON(w, r, &body) {
+		return
+	}
+	err := h.prefs.Set(body)
+	switch {
+	case errors.Is(err, prefs.ErrView):
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_view"})
+	case err != nil:
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "save_failed"})
+	default:
+		writeJSON(w, http.StatusOK, h.prefs.Get())
+	}
 }
 
 func (h *handler) fortressMap(w http.ResponseWriter, _ *http.Request) {

@@ -27,7 +27,7 @@ func TestTheServiceAnswersOnItsSocket(t *testing.T) {
 	dir := t.TempDir()
 	cfg := config{Socket: sock, Sources: filepath.Join(dir, "sources.json"), SockDir: dir,
 		Notify: filepath.Join(dir, "notify.json"), LangDir: dir, Dynamix: filepath.Join(dir, "dynamix.cfg"),
-		Fortress: filepath.Join(dir, "fortress")}
+		Fortress: filepath.Join(dir, "fortress"), Tile: filepath.Join(dir, "tile.json")}
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
 	go func() { done <- run(ctx, cfg) }()
@@ -66,6 +66,14 @@ func TestTheServiceAnswersOnItsSocket(t *testing.T) {
 	_ = resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("notify: status %d", resp.StatusCode)
+	}
+	resp, err = hc.Get("http://tollroll/api/tile")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("tile: status %d", resp.StatusCode)
 	}
 	resp, err = hc.Get("http://tollroll/api/fortress")
 	if err != nil {
@@ -143,7 +151,7 @@ func TestSettingsComeFromTheEnvironment(t *testing.T) {
 	if cfg.Socket != "/tmp/x.sock" || cfg.Sources != "/boot/config/plugins/tollroll/sources.json" ||
 		cfg.Legacy != "" || cfg.SockDir != "/var/run" || cfg.Notify != "/boot/config/plugins/tollroll/notify.json" ||
 		cfg.LangDir != "/usr/local/emhttp/plugins/tollroll/lang" || cfg.Dynamix != "/boot/config/plugins/dynamix/dynamix.cfg" ||
-		cfg.Fortress != "/boot/config/plugins/tollroll/fortress" {
+		cfg.Fortress != "/boot/config/plugins/tollroll/fortress" || cfg.Tile != "/boot/config/plugins/tollroll/tile.json" {
 		t.Fatalf("config %+v", cfg)
 	}
 }

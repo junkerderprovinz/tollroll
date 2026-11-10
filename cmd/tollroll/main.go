@@ -25,6 +25,7 @@ import (
 	"github.com/junkerderprovinz/tollroll/internal/channels"
 	"github.com/junkerderprovinz/tollroll/internal/fetch"
 	"github.com/junkerderprovinz/tollroll/internal/fortress"
+	"github.com/junkerderprovinz/tollroll/internal/prefs"
 	"github.com/junkerderprovinz/tollroll/internal/sources"
 )
 
@@ -37,6 +38,7 @@ type config struct {
 	LangDir  string
 	Dynamix  string
 	Fortress string
+	Tile     string
 }
 
 // version is set at build time.
@@ -52,6 +54,7 @@ func configFromEnv() config {
 		LangDir:  cmp.Or(os.Getenv("LANG_DIR"), "/usr/local/emhttp/plugins/tollroll/lang"),
 		Dynamix:  cmp.Or(os.Getenv("DYNAMIX_CFG"), "/boot/config/plugins/dynamix/dynamix.cfg"),
 		Fortress: cmp.Or(os.Getenv("FORTRESS"), "/boot/config/plugins/tollroll/fortress"),
+		Tile:     cmp.Or(os.Getenv("TILE"), "/boot/config/plugins/tollroll/tile.json"),
 	}
 }
 
@@ -95,7 +98,7 @@ func run(ctx context.Context, cfg config) error {
 		return err
 	}
 	srv := &http.Server{
-		Handler:           api.New(store, b, reader, cfg.SockDir, ch, texts, fort),
+		Handler:           api.New(store, b, reader, cfg.SockDir, ch, texts, fort, prefs.Open(cfg.Tile)),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 	w := &alert.Watcher{Every: checkEvery, Check: b.Check, Channels: ch, Texts: texts}
