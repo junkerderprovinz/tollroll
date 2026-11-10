@@ -257,6 +257,24 @@ func TestAMemberWithoutAStatusLeavesTheTile(t *testing.T) {
 	}
 }
 
+func TestAnotherTileIsOnTheMapButNoRowOfItsOwn(t *testing.T) {
+	url := relayServer(t)
+	secret, words := newPhrase(t)
+	openApp(t, url, secret, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
+	other := openService(t, filepath.Join(t.TempDir(), "other"), url)
+	if err := other.Join(words); err != nil {
+		t.Fatal(err)
+	}
+	s := openService(t, filepath.Join(t.TempDir(), "fortress"), url)
+	if err := s.Join(words); err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, "alpha and the other tile on the map", func() bool { return hasApp(s.Map(), "alpha") && hasApp(s.Map(), AppID) })
+	if got := strings.Join(appsOf(s.Sources()), ","); got != "Alpha" {
+		t.Errorf("the tile reads %q, want only Alpha", got)
+	}
+}
+
 func TestTheMapShowsDevicesAppsAndHowEachIsReached(t *testing.T) {
 	url := relayServer(t)
 	secret, words := newPhrase(t)
