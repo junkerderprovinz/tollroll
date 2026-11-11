@@ -30,8 +30,8 @@ test('a running app reads as running', () => {
   assert.deepEqual(core.rowStatus(app(), en, 'en'), { tone: 'ok', text: 'running' });
 });
 
-test('an app on several servers says how many', () => {
-  assert.deepEqual(core.rowStatus(app({ instances: 2 }), en, 'en'), { tone: 'ok', text: 'running on 2 servers' });
+test('an app on several devices says how many', () => {
+  assert.deepEqual(core.rowStatus(app({ instances: 2 }), en, 'en'), { tone: 'ok', text: 'running on 2 devices' });
 });
 
 test('a need shows its own text, coloured by severity', () => {
@@ -179,4 +179,43 @@ test('a half filled channel stays, switched off, so nothing typed is lost', () =
 test('a switched off unraid channel stays in the list', () => {
   const after = core.notifyChannels([{ id: 'unraid', kind: 'unraid', enabled: true, on: 'always' }], { unraid: false, apprise: '', hs: '', room: '', token: '', tokenSaved: false, on: 'always' });
   assert.deepEqual(after, [{ id: 'unraid', kind: 'unraid', enabled: false, on: 'always' }]);
+});
+
+test('in a fortress the subtitle counts the devices too', () => {
+  const view = { apps: [app(), app({ key: 'b', state: 'failed' })] };
+  assert.equal(core.subtitle(view, en, 'en', 3), '2 apps on 3 devices, 1 needs you');
+  assert.equal(core.subtitle(view, de, 'de', 1), '2 Apps auf 1 Gerät, 1 braucht dich');
+});
+
+test('the apps left out leave the apps and log views', () => {
+  const apps = [app({ key: 'a' }), app({ key: 'b' }), app({ key: 'c' })];
+  assert.deepEqual(core.shown(apps, ['b', 'gone']).map((a) => a.key), ['a', 'c']);
+  assert.deepEqual(core.shown(apps, []).map((a) => a.key), ['a', 'b', 'c']);
+});
+
+test('the app list button says how many apps are chosen', () => {
+  assert.equal(core.selLabel(en, 'en', 6, 6), 'All apps');
+  assert.equal(core.selLabel(en, 'en', 3, 6), '3 of 6 apps');
+  assert.equal(core.selLabel(en, 'en', 0, 6), 'No app');
+  assert.equal(core.selLabel(de, 'de', 1, 2), '1 von 2 Apps');
+});
+
+test('the map groups the members by device, this server first', () => {
+  const map = { joined: true, device: 'tower', members: [
+    { id: 'm1', app: 'alpha', name: 'Alpha', version: '1', device: 'cellar', online: true },
+    { id: 'm2', app: 'squire', name: 'Squire', version: '2', device: 'tower', online: true },
+    { id: 'm3', app: 'alpha', name: 'Alpha', version: '1', device: 'attic', online: false, lastSeen: '2026-11-10T08:00:00Z' },
+    { id: 'm4', app: 'bravo', name: 'Bravo', version: '3', device: 'attic', online: false, lastSeen: '2026-11-10T09:00:00Z' },
+  ] };
+  const devs = core.mapDevices(map, [app({ key: 'alpha', name: 'Alpha' }), app({ key: 'bravo', name: 'Bravo' })]);
+  assert.deepEqual(devs.map((d) => [d.name, d.here, d.online]), [['tower', true, true], ['attic', false, false], ['cellar', false, true]]);
+  assert.equal(devs[1].seen, '2026-11-10T09:00:00Z');
+  assert.deepEqual(devs[0].members.map((m) => [m.name, m.quiet]), [['Squire', true]]);
+  assert.equal(devs[2].members[0].row.key, 'alpha');
+});
+
+test('a time in the past reads as how long ago', () => {
+  const now = new Date('2026-11-10T12:00:00Z');
+  assert.equal(core.ago('2026-11-10T09:00:00Z', 'en', now), '3 hours ago');
+  assert.equal(core.ago('2026-11-10T11:58:00Z', 'de', now), 'vor 2 Minuten');
 });

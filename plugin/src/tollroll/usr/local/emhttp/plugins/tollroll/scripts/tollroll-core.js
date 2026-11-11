@@ -1,5 +1,6 @@
 /* What the pages show, worked out without the DOM: row texts and tones, the
- * log filter, the chips above the log, the labels, an app's mark and the
+ * log filter, the chips above the log, the apps chosen for the apps and log
+ * views, the map of the fortress, the labels, an app's mark and the
  * notification form. tile.js and settings.js draw it, plugin/test/core.test.js
  * checks it under node. */
 (function (root, factory) {
@@ -14,11 +15,13 @@
     });
   }
 
-  function plural(L, base, n, lang) {
+  // plural picks the form for n and fills in vars, n among them unless vars
+  // names it otherwise.
+  function plural(L, base, n, lang, vars) {
     var cat = 'other';
     try { cat = new Intl.PluralRules(lang).select(n); } catch (e) { /* unknown tag, keep other */ }
     var s = L[base + '_' + cat] || L[base + '_other'] || '';
-    return fmt(s, { n: n });
+    return fmt(s, Object.assign({ n: n }, vars));
   }
 
   var STATES = {
@@ -196,11 +199,61 @@
     return app.state === 'unreachable' || !!app.need || ['failed', 'overdue', 'warning'].indexOf(app.state) >= 0;
   }
 
-  function subtitle(view, L, lang) {
+  function subtitle(view, L, lang, devices) {
     var apps = view.apps || [];
     var s = plural(L, 't_apps', apps.length, lang);
+    if (devices) s = fmt(L.t_sub_in, { apps: s, devices: plural(L, 't_dev', devices, lang) });
     var n = apps.filter(needsYou).length;
     return n ? s + ', ' + plural(L, 't_attn', n, lang) : s;
+  }
+
+  function shown(apps, hidden) {
+    return (apps || []).filter(function (a) { return (hidden || []).indexOf(a.key) < 0; });
+  }
+
+  function selLabel(L, lang, n, total) {
+    if (n === total) return L.t_all_apps;
+    if (!n) return L.t_sel_none;
+    return plural(L, 't_sel', total, lang, { n: n, total: total });
+  }
+
+  /* The map shows each device of the fortress with its members, this server
+   * first. A member whose app has no row on the board reports no status. A
+   * device counts as connected while any of its members is. */
+  function mapDevices(map, apps) {
+    var rows = {}, by = {}, order = [];
+    (apps || []).forEach(function (a) { rows[a.key] = a; });
+    function device(name) {
+      if (!by[name]) {
+        by[name] = { name: name, here: name === map.device, online: name === map.device, seen: '', members: [] };
+        order.push(name);
+      }
+      return by[name];
+    }
+    device(map.device);
+    (map.members || []).forEach(function (m) {
+      var d = device(m.device || '?');
+      if (m.online) d.online = true;
+      if (m.lastSeen && m.lastSeen > d.seen) d.seen = m.lastSeen;
+      var row = rows[m.app] || null;
+      d.members.push({ id: m.id, app: m.app, name: row ? row.name : (m.name || m.app), version: m.version || '', online: !!m.online, quiet: !row, row: row });
+    });
+    return order.map(function (n) { return by[n]; }).sort(function (a, b) {
+      return (b.here - a.here) || a.name.localeCompare(b.name);
+    });
+  }
+
+  function ago(iso, lang, now) {
+    var s = Math.round((new Date(iso) - (now || new Date())) / 1000);
+    var steps = [[60, 'second'], [3600, 'minute'], [86400, 'hour'], [Infinity, 'day']];
+    var size = [1, 60, 3600, 86400];
+    for (var i = 0; i < steps.length; i++) {
+      if (Math.abs(s) < steps[i][0]) {
+        try { return new Intl.RelativeTimeFormat(lang, { numeric: 'auto' }).format(Math.round(s / size[i]), steps[i][1]); }
+        catch (e) { return new Date(iso).toLocaleString(); }
+      }
+    }
+    return '';
   }
 
   function lang(locale) {
@@ -210,5 +263,6 @@
 
   return { fmt: fmt, plural: plural, rowStatus: rowStatus, filterLog: filterLog, chips: chips, validFilter: validFilter,
     safeLink: safeLink, hue: hue, mark: mark, timeLabel: timeLabel, subtitle: subtitle, needsYou: needsYou, lang: lang,
-    safeIcon: safeIcon, markColors: markColors, notifyForm: notifyForm, notifyChannels: notifyChannels };
+    safeIcon: safeIcon, markColors: markColors, notifyForm: notifyForm, notifyChannels: notifyChannels,
+    shown: shown, selLabel: selLabel, mapDevices: mapDevices, ago: ago };
 });

@@ -8,7 +8,7 @@ const ROOT = path.join(__dirname, '..');
 const PLUGIN = path.join(ROOT, 'src', 'tollroll', 'usr', 'local', 'emhttp', 'plugins', 'tollroll');
 const read = (...p) => fs.readFileSync(path.join(PLUGIN, ...p), 'utf8');
 const LANGS = ['ar', 'cs', 'da', 'de', 'el', 'en', 'es', 'fi', 'fr', 'he', 'hu', 'it', 'ja', 'ko', 'nl', 'no', 'pl', 'pt', 'ro', 'ru', 'sv', 'th', 'tr', 'uk', 'vi', 'zh'];
-const PLURALS = ['t_apps', 't_attn', 't_inst'];
+const PLURALS = ['t_apps', 't_attn', 't_inst', 't_dev', 't_map', 't_lines', 't_sel', 's_conn'];
 
 function walk(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
