@@ -61,7 +61,7 @@ The tile reads every app in your fortress, the group of apps you joined with one
 
 Under the rows sits one log for all apps, newest at the bottom, in the dark terminal look it keeps on every Unraid theme. Click a row, or one of the buttons above the log, and the log shows only that app's lines. Once the filter names an app, the tile header gets a button that opens that app's web page.
 
-A selector in the tile header switches between four views: **Everything**, the **Apps** alone, the **Log** alone over the whole height of the tile, and the **Map** of the fortress. In the apps and log views you tick apps on and off in a list, with **All** and **None** on top. The map shows every device of the fortress with its apps, and whether each one is connected right now. The tile remembers the view and the apps you chose on the server, so every browser finds it the way you left it.
+A selector in the tile header switches between four views: **Everything**, the **Apps** alone, the **Log** alone over the whole height of the tile, and the **Map** of the fortress. In the log view you tick apps on and off in a list in its head, with **All** and **None** on top. The apps view always shows every app. The map shows every device of the fortress with its apps, and whether each one is connected right now. The tile remembers the view and the apps you chose on the server, so every browser finds it the way you left it.
 
 The tile and the settings page speak the language you picked in Unraid, in all 26 languages Unraid offers. The texts that come from the apps arrive in that language too, as far as each app has them.
 

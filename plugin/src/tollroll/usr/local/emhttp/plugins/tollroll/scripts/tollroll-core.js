@@ -1,6 +1,6 @@
 /* What the pages show, worked out without the DOM: row texts and tones, the
- * log filter, the chips above the log, the apps chosen for the apps and log
- * views, the map of the fortress, the labels, an app's mark and the
+ * log filter, the chips above the log, the apps chosen for the log view, the
+ * map of the fortress, the labels, an app's mark and the
  * notification form. tile.js and settings.js draw it, plugin/test/core.test.js
  * checks it under node. */
 (function (root, factory) {

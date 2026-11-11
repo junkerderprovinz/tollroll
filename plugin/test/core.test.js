@@ -187,7 +187,7 @@ test('in a fortress the subtitle counts the devices too', () => {
   assert.equal(core.subtitle(view, de, 'de', 1), '2 Apps auf 1 Gerät, 1 braucht dich');
 });
 
-test('the apps left out leave the apps and log views', () => {
+test('the apps left out leave the log', () => {
   const apps = [app({ key: 'a' }), app({ key: 'b' }), app({ key: 'c' })];
   assert.deepEqual(core.shown(apps, ['b', 'gone']).map((a) => a.key), ['a', 'c']);
   assert.deepEqual(core.shown(apps, []).map((a) => a.key), ['a', 'b', 'c']);

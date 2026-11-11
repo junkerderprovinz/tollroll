@@ -34,7 +34,7 @@ var (
 )
 
 // Prefs is what the tile remembers. Hidden are the IDs of the apps left out
-// of the apps and log views, so an app that joins later shows up.
+// of the log view, so an app that joins later shows up.
 type Prefs struct {
 	View   string   `json:"view"`
 	Hidden []string `json:"hidden"`

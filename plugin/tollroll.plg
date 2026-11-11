@@ -38,7 +38,7 @@ the fortress with its phrase and reads the status report every member serves.
 - A dashboard tile with a row per app: its state, what needs you and what it is working on, and its version. An app on several servers gets one row.
 - One log for all apps, newest at the bottom. A click on an app or on its button above the log shows only that app's lines.
 - Join your fortress with its phrase in the settings under Utilities, and every app in it shows up.
-- Four views in the tile header: everything, the apps alone, the log alone and a map of the devices and apps in the fortress. Pick the apps for the apps and log views. The tile remembers both on the server.
+- Four views in the tile header: everything, the apps alone, the log alone and a map of the devices and apps in the fortress. Pick the apps the log view shows. The tile remembers both on the server.
 - Every setting is saved the moment you change it.
 - Each row shows the app's own logo and colour when its status report carries them, and its first letter otherwise.
 - Notifications through Unraid, Apprise or Matrix when an app stops answering, answers again or newly needs you. Each one is sent once.

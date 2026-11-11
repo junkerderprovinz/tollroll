@@ -1,6 +1,6 @@
 /* Fills the TollRoll tile from the same-origin proxy every 15 seconds while
  * the dashboard is visible. Everything from the apps goes in as text, never
- * as HTML. The view and the apps chosen for it are kept on the server, so
+ * as HTML. The view and the apps chosen for the log are kept on the server, so
  * every browser finds the tile the way it was left. */
 (function () {
   'use strict';
@@ -58,7 +58,6 @@
       .then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); });
   }
 
-  var rowsHead = el('div', 'trl-apphd');
   var rowsEl = el('ul', 'trl-rows');
   var chipsEl = el('div', 'trl-chips');
   chipsEl.setAttribute('role', 'group');
@@ -73,7 +72,7 @@
   logBox.appendChild(logEl);
   var mapBox = el('div', 'trl-mapbox');
   var emptyEl = el('div', 'trl-empty');
-  [rowsHead, rowsEl, chipsEl, logBox, mapBox, emptyEl].forEach(function (n) { root.appendChild(n); });
+  [rowsEl, chipsEl, logBox, mapBox, emptyEl].forEach(function (n) { root.appendChild(n); });
 
   // A logo goes in as an img only, never into the DOM as markup, so nothing
   // in it can run.
@@ -234,13 +233,13 @@
     });
   }
 
-  // The app list ticks apps on and off for the apps and log views. It stays
+  // The app list in the log head ticks apps on and off for the log. It stays
   // open while ticking and closes on Escape or a click elsewhere.
   function drawPicker(into, where) {
     var counts = {};
     view.log.forEach(function (l) { counts[l.app] = (counts[l.app] || 0) + 1; });
     var n = C.shown(view.apps, prefs.hidden).length;
-    var b = el('button', 'trl-pick' + (where === 'apps' ? ' trl-pick-light' : ''));
+    var b = el('button', 'trl-pick');
     b.type = 'button';
     b.setAttribute('aria-haspopup', 'true');
     b.setAttribute('aria-expanded', String(picking === where));
@@ -488,7 +487,6 @@
     drawHS();
 
     show(emptyEl, !joined);
-    show(rowsHead, joined && v === 'apps');
     show(rowsEl, joined && (v === 'all' || v === 'apps'));
     show(chipsEl, joined && v === 'all');
     show(logBox, joined && (v === 'all' || v === 'log'));
@@ -509,9 +507,7 @@
         var apps = byKey();
         drawLog(C.filterLog(view.log, filter), filter === 'all' ? null : apps[filter]);
       } else if (v === 'apps') {
-        rowsHead.textContent = '';
-        drawPicker(rowsHead, 'apps');
-        drawRows(chosen, true);
+        drawRows(view.apps, true);
       } else {
         var keys = chosen.map(function (a) { return a.key; });
         var lines = view.log.filter(function (l) { return keys.indexOf(l.app) >= 0; });

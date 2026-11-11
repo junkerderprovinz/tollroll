@@ -111,8 +111,7 @@
 
 .trl [hidden]{display:none !important}
 
-/* The app list above the apps view and in the head of the log view. */
-.trl-apphd{position:relative;display:flex;align-items:center;gap:10px;padding:0 0 8px}
+/* The head of the log view with its list of apps. */
 .trl-logbox{position:relative}
 .trl-loghd{position:relative;display:flex;align-items:center;gap:10px;padding:8px 12px 6px;background:#161616;color:#e0e0e0;border-radius:4px 4px 0 0;
   border-bottom:1px solid #2a2a2a;font-size:12px}
@@ -124,11 +123,8 @@
 .trl-pick:focus-visible{outline:2px solid #f4c63d;outline-offset:1px}
 .trl-pick svg{width:13px;height:13px}
 .trl-pick .trl-caret{width:10px;height:10px;opacity:.7}
-.trl-pick-light{background:var(--trl-chip) !important;color:inherit !important}
-.trl-pick-light:hover{background:var(--trl-chip-hover) !important}
 .trl-pick-list{position:absolute;top:38px;left:10px;z-index:20;min-width:240px;max-height:320px;overflow:auto;padding:4px;
   background:#262626;color:#e0e0e0;border-radius:8px;box-shadow:0 12px 30px rgba(0,0,0,.45);font-size:12.5px;line-height:1.2}
-.trl-apphd .trl-pick-list{top:34px;left:0}
 .trl-pick-top{display:flex;gap:6px;padding:4px 4px 8px;margin-bottom:4px;border-bottom:1px solid #353535}
 .trl-pick-top button{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border:0 !important;border-radius:999px;margin:0 !important;min-width:0 !important;
   background:#333 !important;color:inherit !important;font:inherit;cursor:pointer}
