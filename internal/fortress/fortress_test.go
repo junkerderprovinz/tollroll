@@ -291,13 +291,31 @@ func hasApp(m Map, id string) bool {
 	return false
 }
 
+// swapped is a phrase with two words swapped. The checksum lets a swap
+// through now and then, so it swaps until the checksum catches it.
+func swapped(t *testing.T) string {
+	t.Helper()
+	_, words := newPhrase(t)
+	w := strings.Fields(words)
+	for i := 1; i < len(w); i++ {
+		if w[0] == w[i] {
+			continue
+		}
+		w[0], w[i] = w[i], w[0]
+		bad := strings.Join(w, " ")
+		if _, err := phrase.Decode(bad); err != nil {
+			return bad
+		}
+		w[0], w[i] = w[i], w[0]
+	}
+	t.Fatal("no swap of the first word breaks the checksum")
+	return ""
+}
+
 func TestAWrongPhraseIsRefusedAndNothingKept(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "fortress")
 	s := openService(t, dir, "")
-	_, words := newPhrase(t)
-	w := strings.Fields(words)
-	w[0], w[1] = w[1], w[0]
-	for _, bad := range []string{"", "one two three", strings.Join(w, " ")} {
+	for _, bad := range []string{"", "one two three", swapped(t)} {
 		if err := s.Join(bad); !errors.Is(err, ErrPhrase) {
 			t.Errorf("Join(%q) = %v, want ErrPhrase", bad, err)
 		}
