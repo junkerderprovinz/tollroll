@@ -102,6 +102,7 @@
   "s_cancel": "Annuler",
   "s_phrase_bad": "Cette phrase ne correspond pas. Vérifiez qu'aucun mot n'est mal tapé ou inversé.",
   "s_removed_note": "Un autre membre a retiré TollRoll de la forteresse. La phrase vous permet de revenir à tout moment.",
+  "s_changed_note": "Votre forteresse a une nouvelle phrase que TollRoll n'a pas pu suivre tout seul. Saisissez les nouveaux mots ci-dessous et il reste le même membre.",
   "s_this_server": "Ce serveur",
   "s_in_fortress": "{device}, dans la forteresse",
   "s_connection": "Connexion",

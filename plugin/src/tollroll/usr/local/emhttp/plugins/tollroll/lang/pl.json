@@ -107,6 +107,7 @@
   "s_cancel": "Anuluj",
   "s_phrase_bad": "Ta fraza się nie zgadza. Sprawdź, czy któreś słowo nie ma literówki albo nie zamieniło się miejscem.",
   "s_removed_note": "Inny członek usunął TollRoll z twierdzy. Dzięki frazie możesz wrócić w każdej chwili.",
+  "s_changed_note": "Twoja twierdza ma nową frazę, za którą TollRoll nie zdołał podążyć sam. Wpisz poniżej nowe słowa, a zostanie tym samym członkiem.",
   "s_this_server": "Ten serwer",
   "s_in_fortress": "{device}, w twierdzy",
   "s_connection": "Połączenie",

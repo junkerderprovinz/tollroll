@@ -97,6 +97,7 @@
   "s_cancel": "İptal",
   "s_phrase_bad": "Bu ifade uymuyor. Yanlış yazılmış ya da yeri değişmiş bir kelime olup olmadığına bakın.",
   "s_removed_note": "Başka bir üye TollRoll'u kaleden çıkardı. İfadeyle istediğiniz zaman geri dönebilirsiniz.",
+  "s_changed_note": "Kalenizin yeni bir ifadesi var ve TollRoll buna kendi başına geçemedi. Yeni kelimeleri aşağıya girin, aynı üye olarak devam etsin.",
   "s_this_server": "Bu sunucu",
   "s_in_fortress": "{device}, kalede",
   "s_connection": "Bağlantı",

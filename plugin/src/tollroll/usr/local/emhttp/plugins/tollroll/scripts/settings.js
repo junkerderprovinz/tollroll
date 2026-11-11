@@ -51,13 +51,13 @@
       .then(function (r) { return r.json().catch(function () { return { error: 'engine' }; }); });
   }
 
-  /* The fortress card: the twelve words while the tile is in no fortress,
-   * what it sees once it is. */
+  /* The fortress card: the twelve words while the tile is in no fortress or
+   * could not follow a changed phrase, what it sees once it is. */
   var fort = null, board = null, rejoin = false, words = [];
 
   function drawFort() {
     fortEl.textContent = '';
-    if (fort && fort.joined && !rejoin) drawJoined(); else drawJoin();
+    if (fort && fort.joined && !rejoin && !fort.phraseChanged) drawJoined(); else drawJoin();
   }
 
   function heading(sub) {
@@ -67,14 +67,15 @@
   }
 
   function drawJoin(problem) {
-    heading(rejoin ? L.s_rejoin_sub : L.s_fortress_sub);
-    if (fort && fort.removed && !rejoin) {
+    var changed = !!(fort && fort.phraseChanged), again = rejoin || changed;
+    heading(again ? L.s_rejoin_sub : L.s_fortress_sub);
+    if (fort && (fort.removed || changed) && !rejoin) {
       var n = el('div', 'trs-note');
       n.appendChild(glyph('IconInfo'));
-      n.appendChild(el('span', '', L.s_removed_note));
+      n.appendChild(el('span', '', changed ? L.s_changed_note : L.s_removed_note));
       fortEl.appendChild(n);
     }
-    fortEl.appendChild(el('p', 'trs-hint', rejoin ? L.s_rejoin_hint : L.s_join_hint));
+    fortEl.appendChild(el('p', 'trs-hint', again ? L.s_rejoin_hint : L.s_join_hint));
     var grid = el('div', 'trs-words' + (problem === 'phrase_invalid' ? ' trs-bad' : ''));
     var inputs = [];
     for (var i = 0; i < 12; i++) {
@@ -241,7 +242,7 @@
 
   function loadBoard() {
     get('board&lang=' + encodeURIComponent(lang)).then(function (r) {
-      if (r.apps) { board = { apps: r.apps, log: [] }; if (fort && fort.joined && !rejoin) drawFort(); }
+      if (r.apps) { board = { apps: r.apps, log: [] }; if (fort && fort.joined && !rejoin && !fort.phraseChanged) drawFort(); }
     });
   }
 

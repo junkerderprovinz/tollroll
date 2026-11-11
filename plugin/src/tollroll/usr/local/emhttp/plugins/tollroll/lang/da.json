@@ -97,6 +97,7 @@
   "s_cancel": "Annuller",
   "s_phrase_bad": "Frasen passer ikke. Tjek, om et ord er stavet forkert eller byttet om.",
   "s_removed_note": "Et andet medlem fjernede TollRoll fra fæstningen. Med frasen kommer du ind igen når som helst.",
+  "s_changed_note": "Din fæstning har en ny frase, som TollRoll ikke kunne følge af sig selv. Skriv de nye ord nedenfor, så fortsætter den som det samme medlem.",
   "s_this_server": "Denne server",
   "s_in_fortress": "{device}, i fæstningen",
   "s_connection": "Forbindelse",

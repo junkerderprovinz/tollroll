@@ -97,6 +97,7 @@
   "s_cancel": "Abbrechen",
   "s_phrase_bad": "Diese Phrase stimmt nicht. Schau, ob ein Wort vertippt oder vertauscht ist.",
   "s_removed_note": "Ein anderes Mitglied hat TollRoll aus der Festung entfernt. Mit der Phrase kommst du jederzeit wieder hinein.",
+  "s_changed_note": "Deine Festung hat eine neue Phrase, der TollRoll nicht von selbst folgen konnte. Gib unten die neuen Wörter ein, dann bleibt TollRoll dasselbe Mitglied wie bisher.",
   "s_this_server": "Dieser Server",
   "s_in_fortress": "{device}, in der Festung",
   "s_connection": "Verbindung",

@@ -102,6 +102,7 @@
   "s_cancel": "Annulla",
   "s_phrase_bad": "Questa frase non corrisponde. Controlla se una parola è scritta male o scambiata.",
   "s_removed_note": "Un altro membro ha rimosso TollRoll dalla fortezza. Con la frase rientri quando vuoi.",
+  "s_changed_note": "La tua fortezza ha una nuova frase che TollRoll non è riuscito a seguire da solo. Inserisci qui sotto le nuove parole e resterà lo stesso membro.",
   "s_this_server": "Questo server",
   "s_in_fortress": "{device}, nella fortezza",
   "s_connection": "Connessione",

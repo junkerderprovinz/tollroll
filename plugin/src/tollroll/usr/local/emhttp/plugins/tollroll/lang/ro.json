@@ -102,6 +102,7 @@
   "s_cancel": "Anulează",
   "s_phrase_bad": "Fraza aceasta nu se potrivește. Verifică dacă un cuvânt e scris greșit sau inversat.",
   "s_removed_note": "Un alt membru a scos TollRoll din fortăreață. Cu fraza revii oricând.",
+  "s_changed_note": "Fortăreața ta are o frază nouă pe care TollRoll n-a putut s-o urmeze singur. Scrie mai jos cuvintele noi și rămâne același membru.",
   "s_this_server": "Acest server",
   "s_in_fortress": "{device}, în fortăreață",
   "s_connection": "Conexiune",

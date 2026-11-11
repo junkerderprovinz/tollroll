@@ -89,23 +89,36 @@ func (a app) Log(_ context.Context, q status.LogQuery) (status.LogPage, error) {
 	return page, nil
 }
 
-// openApp starts an instance of an app on device in the fortress of secret.
-// A nil src makes a member that serves no status, as a plugin joined on the
-// command line does.
-func openApp(t *testing.T, url string, secret []byte, id, name, device string, src status.Source) *kit.Fortress {
+// instance is the member key and store of an app, kept so that it can open
+// again after its fortress changed the phrase.
+type instance struct {
+	ident member.Identity
+	store *memStore
+}
+
+func newInstance(t *testing.T) instance {
 	t.Helper()
 	ident, err := member.NewIdentity(member.KindInstance)
 	if err != nil {
 		t.Fatal(err)
 	}
+	return instance{ident: ident, store: &memStore{}}
+}
+
+// open starts the instance as app id on device in the fortress of secret,
+// which changed from previous unless that is nil. A nil src makes a member
+// that serves no status, as a plugin joined on the command line does.
+func (in instance) open(t *testing.T, url string, secret, previous []byte, id, name, device string, src status.Source) *kit.Fortress {
+	t.Helper()
 	f, err := kit.Open(kit.Config{
 		App:      kit.App{ID: id, Name: name, Version: "1.2.3"},
 		Secret:   secret,
-		Identity: ident,
+		Previous: previous,
+		Identity: in.ident,
 		Self:     group.Self{Name: device, Deployment: "container"},
 		Relay:    group.RelayOwn,
 		RelayURL: url,
-		Store:    &memStore{},
+		Store:    in.store,
 		Status:   src,
 	})
 	if err != nil {
@@ -113,6 +126,13 @@ func openApp(t *testing.T, url string, secret []byte, id, name, device string, s
 	}
 	t.Cleanup(func() { _ = f.Close() })
 	return f
+}
+
+// openApp starts a new instance of an app on device in the fortress of
+// secret.
+func openApp(t *testing.T, url string, secret []byte, id, name, device string, src status.Source) *kit.Fortress {
+	t.Helper()
+	return newInstance(t).open(t, url, secret, nil, id, name, device, src)
 }
 
 func openService(t *testing.T, dir, url string) *Service {
@@ -497,5 +517,116 @@ func TestTheMapNamesEachMemberByItsAnnouncedApp(t *testing.T) {
 	}
 	if got, ok := entry(approved(kit.App{})); ok {
 		t.Errorf("a member that has not said its app is on the map: %+v", got)
+	}
+}
+
+// tilesOf lists the members of TollRoll that f knows.
+func tilesOf(f *kit.Fortress) []kit.Member {
+	var out []kit.Member
+	for _, m := range f.Members() {
+		if m.App.ID == AppID {
+			out = append(out, m)
+		}
+	}
+	return out
+}
+
+// changedPhrase has the tile in alpha's fortress, then alpha take a new
+// phrase while the tile holds the old keys. It returns the new phrase, alpha
+// as it runs under it and the tile's member ID.
+func changedPhrase(t *testing.T, url string, s *Service) (words string, alpha *kit.Fortress, tile string) {
+	t.Helper()
+	old, oldWords := newPhrase(t)
+	in := newInstance(t)
+	a := in.open(t, url, old, nil, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
+	if err := s.Join(oldWords); err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, "alpha", func() bool { return len(s.Sources()) == 1 })
+	if _, err := s.Reader().Report(context.Background(), s.Sources()[0], ""); err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, "alpha to know the tile", func() bool { return len(tilesOf(a)) == 1 })
+	tile = tilesOf(a)[0].ID
+
+	online := func() bool {
+		for _, mb := range s.Map().Members {
+			if mb.App == "alpha" {
+				return mb.Online
+			}
+		}
+		return false
+	}
+	if err := a.Close(); err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, "alpha to go", func() bool { return !online() })
+	secret, words := newPhrase(t)
+	alpha = in.open(t, url, secret, old, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
+	waitFor(t, "alpha back on the old phrase", online)
+	return words, alpha, tile
+}
+
+func TestAChangedPhraseIsFollowedAndTheReadTriedAgain(t *testing.T) {
+	url := relayServer(t)
+	dir := filepath.Join(t.TempDir(), "fortress")
+	s := openService(t, dir, url)
+	_, alpha, tile := changedPhrase(t, url, s)
+	src := s.Sources()[0]
+
+	rep, err := s.Reader().Report(context.Background(), src, "")
+	if err != nil || rep.App.Name != "Alpha" {
+		t.Fatalf("report after the change: %+v, %v", rep.App, err)
+	}
+	page, err := s.Reader().Log(context.Background(), src, "", "", status.MaxLogLimit)
+	if err != nil || len(page.Entries) != 2 {
+		t.Errorf("log after the change: %+v, %v", page, err)
+	}
+	if m := s.Map(); !m.Joined || m.PhraseChanged {
+		t.Errorf("after following the map is %+v", m)
+	}
+	if tiles := tilesOf(alpha); len(tiles) != 1 || tiles[0].ID != tile {
+		t.Errorf("alpha lists the tile as %+v, want one member %s", tiles, tile)
+	}
+
+	if err := s.Close(); err != nil {
+		t.Fatal(err)
+	}
+	again := openService(t, dir, url)
+	waitFor(t, "alpha after a restart", func() bool { return len(again.Sources()) == 1 })
+	if _, err := again.Reader().Report(context.Background(), again.Sources()[0], ""); err != nil {
+		t.Errorf("after a restart the tile reads alpha: %v", err)
+	}
+}
+
+func TestAPhraseTheTileCannotFollowAsksForTheNewWords(t *testing.T) {
+	follow, wait := followKit, followFor
+	t.Cleanup(func() { followKit, followFor = follow, wait })
+	followKit = func(context.Context, string, *kit.Fortress) (bool, error) { return false, nil }
+	followFor = 300 * time.Millisecond
+
+	url := relayServer(t)
+	s := openService(t, filepath.Join(t.TempDir(), "fortress"), url)
+	words, alpha, tile := changedPhrase(t, url, s)
+
+	if _, err := s.Reader().Report(context.Background(), s.Sources()[0], ""); err == nil {
+		t.Fatal("the tile read alpha on the phrase it left")
+	}
+	if m := s.Map(); !m.Joined || !m.PhraseChanged {
+		t.Fatalf("the map is %+v, want the phrase marked as changed", m)
+	}
+
+	if err := s.Join(words); err != nil {
+		t.Fatal(err)
+	}
+	if s.Map().PhraseChanged {
+		t.Error("the new phrase left the change on the map")
+	}
+	waitFor(t, "alpha under the new phrase", func() bool { return len(s.Sources()) == 1 })
+	if _, err := s.Reader().Report(context.Background(), s.Sources()[0], ""); err != nil {
+		t.Errorf("the tile reads alpha under the new phrase: %v", err)
+	}
+	if tiles := tilesOf(alpha); len(tiles) != 1 || tiles[0].ID != tile {
+		t.Errorf("alpha lists the tile as %+v, want one member %s", tiles, tile)
 	}
 }

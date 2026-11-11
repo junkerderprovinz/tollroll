@@ -14,6 +14,7 @@ import (
 	"errors"
 	"io/fs"
 	"os"
+	"path/filepath"
 	"slices"
 	"sync"
 	"time"
@@ -34,6 +35,14 @@ const AppID = "tollroll"
 // silentFor is how long a member that serves no status stays off the tile
 // before it is asked again, in case its app learned to report.
 const silentFor = 10 * time.Minute
+
+// followKit takes the membership to the keys of a changed phrase, and
+// followFor is how long a member that answered on the old phrase gets to hand
+// them over.
+var (
+	followKit = kit.Follow
+	followFor = 10 * time.Second
+)
 
 // ErrPhrase is a phrase that is not twelve words of the list.
 var ErrPhrase = errors.New("fortress: the phrase is not valid")
@@ -56,9 +65,12 @@ type Options struct {
 type Map struct {
 	Joined bool `json:"joined"`
 	// Removed says another member took the tile out, until it joins again.
-	Removed bool     `json:"removed,omitempty"`
-	Device  string   `json:"device,omitempty"`
-	Members []Member `json:"members"`
+	Removed bool `json:"removed,omitempty"`
+	// PhraseChanged says the fortress has a new phrase the tile could not
+	// follow on its own, until the new words are entered.
+	PhraseChanged bool     `json:"phraseChanged,omitempty"`
+	Device        string   `json:"device,omitempty"`
+	Members       []Member `json:"members"`
 }
 
 // Member is one instance in the fortress. App is its app's ID, the key of
@@ -117,12 +129,16 @@ func entry(mb kit.Member) (Member, bool) {
 type Service struct {
 	opt Options
 
-	mu      sync.Mutex
-	f       *kit.Fortress
-	lan     *lan.Service
-	device  string
-	removed bool
-	silent  map[string]time.Time
+	mu            sync.Mutex
+	f             *kit.Fortress
+	lan           *lan.Service
+	device        string
+	removed       bool
+	phraseChanged bool
+	silent        map[string]time.Time
+	// following lets one follow run at a time without holding mu, so the
+	// tile is not kept waiting.
+	following sync.Mutex
 	// gen counts the fortresses opened, so a removal that arrives late does
 	// not end a membership joined after it.
 	gen int
@@ -147,7 +163,8 @@ func Open(o Options) (*Service, error) {
 }
 
 // Join takes the tile into the fortress of words. A tile in another fortress
-// leaves it first, which is also how it follows a changed phrase.
+// leaves it first. It keeps its member key, so after a phrase change it
+// could not follow, the others know it as before.
 func (s *Service) Join(words string) error {
 	secret, err := phrase.Decode(words)
 	if err != nil {
@@ -157,6 +174,9 @@ func (s *Service) Join(words string) error {
 
 	next := s.opt.Dir + ".new"
 	if err := os.RemoveAll(next); err != nil {
+		return err
+	}
+	if err := keepKey(s.opt.Dir, next); err != nil {
 		return err
 	}
 	if err := kit.Join(next, secret, kit.Membership{App: AppID, Device: s.opt.Device, Relay: s.opt.Relay, LAN: s.opt.LAN}); err != nil {
@@ -178,8 +198,24 @@ func (s *Service) Join(words string) error {
 	if err != nil {
 		return err
 	}
-	s.removed = false
+	s.removed, s.phraseChanged = false, false
 	return s.start(cfg)
+}
+
+// keepKey copies the membership kept in dir to next, where kit.Join finds
+// the member key and joins under it.
+func keepKey(dir, next string) error {
+	raw, err := os.ReadFile(filepath.Join(dir, "fortress.json"))
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(next, 0o700); err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(next, "fortress.json"), raw, 0o600)
 }
 
 // Leave takes the tile out of its fortress and forgets the membership. The
@@ -187,7 +223,7 @@ func (s *Service) Join(words string) error {
 func (s *Service) Leave() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.removed = false
+	s.removed, s.phraseChanged = false, false
 	if err := s.stop(); err != nil {
 		return err
 	}
@@ -246,7 +282,7 @@ func (s *Service) removedBy(gen int) {
 		}
 		_ = s.stop()
 		_ = os.RemoveAll(s.opt.Dir)
-		s.removed = true
+		s.removed, s.phraseChanged = true, false
 	}()
 }
 
@@ -254,7 +290,7 @@ func (s *Service) removedBy(gen int) {
 func (s *Service) Map() Map {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	m := Map{Removed: s.removed, Members: []Member{}}
+	m := Map{Removed: s.removed, PhraseChanged: s.phraseChanged, Members: []Member{}}
 	if s.f == nil {
 		return m
 	}
@@ -308,6 +344,9 @@ func (r reader) Report(ctx context.Context, src board.Source, lang string) (stat
 		return status.Report{}, ErrNotJoined
 	}
 	rep, err := f.Status(ctx, src.ID, lang)
+	if moved := r.s.followed(ctx, f, src.ID, err); moved != nil {
+		rep, err = moved.Status(ctx, src.ID, lang)
+	}
 	return rep, r.s.failed(src.ID, err)
 }
 
@@ -316,8 +355,77 @@ func (r reader) Log(ctx context.Context, src board.Source, after, lang string, l
 	if f == nil {
 		return status.LogPage{}, ErrNotJoined
 	}
-	page, err := f.Log(ctx, src.ID, status.LogQuery{After: after, Lang: lang, Limit: limit})
+	q := status.LogQuery{After: after, Lang: lang, Limit: limit}
+	page, err := f.Log(ctx, src.ID, q)
+	if moved := r.s.followed(ctx, f, src.ID, err); moved != nil {
+		page, err = moved.Log(ctx, src.ID, q)
+	}
 	return page, r.s.failed(src.ID, err)
+}
+
+// followed is the fortress under the new keys when err says member id
+// answered on the phrase the fortress left and the tile could follow, else
+// nil. The follow takes its own time, since a read's deadline is too short
+// for the kit to ask the member what it is and fetch the keys.
+func (s *Service) followed(ctx context.Context, f *kit.Fortress, id string, err error) *kit.Fortress {
+	var no *kit.Refusal
+	if !errors.As(err, &no) || no.Code != "phrase_changed" {
+		return nil
+	}
+	moved := s.follow(context.WithoutCancel(ctx), f)
+	if moved != nil {
+		reach(ctx, moved, id)
+	}
+	return moved
+}
+
+// follow takes the membership in Dir to the fortress's new keys and opens it
+// again, returning the fortress under them, or nil where none came. f is the
+// fortress that ran into the old phrase.
+func (s *Service) follow(ctx context.Context, f *kit.Fortress) *kit.Fortress {
+	s.following.Lock()
+	defer s.following.Unlock()
+	if cur := s.current(); cur != f {
+		return cur
+	}
+	deadline := time.Now().Add(followFor)
+	moved, err := followKit(ctx, s.opt.Dir, f)
+	for !moved && err == nil && time.Now().Before(deadline) {
+		time.Sleep(200 * time.Millisecond)
+		moved, err = followKit(ctx, s.opt.Dir, f)
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.f != f {
+		return s.f
+	}
+	if moved {
+		_ = s.stop()
+		cfg, err := kit.Load(s.opt.Dir)
+		if err == nil && s.start(cfg) == nil {
+			s.phraseChanged = false
+			return s.f
+		}
+	}
+	s.phraseChanged = true
+	return nil
+}
+
+// reach waits until member id is online in f, which has just opened, or ctx
+// ends.
+func reach(ctx context.Context, f *kit.Fortress, id string) {
+	for {
+		for _, m := range f.Members() {
+			if m.ID == id && m.Online() {
+				return
+			}
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(50 * time.Millisecond):
+		}
+	}
 }
 
 func (s *Service) current() *kit.Fortress {

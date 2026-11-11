@@ -97,6 +97,7 @@
   "s_cancel": "Avbryt",
   "s_phrase_bad": "Denne frasen stemmer ikke. Sjekk om et ord er feilskrevet eller byttet om.",
   "s_removed_note": "Et annet medlem fjernet TollRoll fra festningen. Med frasen kommer du inn igjen når som helst.",
+  "s_changed_note": "Festningen din har en ny frase som TollRoll ikke klarte å følge på egen hånd. Skriv inn de nye ordene nedenfor, så fortsetter den som det samme medlemmet.",
   "s_this_server": "Denne serveren",
   "s_in_fortress": "{device}, i festningen",
   "s_connection": "Tilkobling",

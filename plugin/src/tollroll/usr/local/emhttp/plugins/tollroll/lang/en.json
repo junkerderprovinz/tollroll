@@ -97,6 +97,7 @@
   "s_cancel": "Cancel",
   "s_phrase_bad": "This phrase does not fit. Check for a mistyped or swapped word.",
   "s_removed_note": "Another member removed TollRoll from the fortress. The phrase brings you back in at any time.",
+  "s_changed_note": "Your fortress has a new phrase that TollRoll couldn't follow on its own. Enter the new words below and it stays the same member.",
   "s_this_server": "This server",
   "s_in_fortress": "{device}, in the fortress",
   "s_connection": "Connection",

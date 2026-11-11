@@ -97,6 +97,7 @@
   "s_cancel": "Mégse",
   "s_phrase_bad": "Ez a kifejezés nem stimmel. Nézd meg, nincs-e elgépelt vagy felcserélt szó.",
   "s_removed_note": "Egy másik tag eltávolította a TollRollt az erődből. A kifejezéssel bármikor visszajöhetsz.",
+  "s_changed_note": "Az erődödnek új kifejezése van, amelyet a TollRoll nem tudott magától követni. Írd be lent az új szavakat, és ugyanaz a tag marad.",
   "s_this_server": "Ez a szerver",
   "s_in_fortress": "{device}, az erődben",
   "s_connection": "Kapcsolat",

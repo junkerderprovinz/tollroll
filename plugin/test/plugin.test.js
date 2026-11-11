@@ -120,3 +120,10 @@ test('the tile gets no settings or notification texts', () => {
   const page = read('tollroll.Dashboard.page');
   assert.match(page, /strncmp\(\$trl_k, 's_', 2\) !== 0 && strncmp\(\$trl_k, 'n_', 2\) !== 0/);
 });
+
+test('a phrase the tile could not follow opens the field for the new words', () => {
+  const js = read('scripts', 'settings.js');
+  assert.match(js, /fort\.phraseChanged/);
+  assert.ok(js.includes('L.s_changed_note'), 'settings.js never says that the phrase changed');
+  assert.ok(JSON.parse(read('lang', 'en.json')).s_changed_note, 'en.json lacks s_changed_note');
+});
