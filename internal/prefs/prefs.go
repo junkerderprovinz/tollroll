@@ -10,11 +10,13 @@ import (
 	"sync"
 )
 
-// The views of the tile: rows and log, the rows alone, or the log alone.
+// The views of the tile: rows and log, the rows alone, the log alone, or the
+// map of the fortress.
 const (
 	ViewAll  = "all"
 	ViewApps = "apps"
 	ViewLog  = "log"
+	ViewMap  = "map"
 )
 
 // ErrView is a view the tile does not have.
@@ -78,5 +80,5 @@ func (s *Store) Set(p Prefs) error {
 }
 
 func valid(p Prefs) bool {
-	return p.View == ViewAll || p.View == ViewApps || p.View == ViewLog
+	return p.View == ViewAll || p.View == ViewApps || p.View == ViewLog || p.View == ViewMap
 }
