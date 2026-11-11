@@ -17,3 +17,13 @@ func TestTheTileKeepsItsView(t *testing.T) {
 		t.Errorf("%d %v", code, out)
 	}
 }
+
+func TestTheTileKeepsTheAppsLeftOut(t *testing.T) {
+	e := newEnv(t)
+	if code, out := e.do("PUT", "/api/tile", `{"view":"log","hidden":["alpha"]}`); code != 200 || len(out["hidden"].([]any)) != 1 {
+		t.Fatalf("%d %v", code, out)
+	}
+	if code, out := e.do("PUT", "/api/tile", `{"view":"log","hidden":[""]}`); code != 400 || out["error"] != "invalid_hidden" {
+		t.Errorf("%d %v", code, out)
+	}
+}

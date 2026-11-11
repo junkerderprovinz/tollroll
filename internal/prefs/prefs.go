@@ -7,6 +7,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 )
 
@@ -19,12 +20,24 @@ const (
 	ViewMap  = "map"
 )
 
-// ErrView is a view the tile does not have.
-var ErrView = errors.New("prefs: no such view")
+// maxHidden and maxID bound the apps left out to what a tile can show: the
+// board cuts an app's ID at 60 bytes.
+const (
+	maxHidden = 64
+	maxID     = 60
+)
 
-// Prefs is what the tile remembers.
+// Errors of Set.
+var (
+	ErrView   = errors.New("prefs: no such view")
+	ErrHidden = errors.New("prefs: not a list of app IDs")
+)
+
+// Prefs is what the tile remembers. Hidden are the IDs of the apps left out
+// of the apps and log views, so an app that joins later shows up.
 type Prefs struct {
-	View string `json:"view"`
+	View   string   `json:"view"`
+	Hidden []string `json:"hidden"`
 }
 
 // Store holds the prefs and writes every change to its file. It is safe for
@@ -39,10 +52,10 @@ type Store struct {
 // Open reads the prefs from path. A missing or damaged file gives the tile
 // with everything on it, since a lost view is no reason to stop the service.
 func Open(path string) *Store {
-	s := &Store{path: path, p: Prefs{View: ViewAll}}
+	s := &Store{path: path, p: Prefs{View: ViewAll, Hidden: []string{}}}
 	var p Prefs
-	if b, err := os.ReadFile(path); err == nil && json.Unmarshal(b, &p) == nil && valid(p) {
-		s.p = p
+	if b, err := os.ReadFile(path); err == nil && json.Unmarshal(b, &p) == nil && check(p) == nil {
+		s.p = tidy(p)
 	}
 	return s
 }
@@ -56,9 +69,10 @@ func (s *Store) Get() Prefs {
 
 // Set saves p, or refuses it with ErrView and keeps the old prefs.
 func (s *Store) Set(p Prefs) error {
-	if !valid(p) {
-		return ErrView
+	if err := check(p); err != nil {
+		return err
 	}
+	p = tidy(p)
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	b, err := json.Marshal(p)
@@ -79,6 +93,26 @@ func (s *Store) Set(p Prefs) error {
 	return nil
 }
 
-func valid(p Prefs) bool {
-	return p.View == ViewAll || p.View == ViewApps || p.View == ViewLog || p.View == ViewMap
+func check(p Prefs) error {
+	if p.View != ViewAll && p.View != ViewApps && p.View != ViewLog && p.View != ViewMap {
+		return ErrView
+	}
+	if len(p.Hidden) > maxHidden {
+		return ErrHidden
+	}
+	for _, id := range p.Hidden {
+		if id == "" || len(id) > maxID {
+			return ErrHidden
+		}
+	}
+	return nil
+}
+
+// tidy keeps each app once, in a stable order.
+func tidy(p Prefs) Prefs {
+	p.Hidden = slices.Compact(slices.Sorted(slices.Values(p.Hidden)))
+	if p.Hidden == nil {
+		p.Hidden = []string{}
+	}
+	return p
 }

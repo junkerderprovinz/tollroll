@@ -67,6 +67,8 @@ func (h *handler) setTile(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case errors.Is(err, prefs.ErrView):
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_view"})
+	case errors.Is(err, prefs.ErrHidden):
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_hidden"})
 	case err != nil:
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "save_failed"})
 	default:

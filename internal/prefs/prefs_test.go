@@ -4,6 +4,8 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -57,6 +59,33 @@ func TestADamagedFileFallsBackToEverything(t *testing.T) {
 		}
 		if got := Open(path).Get(); got.View != ViewAll {
 			t.Errorf("%s gives view %q", raw, got.View)
+		}
+	}
+}
+
+func TestTheAppsLeftOutOutliveARestart(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "tile.json")
+	if err := Open(path).Set(Prefs{View: ViewLog, Hidden: []string{"bravo", "alpha", "bravo"}}); err != nil {
+		t.Fatal(err)
+	}
+	got := Open(path).Get()
+	if strings.Join(got.Hidden, ",") != "alpha,bravo" {
+		t.Errorf("hidden %v, want alpha,bravo once each", got.Hidden)
+	}
+	if got := Open(filepath.Join(t.TempDir(), "new.json")).Get(); got.Hidden == nil || len(got.Hidden) != 0 {
+		t.Errorf("a new tile hides %#v, want an empty list", got.Hidden)
+	}
+}
+
+func TestAnOverlongListOfAppsIsRefused(t *testing.T) {
+	s := Open(filepath.Join(t.TempDir(), "tile.json"))
+	many := make([]string, maxHidden+1)
+	for i := range many {
+		many[i] = strconv.Itoa(i)
+	}
+	for _, hidden := range [][]string{many, {strings.Repeat("a", maxID+1)}, {""}} {
+		if err := s.Set(Prefs{View: ViewAll, Hidden: hidden}); !errors.Is(err, ErrHidden) {
+			t.Errorf("Set(%d apps) = %v, want ErrHidden", len(hidden), err)
 		}
 	}
 }
