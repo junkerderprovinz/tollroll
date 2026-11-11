@@ -14,8 +14,8 @@ name: Release
 # main. CI sets <!ENTITY version>; bumping it by hand early reopens the window
 # in which main advertises an asset that is not live.
 #
-# workflow_dispatch is a dry run: it builds the .txz and uploads it as an
-# artifact, with no release and no change to main.
+# workflow_dispatch is a dry run: it builds the .txz of the branch it runs on
+# and uploads it as an artifact, with no release and no change to main.
 
 on:
   push:
@@ -38,7 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: main
+          ref: ${{ startsWith(github.ref, 'refs/tags/') && 'main' || github.ref }}
           fetch-depth: 0
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
@@ -69,12 +69,21 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           ver="${{ steps.v.outputs.version }}"
-          awk -v v="### $ver" '$0==v{grab=1;next} grab&&/^### /{exit} grab{print}' \
+          awk -v v="### $ver" '$0==v{grab=1;next} grab&&/^(### |<\/CHANGES>)/{exit} grab{print}' \
             plugin/tollroll.plg > release-notes.md
           if [ ! -s release-notes.md ]; then
             echo "::error::no '### $ver' block in plugin/tollroll.plg <CHANGES>; add it before tagging"
             exit 1
           fi
+          # Unraid's changelog viewer mishandles '#', so the .plg keeps category
+          # lines bold-only; the release page gets them as real headings.
+          sed -i -E \
+            -e 's/^🐛 \*\*Fixed\*\*$/## 🐛 Fixed/' \
+            -e 's/^✨ \*\*Added\*\*$/## ✨ Added/' \
+            -e 's/^🎨 \*\*Design\*\*$/## 🎨 Design/' \
+            -e 's/^⚡ \*\*Improved\*\*$/## ⚡ Improved/' \
+            -e 's/^🌐 \*\*Translations\*\*$/## 🌐 Translations/' \
+            release-notes.md
           echo "---- release notes ----"; cat release-notes.md
 
       - name: Publish release (asset goes live first)
