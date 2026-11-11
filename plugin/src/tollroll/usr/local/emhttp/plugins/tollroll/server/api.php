@@ -6,30 +6,24 @@
  *
  *   GET  api.php?path=board&lang=<tag>       -> GET  /api/board
  *   GET  api.php?path=icons                  -> GET  /api/icons
- *   GET  api.php?path=sources                -> GET  /api/sources
- *   GET  api.php?path=discover               -> GET  /api/discover
  *   GET  api.php?path=notify                 -> GET  /api/notify
  *   GET  api.php?path=fortress               -> GET  /api/fortress
  *   GET  api.php?path=tile                   -> GET  /api/tile
- *   POST api.php  path=sources     data=JSON  -> PUT  /api/sources
- *   POST api.php  path=test        data=JSON  -> POST /api/test
  *   POST api.php  path=notify      data=JSON  -> PUT  /api/notify
  *   POST api.php  path=notify_test data=JSON  -> POST /api/notify/test
  *   POST api.php  path=join        data=JSON  -> POST /api/fortress/join
  *   POST api.php  path=leave                  -> POST /api/fortress/leave
  *   POST api.php  path=tile        data=JSON  -> PUT  /api/tile
  *
- * Read tokens, notification secrets and the phrase go in through a POST and
- * never come back out: the service answers with whether a token is saved, and with
- * channels whose tokens, passwords and header values are masked.
+ * Notification secrets and the phrase go in through a POST and never come
+ * back out: the service answers with channels whose tokens, passwords and
+ * header values are masked, and keeps no phrase at all.
  */
 
 $sock   = '/var/run/tollroll.sock';
-$reads  = ['board' => '/api/board', 'icons' => '/api/icons', 'sources' => '/api/sources', 'discover' => '/api/discover',
-           'notify' => '/api/notify', 'fortress' => '/api/fortress',
+$reads  = ['board' => '/api/board', 'icons' => '/api/icons', 'notify' => '/api/notify', 'fortress' => '/api/fortress',
            'tile' => '/api/tile'];
-$writes = ['sources' => ['PUT', '/api/sources'], 'test' => ['POST', '/api/test'],
-           'notify' => ['PUT', '/api/notify'], 'notify_test' => ['POST', '/api/notify/test'],
+$writes = ['notify' => ['PUT', '/api/notify'], 'notify_test' => ['POST', '/api/notify/test'],
            'join' => ['POST', '/api/fortress/join'], 'leave' => ['POST', '/api/fortress/leave'],
            'tile' => ['PUT', '/api/tile']];
 

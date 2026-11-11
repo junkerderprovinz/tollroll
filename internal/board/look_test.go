@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/parleyport/kit/status"
-
-	"github.com/junkerderprovinz/tollroll/internal/fetch"
 )
 
 func svgIcon(body string) string {
@@ -23,7 +21,7 @@ func withLook(rep status.Report, color, icon string) status.Report {
 func TestAnAppShowsItsOwnColourAndIcon(t *testing.T) {
 	w := newWorld(t)
 	icon := svgIcon(`<circle r="4"/>`)
-	w.add("https://a.lan", &fakeApp{rep: withLook(report("alpha", "Alpha", "1.0.0", status.StateOK), "#2e7d32", icon)})
+	w.add("a", &fakeApp{rep: withLook(report("alpha", "Alpha", "1.0.0", status.StateOK), "#2e7d32", icon)})
 	a := w.view().Apps[0]
 	if a.Color != "#2e7d32" {
 		t.Errorf("color %q", a.Color)
@@ -43,7 +41,7 @@ func TestALookOutsideTheContractIsDropped(t *testing.T) {
 		{"#2e7d32;background:url(x)", "https://a.lan/icon.svg"},
 		{"#2E7D32", "data:text/html;base64,PHNjcmlwdD4="},
 	} {
-		addr := "https://" + string(rune('a'+i)) + ".lan"
+		addr := string(rune('a' + i))
 		w.add(addr, &fakeApp{rep: withLook(report(string(rune('a'+i))+"pp", "App", "1.0.0", status.StateOK), look[0], look[1])})
 	}
 	v := w.view()
@@ -63,9 +61,9 @@ func TestALookOutsideTheContractIsDropped(t *testing.T) {
 func TestARowTakesTheLookOfTheFirstInstanceThatHasOne(t *testing.T) {
 	w := newWorld(t)
 	icon := svgIcon(`<rect width="8" height="8"/>`)
-	w.add("https://a.lan", &fakeApp{rep: report("alpha", "Alpha", "1.0.0", status.StateOK)})
-	w.add("https://b.lan", &fakeApp{rep: withLook(report("alpha", "Alpha", "1.0.0", status.StateOK), "#123456", icon)})
-	w.add("https://c.lan", &fakeApp{rep: withLook(report("alpha", "Alpha", "1.0.0", status.StateOK), "#654321", svgIcon(`<circle r="1"/>`))})
+	w.add("a", &fakeApp{rep: report("alpha", "Alpha", "1.0.0", status.StateOK)})
+	w.add("b", &fakeApp{rep: withLook(report("alpha", "Alpha", "1.0.0", status.StateOK), "#123456", icon)})
+	w.add("c", &fakeApp{rep: withLook(report("alpha", "Alpha", "1.0.0", status.StateOK), "#654321", svgIcon(`<circle r="1"/>`))})
 	a := w.view().Apps[0]
 	if a.Color != "#123456" || w.board.Icons()[a.Icon] != icon {
 		t.Errorf("row %+v", a)
@@ -74,7 +72,7 @@ func TestARowTakesTheLookOfTheFirstInstanceThatHasOne(t *testing.T) {
 
 func TestIconsOfRemovedSourcesAreForgotten(t *testing.T) {
 	w := newWorld(t)
-	w.add("https://a.lan", &fakeApp{rep: withLook(report("alpha", "Alpha", "1.0.0", status.StateOK), "", svgIcon(`<circle r="4"/>`))})
+	w.add("a", &fakeApp{rep: withLook(report("alpha", "Alpha", "1.0.0", status.StateOK), "", svgIcon(`<circle r="4"/>`))})
 	w.view()
 	w.srcs = nil
 	w.later()
@@ -93,22 +91,22 @@ func TestCheckSeesEverySourceWithAllItsNeeds(t *testing.T) {
 		{ID: "n2", Severity: status.SeverityInfo, Text: "an update waits"},
 	}
 	a := &fakeApp{rep: rep}
-	w.add("https://a.lan", a)
-	w.add("https://gone.lan", nil)
+	w.add("a", a)
+	w.add("gone", nil)
 
 	seen := w.board.Check(context.Background(), "en")
 	if len(seen) != 2 {
 		t.Fatalf("seen %+v", seen)
 	}
 	up, down := seen[0], seen[1]
-	if up.Source != "id-https://a.lan" || up.Name != "Alpha" || up.Down || len(up.Needs) != 2 || up.Link != "https://a.lan/" {
+	if up.Source != "a" || up.Name != "Alpha" || up.Down || len(up.Needs) != 2 || up.Link != "https://a.lan/" {
 		t.Errorf("up %+v", up)
 	}
-	if down.Source != "id-https://gone.lan" || !down.Down || down.Name != "gone.lan" || len(down.Needs) != 0 {
+	if down.Source != "gone" || !down.Down || down.Name != "app on gone" || len(down.Needs) != 0 {
 		t.Errorf("down %+v", down)
 	}
 
-	a.err = &fetch.Error{Code: "unreachable"}
+	a.err = errUnreachable
 	w.later()
 	again := w.board.Check(context.Background(), "en")[0]
 	if !again.Down || again.Name != "Alpha" || len(again.Needs) != 2 {

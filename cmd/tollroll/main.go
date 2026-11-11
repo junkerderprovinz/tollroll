@@ -1,7 +1,6 @@
-// Command tollroll is the service behind the TollRoll tile. It reads the
-// status contract of every configured app and of every member of the
-// fortress it joined, and answers the plugin's PHP proxy on a unix socket.
-// It opens no TCP port.
+// Command tollroll is the service behind the TollRoll tile. It joins a
+// fortress with its phrase, reads the status contract of every member and
+// answers the plugin's PHP proxy on a unix socket. It opens no TCP port.
 package main
 
 import (
@@ -23,17 +22,12 @@ import (
 	"github.com/junkerderprovinz/tollroll/internal/api"
 	"github.com/junkerderprovinz/tollroll/internal/board"
 	"github.com/junkerderprovinz/tollroll/internal/channels"
-	"github.com/junkerderprovinz/tollroll/internal/fetch"
 	"github.com/junkerderprovinz/tollroll/internal/fortress"
 	"github.com/junkerderprovinz/tollroll/internal/prefs"
-	"github.com/junkerderprovinz/tollroll/internal/sources"
 )
 
 type config struct {
 	Socket   string
-	Sources  string
-	Legacy   string
-	SockDir  string
 	Notify   string
 	LangDir  string
 	Dynamix  string
@@ -47,9 +41,6 @@ var version = "dev"
 func configFromEnv() config {
 	return config{
 		Socket:   cmp.Or(os.Getenv("SOCKET"), "/var/run/tollroll.sock"),
-		Sources:  cmp.Or(os.Getenv("SOURCES"), "/boot/config/plugins/tollroll/sources.json"),
-		Legacy:   os.Getenv("LEGACY_CFG"),
-		SockDir:  cmp.Or(os.Getenv("SOCK_DIR"), "/var/run"),
 		Notify:   cmp.Or(os.Getenv("NOTIFY"), "/boot/config/plugins/tollroll/notify.json"),
 		LangDir:  cmp.Or(os.Getenv("LANG_DIR"), "/usr/local/emhttp/plugins/tollroll/lang"),
 		Dynamix:  cmp.Or(os.Getenv("DYNAMIX_CFG"), "/boot/config/plugins/dynamix/dynamix.cfg"),
@@ -72,10 +63,6 @@ func main() {
 }
 
 func run(ctx context.Context, cfg config) error {
-	store, err := sources.Open(cfg.Sources, cfg.Legacy)
-	if err != nil {
-		return err
-	}
 	ch, err := channels.Open(cfg.Notify, notify.Options{})
 	if err != nil {
 		return err
@@ -86,9 +73,7 @@ func run(ctx context.Context, cfg config) error {
 		return err
 	}
 	defer func() { _ = fort.Close() }()
-	reader := fort.Reader(fetch.New(store.Learn))
-	list := func() []sources.Source { return append(store.List(), fort.Sources()...) }
-	b := board.New(list, reader)
+	b := board.New(fort.Sources, fort.Reader())
 	texts := func() (string, alert.Texts) {
 		lang := alert.Language(cfg.Dynamix)
 		return lang, alert.LoadTexts(cfg.LangDir, lang)
@@ -98,7 +83,7 @@ func run(ctx context.Context, cfg config) error {
 		return err
 	}
 	srv := &http.Server{
-		Handler:           api.New(store, b, reader, cfg.SockDir, ch, texts, fort, prefs.Open(cfg.Tile)),
+		Handler:           api.New(b, ch, texts, fort, prefs.Open(cfg.Tile)),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 	w := &alert.Watcher{Every: checkEvery, Check: b.Check, Channels: ch, Texts: texts}
@@ -109,7 +94,7 @@ func run(ctx context.Context, cfg config) error {
 		defer cancel()
 		_ = srv.Shutdown(shut)
 	}()
-	slog.Info("tollroll listening", "socket", cfg.Socket, "sources", len(store.List()))
+	slog.Info("tollroll listening", "socket", cfg.Socket, "joined", fort.Map().Joined)
 	if err := srv.Serve(ln); !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}

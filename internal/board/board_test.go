@@ -2,6 +2,7 @@ package board
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -11,12 +12,11 @@ import (
 	"unicode/utf8"
 
 	"github.com/junkerderprovinz/parleyport/kit/status"
-
-	"github.com/junkerderprovinz/tollroll/internal/fetch"
-	"github.com/junkerderprovinz/tollroll/internal/sources"
 )
 
 var t0 = time.Date(2026, 11, 10, 8, 0, 0, 0, time.UTC)
+
+var errUnreachable = errors.New("unreachable")
 
 type fakeApp struct {
 	rep  status.Report
@@ -31,13 +31,13 @@ type fake struct {
 	langs []string
 }
 
-func (f *fake) Report(_ context.Context, src sources.Source, lang string) (status.Report, error) {
+func (f *fake) Report(_ context.Context, src Source, lang string) (status.Report, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.langs = append(f.langs, lang)
-	a := f.apps[src.Address]
+	a := f.apps[src.ID]
 	if a == nil {
-		return status.Report{}, &fetch.Error{Code: "unreachable"}
+		return status.Report{}, errUnreachable
 	}
 	if a.err != nil {
 		return status.Report{}, a.err
@@ -49,10 +49,10 @@ func (f *fake) Report(_ context.Context, src sources.Source, lang string) (statu
 	return rep, nil
 }
 
-func (f *fake) Log(_ context.Context, src sources.Source, after, lang string, limit int) (status.LogPage, error) {
+func (f *fake) Log(_ context.Context, src Source, after, lang string, limit int) (status.LogPage, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	a := f.apps[src.Address]
+	a := f.apps[src.ID]
 	a.logs = append(a.logs, after)
 	from := 0
 	if after != "" {
@@ -88,22 +88,23 @@ func entries(n int, start time.Time) []status.LogEntry {
 type world struct {
 	t     *testing.T
 	f     *fake
-	srcs  []sources.Source
+	srcs  []Source
 	now   time.Time
 	board *Board
 }
 
 func newWorld(t *testing.T) *world {
 	w := &world{t: t, f: &fake{apps: map[string]*fakeApp{}}, now: t0}
-	w.board = New(func() []sources.Source { return w.srcs }, w.f)
+	w.board = New(func() []Source { return w.srcs }, w.f)
 	w.board.now = func() time.Time { return w.now }
 	return w
 }
 
-func (w *world) add(addr string, a *fakeApp) {
-	w.srcs = append(w.srcs, sources.Source{ID: "id-" + addr, Address: addr})
+// add puts member id on the list, called "app on id" until its app answers.
+func (w *world) add(id string, a *fakeApp) {
+	w.srcs = append(w.srcs, Source{ID: id, Name: "app on " + id})
 	if a != nil {
-		w.f.apps[addr] = a
+		w.f.apps[id] = a
 	}
 }
 
@@ -116,7 +117,7 @@ func (w *world) later() { w.now = w.now.Add(time.Minute) }
 
 func TestAnAppGetsARow(t *testing.T) {
 	w := newWorld(t)
-	w.add("https://a.lan", &fakeApp{rep: report("alpha", "Alpha", "1.0.0", status.StateOK)})
+	w.add("a", &fakeApp{rep: report("alpha", "Alpha", "1.0.0", status.StateOK)})
 	v := w.view()
 	if len(v.Apps) != 1 {
 		t.Fatalf("%d rows", len(v.Apps))
@@ -129,30 +130,17 @@ func TestAnAppGetsARow(t *testing.T) {
 
 func TestTwoInstancesOfAnAppShareARowWithTheWorseState(t *testing.T) {
 	w := newWorld(t)
-	w.add("https://a.lan", &fakeApp{rep: report("alpha", "Alpha", "1.0.0", status.StateOK)})
-	w.add("https://b.lan", &fakeApp{rep: report("alpha", "Alpha", "1.0.0", status.StateOverdue)})
+	w.add("a", &fakeApp{rep: report("alpha", "Alpha", "1.0.0", status.StateOK)})
+	w.add("b", &fakeApp{rep: report("alpha", "Alpha", "1.0.0", status.StateOverdue)})
 	v := w.view()
 	if len(v.Apps) != 1 || v.Apps[0].Instances != 2 || v.Apps[0].State != "overdue" {
 		t.Fatalf("rows %+v", v.Apps)
 	}
 }
 
-func TestAnAppNeverReachedShowsItsAddress(t *testing.T) {
+func TestAMemberNeverReachedShowsTheNameOfItsApp(t *testing.T) {
 	w := newWorld(t)
-	w.add("https://tower.lan:3443", nil)
-	w.add("/var/run/example.sock", nil)
-	v := w.view()
-	if len(v.Apps) != 2 {
-		t.Fatalf("rows %+v", v.Apps)
-	}
-	if v.Apps[0].Name != "example.sock" || v.Apps[1].Name != "tower.lan" || v.Apps[1].State != "unreachable" {
-		t.Fatalf("rows %+v", v.Apps)
-	}
-}
-
-func TestAFortressMemberNeverReachedShowsTheNameOfItsApp(t *testing.T) {
-	w := newWorld(t)
-	w.srcs = append(w.srcs, sources.Source{ID: "m1", Address: sources.FortressPrefix + "m1", Name: "Alpha"})
+	w.srcs = append(w.srcs, Source{ID: "m1", Name: "Alpha"})
 	v := w.view()
 	if len(v.Apps) != 1 || v.Apps[0].Name != "Alpha" || v.Apps[0].State != "unreachable" || v.Apps[0].UI != "" {
 		t.Fatalf("rows %+v", v.Apps)
@@ -162,38 +150,12 @@ func TestAFortressMemberNeverReachedShowsTheNameOfItsApp(t *testing.T) {
 	}
 }
 
-func TestAnAppAddedByHandAndInTheFortressCountsOnce(t *testing.T) {
-	w := newWorld(t)
-	rep := report("alpha", "Alpha", "1.0.0", status.StateOK)
-	rep.Instance.ID = "cellar"
-	other := report("alpha", "Alpha", "1.0.0", status.StateOK)
-	other.Instance.ID = "attic"
-	w.add("https://a.lan", &fakeApp{rep: rep, log: entries(2, t0)})
-	w.srcs = append(w.srcs, sources.Source{ID: "m1", Address: sources.FortressPrefix + "m1"}, sources.Source{ID: "m2", Address: sources.FortressPrefix + "m2"})
-	w.f.apps[sources.FortressPrefix+"m1"] = &fakeApp{rep: rep, log: entries(2, t0)}
-	w.f.apps[sources.FortressPrefix+"m2"] = &fakeApp{rep: other}
-	v := w.view()
-	if len(v.Apps) != 1 || v.Apps[0].Instances != 2 {
-		t.Fatalf("rows %+v", v.Apps)
-	}
-	if len(v.Log) != 2 {
-		t.Errorf("the log shows %d lines, want each line once", len(v.Log))
-	}
-	out := w.board.Outcomes()
-	if !out["id-https://a.lan"].Twin || out["m1"].Twin {
-		t.Errorf("outcomes %+v", out)
-	}
-	if seen := w.board.Check(context.Background(), "en"); len(seen) != 2 {
-		t.Errorf("notifications would watch %d sources, want the two members: %+v", len(seen), seen)
-	}
-}
-
 func TestAnAppThatStopsAnsweringKeepsItsName(t *testing.T) {
 	w := newWorld(t)
 	a := &fakeApp{rep: report("alpha", "Alpha", "1.0.0", status.StateOK)}
-	w.add("https://a.lan", a)
+	w.add("a", a)
 	w.view()
-	a.err = &fetch.Error{Code: "unreachable"}
+	a.err = errUnreachable
 	w.later()
 	v := w.view()
 	if v.Apps[0].Name != "Alpha" || v.Apps[0].Version != "1.0.0" || v.Apps[0].State != "unreachable" {
@@ -203,11 +165,11 @@ func TestAnAppThatStopsAnsweringKeepsItsName(t *testing.T) {
 
 func TestAnUnreachableInstanceOutranksAWarning(t *testing.T) {
 	w := newWorld(t)
-	w.add("https://a.lan", &fakeApp{rep: report("alpha", "Alpha", "1.0.0", status.StateWarning)})
+	w.add("a", &fakeApp{rep: report("alpha", "Alpha", "1.0.0", status.StateWarning)})
 	b := &fakeApp{rep: report("alpha", "Alpha", "1.0.0", status.StateOK)}
-	w.add("https://b.lan", b)
+	w.add("b", b)
 	w.view()
-	b.err = &fetch.Error{Code: "unreachable"}
+	b.err = errUnreachable
 	w.later()
 	if got := w.view().Apps[0].State; got != "unreachable" {
 		t.Fatalf("state %q", got)
@@ -222,7 +184,7 @@ func TestTheMostUrgentNeedIsShown(t *testing.T) {
 		{ID: "b", Severity: status.SeverityError, Text: "the backup failed"},
 	}
 	rep.Work = []status.Task{{ID: "w", Title: "Container: web"}}
-	w.add("https://a.lan", &fakeApp{rep: rep})
+	w.add("a", &fakeApp{rep: rep})
 	a := w.view().Apps[0]
 	if a.Need == nil || a.Need.Text != "the backup failed" || a.Need.Severity != "error" || a.Work != nil {
 		t.Fatalf("row %+v", a)
@@ -234,7 +196,7 @@ func TestRunningWorkIsShownWhenNothingNeedsYou(t *testing.T) {
 	rep := report("alpha", "Alpha", "1.0.0", status.StateOK)
 	p := 0.42
 	rep.Work = []status.Task{{ID: "w", Title: "Container: web", Progress: &p}}
-	w.add("https://a.lan", &fakeApp{rep: rep})
+	w.add("a", &fakeApp{rep: rep})
 	a := w.view().Apps[0]
 	if a.Work == nil || a.Work.Title != "Container: web" || a.Work.Progress == nil || *a.Work.Progress != 0.42 {
 		t.Fatalf("row %+v", a)
@@ -243,9 +205,9 @@ func TestRunningWorkIsShownWhenNothingNeedsYou(t *testing.T) {
 
 func TestRowsAreSortedByName(t *testing.T) {
 	w := newWorld(t)
-	w.add("https://z.lan", &fakeApp{rep: report("zulu", "zulu", "1", status.StateOK)})
-	w.add("https://a.lan", &fakeApp{rep: report("bravo", "Bravo", "1", status.StateOK)})
-	w.add("https://m.lan", &fakeApp{rep: report("alpha", "alpha", "1", status.StateOK)})
+	w.add("z", &fakeApp{rep: report("zulu", "zulu", "1", status.StateOK)})
+	w.add("a", &fakeApp{rep: report("bravo", "Bravo", "1", status.StateOK)})
+	w.add("m", &fakeApp{rep: report("alpha", "alpha", "1", status.StateOK)})
 	v := w.view()
 	got := []string{v.Apps[0].Key, v.Apps[1].Key, v.Apps[2].Key}
 	if fmt.Sprint(got) != "[alpha bravo zulu]" {
@@ -255,8 +217,8 @@ func TestRowsAreSortedByName(t *testing.T) {
 
 func TestTheLogMixesAllAppsByTime(t *testing.T) {
 	w := newWorld(t)
-	w.add("https://a.lan", &fakeApp{rep: report("alpha", "Alpha", "1", status.StateOK), log: entries(2, t0)})
-	w.add("https://b.lan", &fakeApp{rep: report("bravo", "Bravo", "1", status.StateOK), log: entries(2, t0.Add(30*time.Second))})
+	w.add("a", &fakeApp{rep: report("alpha", "Alpha", "1", status.StateOK), log: entries(2, t0)})
+	w.add("b", &fakeApp{rep: report("bravo", "Bravo", "1", status.StateOK), log: entries(2, t0.Add(30*time.Second))})
 	v := w.view()
 	var got []string
 	for _, l := range v.Log {
@@ -270,7 +232,7 @@ func TestTheLogMixesAllAppsByTime(t *testing.T) {
 func TestTheLogIsReadOnFromItsCursor(t *testing.T) {
 	w := newWorld(t)
 	a := &fakeApp{rep: report("alpha", "Alpha", "1", status.StateOK), log: entries(3, t0)}
-	w.add("https://a.lan", a)
+	w.add("a", a)
 	w.view()
 	a.log = entries(4, t0)
 	w.later()
@@ -286,7 +248,7 @@ func TestTheLogIsReadOnFromItsCursor(t *testing.T) {
 func TestALongLogIsPagedAndTrimmed(t *testing.T) {
 	w := newWorld(t)
 	a := &fakeApp{rep: report("alpha", "Alpha", "1", status.StateOK), log: entries(450, t0)}
-	w.add("https://a.lan", a)
+	w.add("a", a)
 	v := w.view()
 	if len(v.Log) != perSource {
 		t.Fatalf("%d lines, want %d", len(v.Log), perSource)
@@ -298,7 +260,7 @@ func TestALongLogIsPagedAndTrimmed(t *testing.T) {
 
 func TestAViewIsReusedForAWhile(t *testing.T) {
 	w := newWorld(t)
-	w.add("https://a.lan", &fakeApp{rep: report("alpha", "Alpha", "1", status.StateOK)})
+	w.add("a", &fakeApp{rep: report("alpha", "Alpha", "1", status.StateOK)})
 	w.view()
 	w.now = w.now.Add(ttl / 2)
 	w.view()
@@ -309,7 +271,7 @@ func TestAViewIsReusedForAWhile(t *testing.T) {
 
 func TestEachLanguageHasItsOwnTexts(t *testing.T) {
 	w := newWorld(t)
-	w.add("https://a.lan", &fakeApp{rep: report("alpha", "Alpha", "1", status.StateOK), log: entries(1, t0)})
+	w.add("a", &fakeApp{rep: report("alpha", "Alpha", "1", status.StateOK), log: entries(1, t0)})
 	en := w.board.View(context.Background(), "en")
 	de := w.board.View(context.Background(), "de")
 	if en.Apps[0].Name != "Alpha" || de.Apps[0].Name != "Alpha (de)" || de.Log[0].Text != "line 1 (de)" || en.Log[0].Text != "line 1" {
@@ -323,18 +285,18 @@ func TestOnlyWebLinksReachTheTile(t *testing.T) {
 	bad.App.UI = "javascript:alert(1)"
 	good := report("bravo", "Bravo", "1", status.StateOK)
 	good.App.UI = "https://bravo.lan/"
-	w.add("https://alpha.lan:3443", &fakeApp{rep: bad})
-	w.add("/var/run/bravo.sock", &fakeApp{rep: good})
-	w.add("/var/run/charlie.sock", &fakeApp{rep: report("charlie", "Charlie", "1", status.StateOK)})
+	w.add("alpha", &fakeApp{rep: bad})
+	w.add("bravo", &fakeApp{rep: good})
+	w.add("charlie", &fakeApp{rep: report("charlie", "Charlie", "1", status.StateOK)})
 	v := w.view()
-	if v.Apps[0].UI != "https://alpha.lan:3443" || v.Apps[1].UI != "https://bravo.lan/" || v.Apps[2].UI != "" {
+	if v.Apps[0].UI != "" || v.Apps[1].UI != "https://bravo.lan/" || v.Apps[2].UI != "" {
 		t.Fatalf("links %q %q %q", v.Apps[0].UI, v.Apps[1].UI, v.Apps[2].UI)
 	}
 }
 
 func TestARemovedSourceLeavesTheBoard(t *testing.T) {
 	w := newWorld(t)
-	w.add("https://a.lan", &fakeApp{rep: report("alpha", "Alpha", "1", status.StateOK), log: entries(1, t0)})
+	w.add("a", &fakeApp{rep: report("alpha", "Alpha", "1", status.StateOK), log: entries(1, t0)})
 	w.view()
 	w.srcs = nil
 	w.later()
@@ -344,25 +306,11 @@ func TestARemovedSourceLeavesTheBoard(t *testing.T) {
 	}
 }
 
-func TestTheLastOutcomeOfEachSourceIsKept(t *testing.T) {
-	w := newWorld(t)
-	w.add("https://a.lan", &fakeApp{rep: report("alpha", "Alpha", "1.0.0", status.StateOK)})
-	w.add("https://b.lan", &fakeApp{err: &fetch.Error{Code: "forbidden"}})
-	w.view()
-	got := w.board.Outcomes()
-	if a := got["id-https://a.lan"]; a.Error != "" || a.Name != "Alpha" || a.Version != "1.0.0" {
-		t.Fatalf("alpha %+v", a)
-	}
-	if b := got["id-https://b.lan"]; b.Error != "forbidden" {
-		t.Fatalf("bravo %+v", b)
-	}
-}
-
 func TestAChangedListIsReadAtOnce(t *testing.T) {
 	w := newWorld(t)
-	w.add("https://a.lan", &fakeApp{rep: report("alpha", "Alpha", "1", status.StateOK)})
+	w.add("a", &fakeApp{rep: report("alpha", "Alpha", "1", status.StateOK)})
 	w.view()
-	w.add("https://b.lan", &fakeApp{rep: report("bravo", "Bravo", "1", status.StateOK)})
+	w.add("b", &fakeApp{rep: report("bravo", "Bravo", "1", status.StateOK)})
 	if n := len(w.view().Apps); n != 2 {
 		t.Fatalf("%d rows right after a source was added", n)
 	}
@@ -370,14 +318,14 @@ func TestAChangedListIsReadAtOnce(t *testing.T) {
 
 type slow struct{ fake }
 
-func (s *slow) Log(ctx context.Context, _ sources.Source, _, _ string, _ int) (status.LogPage, error) {
+func (s *slow) Log(ctx context.Context, _ Source, _, _ string, _ int) (status.LogPage, error) {
 	<-ctx.Done()
 	return status.LogPage{}, ctx.Err()
 }
 
 func TestASlowAppCannotHoldTheBoard(t *testing.T) {
-	s := &slow{fake: fake{apps: map[string]*fakeApp{"https://a.lan": {rep: report("alpha", "Alpha", "1", status.StateOK)}}}}
-	b := New(func() []sources.Source { return []sources.Source{{ID: "a", Address: "https://a.lan"}} }, s)
+	s := &slow{fake: fake{apps: map[string]*fakeApp{"a": {rep: report("alpha", "Alpha", "1", status.StateOK)}}}}
+	b := New(func() []Source { return []Source{{ID: "a", Name: "Alpha"}} }, s)
 	b.budget = 50 * time.Millisecond
 	start := time.Now()
 	v := b.View(context.Background(), "en")
@@ -395,7 +343,7 @@ func TestOverlongTextsAreCut(t *testing.T) {
 	rep.NeedsYou = []status.Need{{ID: "n", Severity: status.SeverityWarn, Text: strings.Repeat("ä", 5000)}}
 	log := entries(1, t0)
 	log[0].Text = strings.Repeat("x", 100000)
-	w.add("https://a.lan", &fakeApp{rep: rep, log: log})
+	w.add("a", &fakeApp{rep: rep, log: log})
 	v := w.view()
 	a := v.Apps[0]
 	if n := utf8.RuneCountInString(a.Name); n > maxName {
@@ -421,7 +369,7 @@ func TestHugeIDsAndUnknownLevelsAreTamed(t *testing.T) {
 	log := entries(1, t0)
 	log[0].ID = strings.Repeat("7", 5000)
 	log[0].Level = "<img>"
-	w.add("https://a.lan", &fakeApp{rep: rep, log: log})
+	w.add("a", &fakeApp{rep: rep, log: log})
 	v := w.view()
 	if n := len(v.Apps[0].Key); n > maxName {
 		t.Errorf("key of %d bytes", n)
@@ -434,23 +382,9 @@ func TestHugeIDsAndUnknownLevelsAreTamed(t *testing.T) {
 	}
 }
 
-func TestAnAppLinksOnlyToItsOwnHost(t *testing.T) {
-	w := newWorld(t)
-	rep := report("alpha", "Alpha", "1", status.StateOK)
-	rep.App.UI = "https://phish.example/login"
-	w.add("https://alpha.lan:3443", &fakeApp{rep: rep})
-	own := report("bravo", "Bravo", "1", status.StateOK)
-	own.App.UI = "https://bravo.lan/ui"
-	w.add("https://bravo.lan:8443", &fakeApp{rep: own})
-	v := w.view()
-	if v.Apps[0].UI != "https://alpha.lan:3443" || v.Apps[1].UI != "https://bravo.lan/ui" {
-		t.Fatalf("links %q %q", v.Apps[0].UI, v.Apps[1].UI)
-	}
-}
-
 func TestOnlyAFewLanguagesAreKept(t *testing.T) {
 	w := newWorld(t)
-	w.add("https://a.lan", &fakeApp{rep: report("alpha", "Alpha", "1", status.StateOK)})
+	w.add("a", &fakeApp{rep: report("alpha", "Alpha", "1", status.StateOK)})
 	for _, l := range []string{"aa", "bb", "cc", "dd", "ee", "ff", "gg"} {
 		w.board.View(context.Background(), l)
 	}
@@ -469,7 +403,7 @@ func TestALinkWithQuotesOrMarkupIsDropped(t *testing.T) {
 	for i, ui := range []string{`http://a.lan/x"><img src=x onerror=alert(1)>`, `http://a.lan/x'y`, `http://a.lan/a b`, `http://a.lan/a\b`} {
 		rep := report(fmt.Sprint("app", i), "App", "1", status.StateOK)
 		rep.App.UI = ui
-		w.add(fmt.Sprint("/var/run/app", i, ".sock"), &fakeApp{rep: rep})
+		w.add(fmt.Sprint("app", i), &fakeApp{rep: rep})
 	}
 	for _, a := range w.view().Apps {
 		if a.UI != "" {

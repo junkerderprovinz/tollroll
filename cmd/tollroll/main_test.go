@@ -25,7 +25,7 @@ func socketPath(t *testing.T) string {
 func TestTheServiceAnswersOnItsSocket(t *testing.T) {
 	sock := socketPath(t)
 	dir := t.TempDir()
-	cfg := config{Socket: sock, Sources: filepath.Join(dir, "sources.json"), SockDir: dir,
+	cfg := config{Socket: sock,
 		Notify: filepath.Join(dir, "notify.json"), LangDir: dir, Dynamix: filepath.Join(dir, "dynamix.cfg"),
 		Fortress: filepath.Join(dir, "fortress"), Tile: filepath.Join(dir, "tile.json")}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -94,7 +94,7 @@ func TestADamagedMembershipStopsTheStart(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(fort, "fortress.json"), []byte("{"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	cfg := config{Socket: socketPath(t), Sources: filepath.Join(dir, "sources.json"), SockDir: dir,
+	cfg := config{Socket: socketPath(t),
 		Notify: filepath.Join(dir, "notify.json"), Fortress: fort}
 	if err := run(context.Background(), cfg); err == nil {
 		t.Fatal("the service started on a membership it cannot read")
@@ -107,7 +107,7 @@ func TestABrokenChannelFileStopsTheStart(t *testing.T) {
 	if err := os.WriteFile(notify, []byte("["), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	cfg := config{Socket: socketPath(t), Sources: filepath.Join(dir, "sources.json"), SockDir: dir, Notify: notify}
+	cfg := config{Socket: socketPath(t), Notify: notify, Fortress: filepath.Join(dir, "fortress")}
 	if err := run(context.Background(), cfg); err == nil {
 		t.Fatal("the service started on a channel file it cannot read")
 	}
@@ -146,10 +146,9 @@ func TestTheSocketIsOpenToRootAndItsGroupOnly(t *testing.T) {
 
 func TestSettingsComeFromTheEnvironment(t *testing.T) {
 	t.Setenv("SOCKET", "/tmp/x.sock")
-	t.Setenv("SOURCES", "")
+	t.Setenv("NOTIFY", "")
 	cfg := configFromEnv()
-	if cfg.Socket != "/tmp/x.sock" || cfg.Sources != "/boot/config/plugins/tollroll/sources.json" ||
-		cfg.Legacy != "" || cfg.SockDir != "/var/run" || cfg.Notify != "/boot/config/plugins/tollroll/notify.json" ||
+	if cfg.Socket != "/tmp/x.sock" || cfg.Notify != "/boot/config/plugins/tollroll/notify.json" ||
 		cfg.LangDir != "/usr/local/emhttp/plugins/tollroll/lang" || cfg.Dynamix != "/boot/config/plugins/dynamix/dynamix.cfg" ||
 		cfg.Fortress != "/boot/config/plugins/tollroll/fortress" || cfg.Tile != "/boot/config/plugins/tollroll/tile.json" {
 		t.Fatalf("config %+v", cfg)

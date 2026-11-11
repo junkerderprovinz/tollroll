@@ -20,8 +20,7 @@ import (
 	"github.com/junkerderprovinz/parleyport/kit/relay"
 	"github.com/junkerderprovinz/parleyport/kit/status"
 
-	"github.com/junkerderprovinz/tollroll/internal/fetch"
-	"github.com/junkerderprovinz/tollroll/internal/sources"
+	"github.com/junkerderprovinz/tollroll/internal/board"
 )
 
 func relayServer(t *testing.T) string {
@@ -138,7 +137,7 @@ func waitFor(t *testing.T, what string, cond func() bool) {
 	t.Fatalf("timed out waiting for %s", what)
 }
 
-func appsOf(srcs []sources.Source) []string {
+func appsOf(srcs []board.Source) []string {
 	var out []string
 	for _, src := range srcs {
 		out = append(out, src.Name)
@@ -165,11 +164,8 @@ func TestThePhraseShowsEveryAppOfTheFortress(t *testing.T) {
 	if got := strings.Join(appsOf(srcs), ","); got != "Alpha,Bravo" {
 		t.Errorf("sources are named %q, want Alpha,Bravo", got)
 	}
-	r := s.Reader(nil)
+	r := s.Reader()
 	for _, src := range srcs {
-		if src.Kind() != sources.KindFortress || src.Token != "" {
-			t.Errorf("source %+v is no fortress member", src)
-		}
 		rep, err := r.Report(context.Background(), src, "de")
 		if err != nil {
 			t.Fatalf("report of %s: %v", src.Name, err)
@@ -190,7 +186,7 @@ func TestTheLogIsReadOnFromTheCursor(t *testing.T) {
 	}
 	waitFor(t, "alpha", func() bool { return len(s.Sources()) == 1 })
 	src := s.Sources()[0]
-	r := s.Reader(nil)
+	r := s.Reader()
 
 	page, err := r.Log(context.Background(), src, "", "", status.MaxLogLimit)
 	if err != nil || len(page.Entries) != 2 || page.Next != "2" {
@@ -200,34 +196,6 @@ func TestTheLogIsReadOnFromTheCursor(t *testing.T) {
 	if err != nil || len(page.Entries) != 1 || page.Entries[0].Text != "Alpha is low on space" {
 		t.Errorf("page after 1 is %+v, %v", page, err)
 	}
-}
-
-func TestOtherSourcesAreReadAsBefore(t *testing.T) {
-	s := openService(t, filepath.Join(t.TempDir(), "fortress"), "")
-	next := &recorder{}
-	r := s.Reader(next)
-	src := sources.Source{ID: "a", Address: "https://cellar.lan:8443", Token: "t"}
-	if _, err := r.Report(context.Background(), src, "en"); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := r.Log(context.Background(), src, "7", "en", 10); err != nil {
-		t.Fatal(err)
-	}
-	if strings.Join(next.calls, ",") != "report https://cellar.lan:8443,log https://cellar.lan:8443" {
-		t.Errorf("the hand-made source went %v", next.calls)
-	}
-}
-
-type recorder struct{ calls []string }
-
-func (r *recorder) Report(_ context.Context, src sources.Source, _ string) (status.Report, error) {
-	r.calls = append(r.calls, "report "+src.Address)
-	return status.Report{}, nil
-}
-
-func (r *recorder) Log(_ context.Context, src sources.Source, _, _ string, _ int) (status.LogPage, error) {
-	r.calls = append(r.calls, "log "+src.Address)
-	return status.LogPage{}, nil
 }
 
 func TestAMemberWithoutAStatusLeavesTheTile(t *testing.T) {
@@ -241,12 +209,10 @@ func TestAMemberWithoutAStatusLeavesTheTile(t *testing.T) {
 	}
 	waitFor(t, "both apps", func() bool { return len(s.Sources()) == 2 })
 
-	r := s.Reader(nil)
+	r := s.Reader()
 	for _, src := range s.Sources() {
-		_, err := r.Report(context.Background(), src, "")
-		var fe *fetch.Error
-		if src.Name == "Squire" && (!errors.As(err, &fe) || fe.Code != "not_found") {
-			t.Errorf("a member without a status answers %v, want not_found", err)
+		if _, err := r.Report(context.Background(), src, ""); src.Name == "Squire" && err == nil {
+			t.Error("a member without a status answers")
 		}
 	}
 	if got := strings.Join(appsOf(s.Sources()), ","); got != "Alpha" {
@@ -279,14 +245,14 @@ func TestTheMapShowsDevicesAppsAndHowEachIsReached(t *testing.T) {
 	url := relayServer(t)
 	secret, words := newPhrase(t)
 	openApp(t, url, secret, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
-	openApp(t, url, secret, "bravo", "Bravo", "attic", app{id: "bravo", name: "Bravo"})
+	b := openApp(t, url, secret, "bravo", "Bravo", "attic", app{id: "bravo", name: "Bravo"})
 	s := openService(t, filepath.Join(t.TempDir(), "fortress"), url)
 	if err := s.Join(words); err != nil {
 		t.Fatal(err)
 	}
 	waitFor(t, "both apps on the map", func() bool {
 		m := s.Map()
-		return m.Relay && len(m.Members) == 2 && m.Members[0].App != "" && m.Members[1].App != ""
+		return len(m.Members) == 2 && m.Members[0].App != "" && m.Members[1].App != "" && m.Members[0].Online && m.Members[1].Online
 	})
 
 	m := s.Map()
@@ -298,13 +264,22 @@ func TestTheMapShowsDevicesAppsAndHowEachIsReached(t *testing.T) {
 		if want[mb.App] != mb.Device || mb.Name == "" || mb.Version != "1.2.3" || mb.Kind != "instance" {
 			t.Errorf("member %+v", mb)
 		}
-		if !mb.Relay || mb.Direct {
-			t.Errorf("%s is reached direct %v, relay %v; want the relay alone", mb.App, mb.Direct, mb.Relay)
-		}
 	}
 	if m.Members[0].Device > m.Members[1].Device {
 		t.Errorf("members are not in device order: %s, %s", m.Members[0].Device, m.Members[1].Device)
 	}
+
+	if err := b.Close(); err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, "bravo to go away", func() bool {
+		for _, mb := range s.Map().Members {
+			if mb.App == "bravo" {
+				return !mb.Online
+			}
+		}
+		return false
+	})
 }
 
 func hasApp(m Map, id string) bool {

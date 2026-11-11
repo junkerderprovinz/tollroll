@@ -9,15 +9,11 @@ LOG="/var/log/${NAME}.log"
 # The service has no login of its own, so it listens on a socket that only
 # root and the WebGUI's proxy (server/api.php) reach.
 SOCKET="/var/run/tollroll.sock"
-SOURCES="/boot/config/plugins/${NAME}/sources.json"
 NOTIFY="/boot/config/plugins/${NAME}/notify.json"
 # The tile's membership in a fortress: its member key and the fortress keys,
 # never the phrase.
 FORTRESS="/boot/config/plugins/${NAME}/fortress"
 TILE="/boot/config/plugins/${NAME}/tile.json"
-# The older single-app widget, whose address and token are taken over once.
-LEGACY_CFG="/boot/config/plugins/bombvaultwidget/bombvaultwidget.cfg"
-SOCK_DIR="/var/run"
 
 is_running() { [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null; }
 
@@ -26,7 +22,7 @@ start() {
   # A package built on a filesystem without mode bits lacks the exec bit.
   [ -f "$BIN" ] && chmod +x "$BIN" 2>/dev/null
   if [ ! -x "$BIN" ]; then echo "tollroll: binary missing or not executable at $BIN"; return 1; fi
-  export SOCKET SOURCES NOTIFY FORTRESS TILE LEGACY_CFG SOCK_DIR
+  export SOCKET NOTIFY FORTRESS TILE
   setsid "$BIN" >>"$LOG" 2>&1 &
   echo $! >"$PIDFILE"
   echo "tollroll: started (pid $(cat "$PIDFILE"), socket $SOCKET)"

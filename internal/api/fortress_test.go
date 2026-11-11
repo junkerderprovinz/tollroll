@@ -21,7 +21,7 @@ func (f *fakeFortress) Map() fortress.Map {
 	m := fortress.Map{Members: []fortress.Member{}}
 	if f.joined != "" {
 		m.Joined, m.Device = true, "tower"
-		m.Members = append(m.Members, fortress.Member{ID: "m1", App: "alpha", Name: "Alpha", Device: "cellar", Relay: true})
+		m.Members = append(m.Members, fortress.Member{ID: "m1", App: "alpha", Name: "Alpha", Device: "cellar", Online: true})
 	}
 	return m
 }
@@ -71,7 +71,7 @@ func TestJoiningTakesThePhraseAndGivesItNeverBack(t *testing.T) {
 	if e.fort.joined != twelve {
 		t.Errorf("the service joined with %q", e.fort.joined)
 	}
-	for _, path := range []string{"/api/fortress", "/api/board", "/api/sources"} {
+	for _, path := range []string{"/api/fortress", "/api/board"} {
 		req := e.raw("GET", path, "")
 		if strings.Contains(req, "eleven") {
 			t.Errorf("%s gives the phrase back: %s", path, req)

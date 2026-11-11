@@ -1,6 +1,6 @@
 // Package fortress keeps TollRoll's place in a fortress. Joined with the
 // phrase, the tile reads the status and log of every member with its own
-// member key, so no app needs a read token. The phrase itself is never kept.
+// member key. The phrase itself is never kept.
 //
 // The tile takes part as an instance of the app "tollroll" that offers no
 // action and uses none: it only reads. It opens no port of its own, so it
@@ -26,8 +26,6 @@ import (
 	"github.com/junkerderprovinz/parleyport/kit/status"
 
 	"github.com/junkerderprovinz/tollroll/internal/board"
-	"github.com/junkerderprovinz/tollroll/internal/fetch"
-	"github.com/junkerderprovinz/tollroll/internal/sources"
 )
 
 // AppID is the app the tile joins as.
@@ -53,14 +51,13 @@ type Options struct {
 }
 
 // Map is the fortress as the tile sees it: this server and every other
-// member, each with how the tile reaches it now.
+// member, each connected or not. How the kit carries a call is its own
+// business and stays off the map.
 type Map struct {
 	Joined bool `json:"joined"`
 	// Removed says another member took the tile out, until it joins again.
-	Removed bool   `json:"removed,omitempty"`
-	Device  string `json:"device,omitempty"`
-	// Relay says this server is on the relay now.
-	Relay   bool     `json:"relay"`
+	Removed bool     `json:"removed,omitempty"`
+	Device  string   `json:"device,omitempty"`
 	Members []Member `json:"members"`
 }
 
@@ -74,8 +71,7 @@ type Member struct {
 	Device     string    `json:"device"`
 	Deployment string    `json:"deployment"`
 	Kind       string    `json:"kind"`
-	Direct     bool      `json:"direct"`
-	Relay      bool      `json:"relay"`
+	Online     bool      `json:"online"`
 	LastSeen   time.Time `json:"lastSeen,omitzero"`
 }
 
@@ -224,7 +220,7 @@ func (s *Service) Map() Map {
 	if s.f == nil {
 		return m
 	}
-	m.Joined, m.Device, m.Relay = true, s.device, s.f.RelayConnected()
+	m.Joined, m.Device = true, s.device
 	for _, mb := range s.f.Members() {
 		if mb.State != group.StateApproved {
 			continue
@@ -232,7 +228,7 @@ func (s *Service) Map() Map {
 		m.Members = append(m.Members, Member{
 			ID: mb.ID, App: mb.App.ID, Name: mb.App.Name, Version: mb.App.Version,
 			Device: mb.Device, Deployment: mb.Deployment, Kind: string(mb.Kind),
-			Direct: mb.Direct, Relay: mb.Relay, LastSeen: mb.LastSeen,
+			Online: mb.Online(), LastSeen: mb.LastSeen,
 		})
 	}
 	slices.SortFunc(m.Members, func(a, b Member) int {
@@ -243,14 +239,14 @@ func (s *Service) Map() Map {
 
 // Sources returns the members the tile reads: every instance of another app
 // that said which app it runs, less those that serve no status.
-func (s *Service) Sources() []sources.Source {
+func (s *Service) Sources() []board.Source {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.f == nil {
 		return nil
 	}
 	now := time.Now()
-	var out []sources.Source
+	var out []board.Source
 	for _, mb := range s.f.Members() {
 		if mb.State != group.StateApproved || mb.Kind != member.KindInstance || mb.App.ID == "" || mb.App.ID == AppID {
 			continue
@@ -258,42 +254,33 @@ func (s *Service) Sources() []sources.Source {
 		if at, ok := s.silent[mb.ID]; ok && now.Sub(at) < silentFor {
 			continue
 		}
-		out = append(out, sources.Source{ID: mb.ID, Address: sources.FortressPrefix + mb.ID, Name: mb.App.Name})
+		out = append(out, board.Source{ID: mb.ID, Name: mb.App.Name})
 	}
-	slices.SortFunc(out, func(a, b sources.Source) int { return cmp.Or(cmp.Compare(a.Name, b.Name), cmp.Compare(a.ID, b.ID)) })
+	slices.SortFunc(out, func(a, b board.Source) int { return cmp.Or(cmp.Compare(a.Name, b.Name), cmp.Compare(a.ID, b.ID)) })
 	return out
 }
 
-// Reader reads the fortress members through the tile's membership and every
-// other source through next.
-func (s *Service) Reader(next board.Reader) board.Reader {
-	return reader{s: s, next: next}
-}
+// ErrNotJoined is a read while the tile is in no fortress.
+var ErrNotJoined = errors.New("fortress: not joined")
 
-type reader struct {
-	s    *Service
-	next board.Reader
-}
+// Reader reads the members through the tile's membership.
+func (s *Service) Reader() board.Reader { return reader{s: s} }
 
-func (r reader) Report(ctx context.Context, src sources.Source, lang string) (status.Report, error) {
-	if src.Kind() != sources.KindFortress {
-		return r.next.Report(ctx, src, lang)
-	}
+type reader struct{ s *Service }
+
+func (r reader) Report(ctx context.Context, src board.Source, lang string) (status.Report, error) {
 	f := r.s.current()
 	if f == nil {
-		return status.Report{}, &fetch.Error{Code: "unreachable"}
+		return status.Report{}, ErrNotJoined
 	}
 	rep, err := f.Status(ctx, src.ID, lang)
 	return rep, r.s.failed(src.ID, err)
 }
 
-func (r reader) Log(ctx context.Context, src sources.Source, after, lang string, limit int) (status.LogPage, error) {
-	if src.Kind() != sources.KindFortress {
-		return r.next.Log(ctx, src, after, lang, limit)
-	}
+func (r reader) Log(ctx context.Context, src board.Source, after, lang string, limit int) (status.LogPage, error) {
 	f := r.s.current()
 	if f == nil {
-		return status.LogPage{}, &fetch.Error{Code: "unreachable"}
+		return status.LogPage{}, ErrNotJoined
 	}
 	page, err := f.Log(ctx, src.ID, status.LogQuery{After: after, Lang: lang, Limit: limit})
 	return page, r.s.failed(src.ID, err)
@@ -305,19 +292,14 @@ func (s *Service) current() *kit.Fortress {
 	return s.f
 }
 
-// failed turns an error of a read into the codes the tile knows. A member
-// that serves no status, such as a plugin joined on the command line, is left
-// off the tile for a while.
+// failed leaves a member that serves no status, such as a plugin joined on
+// the command line, off the tile for a while.
 func (s *Service) failed(id string, err error) error {
-	if err == nil {
-		return nil
-	}
 	var no *kit.Refusal
 	if errors.As(err, &no) && no.Code == "not_found" {
 		s.mu.Lock()
 		s.silent[id] = time.Now()
 		s.mu.Unlock()
-		return &fetch.Error{Code: "not_found"}
 	}
-	return &fetch.Error{Code: "unreachable"}
+	return err
 }

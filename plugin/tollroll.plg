@@ -29,24 +29,21 @@
 </ICON>
 
 <CHANGES>
-One dashboard tile for the apps on your network: a row per app with how it is
-doing, and one log with the lines of all of them, filtered by a click. It reads
-the status report every app of the family serves, with a read token kept on the
-server or over the app's socket on this server.
+One dashboard tile for the apps of your fortress: a row per app with how it is
+doing, and one log with the lines of all of them, filtered by a click. It joins
+the fortress with its phrase and reads the status report every member serves.
 
 ### 0.1.0
 ✨ **Added**
 - A dashboard tile with a row per app: its state, what needs you and what it is working on, and its version. An app on several servers gets one row.
 - One log for all apps, newest at the bottom. A click on an app or on its button above the log shows only that app's lines.
-- Settings under Utilities: add each app by its address and read token, or search this server for apps that answer on a socket, and test every connection.
-- The address and token of the older single-app dashboard widget are taken over on the first start.
+- Join your fortress with its phrase in the settings under Utilities, and every app in it shows up.
 - Each row shows the app's own logo and colour when its status report carries them, and its first letter otherwise.
 - Notifications through Unraid, Apprise or Matrix when an app stops answering, answers again or newly needs you. Each one is sent once.
 - Every text in the 26 languages Unraid offers.
 
 🔒 **Security**
-- Read tokens stay on the server. The browser talks only to the WebGUI, and the service behind it listens on a socket, not on a port.
-- A self-signed certificate is trusted on first contact and checked on every later one.
+- The phrase is never kept, only the keys the fortress derives from it. The browser talks only to the WebGUI, and the service behind it listens on a socket, not on a port.
 - An app's logo is checked and only ever shown as an image, so nothing in it can run.
 </CHANGES>
 
@@ -88,8 +85,8 @@ echo "TollRoll is ready!"
 
 <!-- Remove. The plugin manager runs only FILE elements and ignores a bare
      REMOVE, and the block has to end with exit 0, or Unraid keeps the .plg and
-     reinstalls it on boot. The sources on the flash stay, so a reinstall
-     keeps the apps, their tokens and the fortress membership. -->
+     reinstalls it on boot. The settings on the flash stay, so a reinstall
+     keeps the fortress membership and the notification channels. -->
 <FILE Run="/bin/bash" Method="remove">
 <INLINE>
 cat &emhttp;/banner.txt 2>/dev/null
@@ -101,9 +98,8 @@ pkg=$(ls /var/log/packages/ 2>/dev/null | grep -E "^&slug;(-[^-]+-[^-]+-[^-]+)?$
 if [ -n "$pkg" ]; then removepkg "$pkg" 2>/dev/null; fi
 rm -rf &emhttp;
 rm -f &plgPath;/*.txz /var/run/&slug;.pid /var/run/&slug;.sock
-echo "TollRoll removed. Your apps, read tokens, notification channels and the"
-echo "fortress membership in &plgPath; were kept. Delete that folder if you do"
-echo "not plan to reinstall."
+echo "TollRoll removed. Your fortress membership and notification channels in"
+echo "&plgPath; were kept. Delete that folder if you do not plan to reinstall."
 exit 0
 </INLINE>
 </FILE>

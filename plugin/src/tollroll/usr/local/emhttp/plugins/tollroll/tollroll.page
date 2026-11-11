@@ -3,9 +3,9 @@ Title="TollRoll"
 Icon="tollroll.png"
 ---
 <?php
-/* Settings page. The list of apps and the notification channels live with
-   the service, which this page reads and writes through server/api.php.
-   Tokens go in and never come back.
+/* Settings page. The notification channels live with the service, which
+   this page reads and writes through server/api.php. Tokens go in and never
+   come back.
    No functions here: Unraid may include a .page more than once. */
 $trl_locale = (string)(isset($_SESSION['locale']) ? $_SESSION['locale'] : '');
 $trl_lang   = strtolower(substr($trl_locale, 0, 2));
@@ -27,22 +27,6 @@ $h = function ($k) use ($L) { return htmlspecialchars(isset($L[$k]) ? $L[$k] : $
       <div class="trs-sub"><?=$h('s_sub')?></div>
     </div>
   </div>
-
-  <section class="trs-card" aria-labelledby="trs-apps-h">
-    <h3 id="trs-apps-h"><?=$h('s_apps')?> <small><?=$h('s_apps_sub')?></small></h3>
-    <p class="trs-hint"><b><?=$h('s_addr')?>:</b> <?=$h('s_addr_hint')?></p>
-    <p class="trs-hint"><b><?=$h('s_token')?>:</b> <?=$h('s_token_hint')?></p>
-    <div id="trs-list" class="trs-list" aria-live="polite"></div>
-    <div class="trs-tools">
-      <button type="button" id="trs-add" class="trs-btn"><?=$h('s_add')?></button>
-      <button type="button" id="trs-find" class="trs-btn"><?=$h('s_find')?></button>
-      <span id="trs-find-res" class="trs-res" role="status"></span>
-    </div>
-    <div id="trs-found" class="trs-found" hidden>
-      <h4><?=$h('s_found')?></h4>
-      <ul id="trs-found-list"></ul>
-    </div>
-  </section>
 
   <section class="trs-card" aria-labelledby="trs-notify-h">
     <h3 id="trs-notify-h"><?=$h('s_notify')?> <small><?=$h('s_notify_sub')?></small></h3>

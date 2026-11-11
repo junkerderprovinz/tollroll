@@ -1,6 +1,6 @@
-// Package board turns the reports and logs of many apps into what the tile
-// shows: one row per app, however many servers it runs on, and one log with
-// the lines of every app in time order.
+// Package board turns the reports and logs of the members of a fortress into
+// what the tile shows: one row per app, however many devices it runs on, and
+// one log with the lines of every app in time order.
 //
 // Apps are read only while someone looks: a view is built on request and
 // reused for a few seconds. Each app's log is read on from where the last
@@ -12,9 +12,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"net/url"
-	"path"
 	"slices"
 	"strings"
 	"sync"
@@ -22,9 +20,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/junkerderprovinz/parleyport/kit/status"
-
-	"github.com/junkerderprovinz/tollroll/internal/fetch"
-	"github.com/junkerderprovinz/tollroll/internal/sources"
 )
 
 const (
@@ -48,10 +43,17 @@ const (
 // between warning and overdue.
 const Unreachable = "unreachable"
 
-// Reader reads one app.
+// Source is one member the tile reads. Name is what it calls its app, shown
+// until it answers.
+type Source struct {
+	ID   string
+	Name string
+}
+
+// Reader reads one member.
 type Reader interface {
-	Report(ctx context.Context, src sources.Source, lang string) (status.Report, error)
-	Log(ctx context.Context, src sources.Source, after, lang string, limit int) (status.LogPage, error)
+	Report(ctx context.Context, src Source, lang string) (status.Report, error)
+	Log(ctx context.Context, src Source, after, lang string, limit int) (status.LogPage, error)
 }
 
 // View is everything the tile draws.
@@ -62,7 +64,7 @@ type View struct {
 }
 
 // App is one row. Key is the app's ID from its report, or "source:" and the
-// source ID while the app has never answered. UI is an http(s) link or empty.
+// member ID while the app has never answered. UI is an http(s) link or empty.
 // Color is the app's own #rrggbb and Icon the ID of its logo in Icons, both
 // empty when the app names none.
 type App struct {
@@ -99,20 +101,9 @@ type Line struct {
 	Text  string    `json:"text"`
 }
 
-// Outcome is how the last read of one source went, for the settings page.
-// Twin says the same instance also comes from the fortress, so the board
-// leaves this source out and the entry can go.
-type Outcome struct {
-	Name    string    `json:"name,omitempty"`
-	Version string    `json:"version,omitempty"`
-	Error   string    `json:"error,omitempty"`
-	At      time.Time `json:"at"`
-	Twin    bool      `json:"twin,omitempty"`
-}
-
 // Board builds views. It is safe for concurrent use.
 type Board struct {
-	list   func() []sources.Source
+	list   func() []Source
 	reader Reader
 	now    func() time.Time
 	budget time.Duration
@@ -120,19 +111,17 @@ type Board struct {
 	mu     sync.Mutex
 	state  map[string]*source
 	cached map[string]cached
-	twins  map[string]bool
 }
 
 type cached struct {
 	view View
-	srcs []sources.Source
+	srcs []Source
 }
 
 type source struct {
 	down    bool
 	reports map[string]status.Report
 	logs    map[string]*logBuf
-	outcome Outcome
 }
 
 type logBuf struct {
@@ -141,7 +130,7 @@ type logBuf struct {
 }
 
 // New returns a board over the sources list returns, read through r.
-func New(list func() []sources.Source, r Reader) *Board {
+func New(list func() []Source, r Reader) *Board {
 	return &Board{list: list, reader: r, now: time.Now, budget: budget, state: map[string]*source{}, cached: map[string]cached{}}
 }
 
@@ -155,31 +144,16 @@ func (b *Board) View(ctx context.Context, lang string) View {
 	if c, ok := b.cached[lang]; ok && now.Sub(c.view.SampledAt) < ttl && slices.Equal(c.srcs, srcs) {
 		return c.view
 	}
-	b.read(ctx, srcs, lang, now)
+	b.read(ctx, srcs, lang)
 	v := b.build(srcs, lang, now)
 	evict(b.cached, lang)
 	b.cached[lang] = cached{view: v, srcs: srcs}
 	return v
 }
 
-// Outcomes returns the last outcome per source ID.
-func (b *Board) Outcomes() map[string]Outcome {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	out := map[string]Outcome{}
-	for _, src := range b.list() {
-		if s, ok := b.state[key(src)]; ok {
-			o := s.outcome
-			o.Twin = b.twins[key(src)]
-			out[src.ID] = o
-		}
-	}
-	return out
-}
+func key(src Source) string { return src.ID }
 
-func key(src sources.Source) string { return src.ID + "|" + src.Address }
-
-func (b *Board) read(ctx context.Context, srcs []sources.Source, lang string, now time.Time) {
+func (b *Board) read(ctx context.Context, srcs []Source, lang string) {
 	keep := map[string]bool{}
 	var wg sync.WaitGroup
 	for _, src := range srcs {
@@ -193,7 +167,7 @@ func (b *Board) read(ctx context.Context, srcs []sources.Source, lang string, no
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			b.readOne(ctx, src, s, lang, now)
+			b.readOne(ctx, src, s, lang)
 		}()
 	}
 	wg.Wait()
@@ -205,13 +179,12 @@ func (b *Board) read(ctx context.Context, srcs []sources.Source, lang string, no
 }
 
 // readOne touches only s, so the sources can be read side by side.
-func (b *Board) readOne(ctx context.Context, src sources.Source, s *source, lang string, now time.Time) {
+func (b *Board) readOne(ctx context.Context, src Source, s *source, lang string) {
 	ctx, cancel := context.WithTimeout(ctx, b.budget)
 	defer cancel()
 	rep, err := b.reader.Report(ctx, src, lang)
 	if err != nil {
 		s.down = true
-		s.outcome = Outcome{Name: s.outcome.Name, Version: s.outcome.Version, Error: code(err), At: now}
 		return
 	}
 	s.down = false
@@ -228,7 +201,6 @@ func (b *Board) readOne(ctx context.Context, src sources.Source, s *source, lang
 	}
 	evict(s.reports, lang)
 	s.reports[lang] = rep
-	s.outcome = Outcome{Name: rep.App.Name, Version: rep.App.Version, At: now}
 
 	buf := s.logs[lang]
 	pages := 3
@@ -262,14 +234,6 @@ func (b *Board) readOne(ctx context.Context, src sources.Source, s *source, lang
 	}
 }
 
-func code(err error) string {
-	var fe *fetch.Error
-	if errors.As(err, &fe) {
-		return fe.Code
-	}
-	return "unreachable"
-}
-
 var rank = map[string]int{
 	string(status.StateOff):      0,
 	string(status.StateOK):       1,
@@ -283,40 +247,13 @@ var rank = map[string]int{
 var severityRank = map[status.Severity]int{status.SeverityInfo: 0, status.SeverityWarn: 1, status.SeverityError: 2}
 
 type instance struct {
-	src   sources.Source
+	src   Source
 	rep   status.Report
 	known bool
 	state string
 }
 
-// findTwins marks the sources added by hand whose instance the fortress
-// reaches too, by the app and instance IDs their reports carry.
-func (b *Board) findTwins(srcs []sources.Source) {
-	ident := func(src sources.Source) string {
-		for _, rep := range b.state[key(src)].reports {
-			if rep.Instance.ID != "" {
-				return rep.App.ID + "/" + rep.Instance.ID
-			}
-		}
-		return ""
-	}
-	inFortress := map[string]bool{}
-	for _, src := range srcs {
-		if id := ident(src); id != "" && src.Kind() == sources.KindFortress {
-			inFortress[id] = true
-		}
-	}
-	b.twins = map[string]bool{}
-	for _, src := range srcs {
-		if src.Kind() != sources.KindFortress && inFortress[ident(src)] {
-			b.twins[key(src)] = true
-		}
-	}
-}
-
-func (b *Board) build(srcs []sources.Source, lang string, now time.Time) View {
-	b.findTwins(srcs)
-	srcs = slices.DeleteFunc(slices.Clone(srcs), func(src sources.Source) bool { return b.twins[key(src)] })
+func (b *Board) build(srcs []Source, lang string, now time.Time) View {
 	rows := map[string][]instance{}
 	var order []string
 	keys := map[string]string{}
@@ -407,26 +344,17 @@ func row(k string, ins []instance) App {
 }
 
 // link is where the tile's open button and a notification lead: the UI the
-// app names, or the address it was added with, and only ever an http(s) URL
-// without quotes, spaces or markup. An app reached over the network may name
-// a UI on its own host only, so it cannot point a row it shares with another
-// instance at some other site.
+// app names, and only ever an http(s) URL without quotes, spaces or markup.
 func link(in instance) string {
-	src, _ := url.Parse(in.src.Address)
-	for _, cand := range []string{in.rep.App.UI, in.src.Address} {
-		if strings.ContainsAny(cand, "\"'<>\\ \t\r\n") {
-			continue
-		}
-		u, err := url.Parse(cand)
-		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || u.User != nil {
-			continue
-		}
-		if in.src.Kind() == sources.KindURL && src != nil && !strings.EqualFold(u.Hostname(), src.Hostname()) {
-			continue
-		}
-		return cand
+	ui := in.rep.App.UI
+	if strings.ContainsAny(ui, "\"'<>\\ \t\r\n") {
+		return ""
 	}
-	return ""
+	u, err := url.Parse(ui)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || u.User != nil {
+		return ""
+	}
+	return ui
 }
 
 // Icons returns the logos of the apps on the board by the ID their rows carry,
@@ -471,7 +399,7 @@ func (b *Board) Check(ctx context.Context, lang string) []Seen {
 	out := make([]Seen, 0, len(srcs))
 	for _, src := range srcs {
 		s, ok := b.state[key(src)]
-		if !ok || b.twins[key(src)] {
+		if !ok {
 			continue
 		}
 		in := instance{src: src}
@@ -487,16 +415,13 @@ func (b *Board) Check(ctx context.Context, lang string) []Seen {
 	return out
 }
 
-// fallbackName names an app that never answered: a fortress member by the app
-// it said it runs, any other source by its address.
-func fallbackName(src sources.Source) string {
+// fallbackName names an app that never answered by the app its member said
+// it runs.
+func fallbackName(src Source) string {
 	if src.Name != "" {
 		return src.Name
 	}
-	if u, err := url.Parse(src.Address); err == nil && u.Hostname() != "" {
-		return u.Hostname()
-	}
-	return path.Base(src.Address)
+	return src.ID
 }
 
 func cut(s string, runes int) string {

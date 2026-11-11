@@ -8,8 +8,6 @@ import (
 	"strings"
 	"sync"
 	"testing"
-
-	"github.com/junkerderprovinz/tollroll/internal/sources"
 )
 
 type runner struct {
@@ -36,8 +34,7 @@ func TestAnIconIsServedByTheIDItsRowCarries(t *testing.T) {
 	icon := "data:image/svg+xml;base64," + base64.StdEncoding.EncodeToString([]byte(`<svg xmlns="http://www.w3.org/2000/svg"><circle r="4"/></svg>`))
 	rep := app("alpha", "Alpha", "1.0.0")
 	rep.App.Icon, rep.App.Color = icon, "#2e7d32"
-	e.f.apps["/run/a.sock"] = rep
-	_, _ = e.store.Replace([]sources.Edit{{Address: "/run/a.sock"}})
+	e.member("m1", rep)
 	_, board := e.do("GET", "/api/board", "")
 	row := board["apps"].([]any)[0].(map[string]any)
 	id, _ := row["icon"].(string)
