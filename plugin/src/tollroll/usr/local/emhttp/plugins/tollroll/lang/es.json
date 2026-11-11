@@ -78,6 +78,8 @@
   "t_seen": "visto por última vez {when}",
   "t_quiet": "sin estado",
   "t_quiet_hint": "No informa de ningún estado, así que no tiene fila en el mosaico",
+  "t_on_demand": "en línea mientras se ejecuta",
+  "t_on_demand_hint": "Solo está en la fortaleza mientras se ejecuta, por ejemplo en una comprobación, y el resto del tiempo no está",
   "t_show_log": "Mostrar el registro de {name}",
   "t_map_hint": "Haz clic en una app para ver su registro.",
   "t_alone": "Ningún otro dispositivo se ha unido todavía a la fortaleza.",

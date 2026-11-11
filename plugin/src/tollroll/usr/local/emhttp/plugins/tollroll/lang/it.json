@@ -78,6 +78,8 @@
   "t_seen": "visto l'ultima volta {when}",
   "t_quiet": "nessuno stato",
   "t_quiet_hint": "Non segnala alcuno stato, quindi non ha una riga nel riquadro",
+  "t_on_demand": "online mentre è in esecuzione",
+  "t_on_demand_hint": "È nella fortezza solo mentre è in esecuzione, per esempio durante un controllo, e il resto del tempo è assente",
   "t_show_log": "Mostra il registro di {name}",
   "t_map_hint": "Fai clic su un'app per vederne il registro.",
   "t_alone": "Nessun altro dispositivo è ancora entrato nella fortezza.",

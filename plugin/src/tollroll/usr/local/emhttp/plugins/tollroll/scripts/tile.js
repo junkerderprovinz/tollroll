@@ -379,25 +379,25 @@
   }
 
   function device(d) {
-    var box = el('div', 'trl-dev' + (d.online ? '' : ' trl-gone'));
+    var box = el('div', 'trl-dev' + (d.online || d.calm ? '' : ' trl-gone'));
     box.dataset.link = d.here ? 'here' : d.online ? 'on' : 'off';
     var hd = el('div', 'trl-dev-hd');
     hd.appendChild(el('span', 'trl-dev-name', d.name));
-    var tag = el('span', 'trl-tag' + (d.here ? '' : d.online ? ' trl-ok' : ' trl-off'));
-    if (!d.here) tag.appendChild(el('i'));
-    tag.appendChild(document.createTextNode(d.here ? L.t_here : d.online ? L.t_connected : L.t_st_unreachable));
+    var tag = el('span', 'trl-tag' + (d.here || d.calm ? '' : d.online ? ' trl-ok' : ' trl-off'));
+    if (!d.here && !d.calm) tag.appendChild(el('i'));
+    tag.appendChild(document.createTextNode(d.here ? L.t_here : d.online ? L.t_connected : d.calm ? L.t_on_demand : L.t_st_unreachable));
     hd.appendChild(tag);
     box.appendChild(hd);
     var ul = el('ul');
     d.members.forEach(function (m) {
-      var li = el('li', m.quiet ? 'trl-quiet' : '');
+      var li = el('li', m.quiet || m.onDemand ? 'trl-quiet' : '');
       li.appendChild(mark(m.row || { key: m.app, name: m.name }, true));
       var name = el('span', '', m.name);
-      if (m.quiet) name.appendChild(el('span', 'trl-quiet-word', ' ' + L.t_quiet));
+      if (m.quiet || m.onDemand) name.appendChild(el('span', 'trl-quiet-word', ' ' + (m.onDemand ? L.t_on_demand : L.t_quiet)));
       li.appendChild(name);
       li.appendChild(el('span', 'trl-ver', m.version));
-      if (m.quiet) {
-        li.title = L.t_quiet_hint;
+      if (m.quiet || m.onDemand) {
+        li.title = m.onDemand ? L.t_on_demand_hint : L.t_quiet_hint;
       } else {
         // The row shows the worst instance of the app; a member that answers
         // is not the one that does not.

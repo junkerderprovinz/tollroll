@@ -73,6 +73,8 @@
   "t_seen": "son görülme {when}",
   "t_quiet": "durum yok",
   "t_quiet_hint": "Durum bildirmediği için kutucukta satırı yok",
+  "t_on_demand": "çalışırken bağlı",
+  "t_on_demand_hint": "Kalede yalnızca çalışırken bulunur, örneğin bir denetim sırasında, geri kalan zamanda yoktur",
   "t_show_log": "{name} günlüğünü göster",
   "t_map_hint": "Günlüğünü görmek için bir uygulamaya tıklayın.",
   "t_alone": "Kaleye henüz başka bir cihaz katılmadı.",

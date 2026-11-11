@@ -73,6 +73,8 @@
   "t_seen": "nähty viimeksi {when}",
   "t_quiet": "ei tilaa",
   "t_quiet_hint": "Ei ilmoita tilaa, joten sillä ei ole riviä ruudussa",
+  "t_on_demand": "paikalla, kun se on käynnissä",
+  "t_on_demand_hint": "On linnoituksessa vain ollessaan käynnissä, esimerkiksi tarkistuksen aikana, ja muulloin poissa",
   "t_show_log": "Näytä sovelluksen {name} loki",
   "t_map_hint": "Napsauta sovellusta nähdäksesi sen lokin.",
   "t_alone": "Linnoitukseen ei ole vielä liittynyt muita laitteita.",

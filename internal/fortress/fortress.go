@@ -62,7 +62,8 @@ type Map struct {
 }
 
 // Member is one instance in the fortress. App is its app's ID, the key of
-// its row on the board, empty until it said which app it runs.
+// its row on the board. OnDemand marks an app that is in reach only while it
+// runs, so being away is how it should be.
 type Member struct {
 	ID         string    `json:"id"`
 	App        string    `json:"app"`
@@ -72,7 +73,44 @@ type Member struct {
 	Deployment string    `json:"deployment"`
 	Kind       string    `json:"kind"`
 	Online     bool      `json:"online"`
+	OnDemand   bool      `json:"onDemand,omitempty"`
 	LastSeen   time.Time `json:"lastSeen,omitzero"`
+}
+
+// names are how the house's apps write their names, for a member that
+// announces its app by the ID alone or without a name.
+var names = map[string]string{
+	"arrowloop": "ArrowLoop", "bombvault": "BombVault", "cannoncommander": "CannonCommander",
+	"castleparcel": "CastleParcel", "firesquire": "FireSquire", "knightloader": "KnightLoader",
+	"shiplog": "ShipLog", "tollroll": "TollRoll", "towertorch": "TowerTorch",
+}
+
+// onDemand says the app took part through the kit's fortress command, which
+// announces it by its ID alone and stays only while one command runs, as a
+// plugin's check does.
+func onDemand(a kit.App) bool { return a.Name == a.ID }
+
+func appName(a kit.App) string {
+	if a.Name != "" && a.Name != a.ID {
+		return a.Name
+	}
+	if n, ok := names[a.ID]; ok {
+		return n
+	}
+	return a.ID
+}
+
+// entry is mb as the map shows it, false while it has not said which app it
+// runs, since there is no name to show yet.
+func entry(mb kit.Member) (Member, bool) {
+	if mb.State != group.StateApproved || mb.App.ID == "" {
+		return Member{}, false
+	}
+	return Member{
+		ID: mb.ID, App: mb.App.ID, Name: appName(mb.App), Version: mb.App.Version,
+		Device: mb.Device, Deployment: mb.Deployment, Kind: string(mb.Kind),
+		Online: mb.Online(), OnDemand: mb.Kind == member.KindInstance && onDemand(mb.App), LastSeen: mb.LastSeen,
+	}, true
 }
 
 // Service is the tile's membership. It is safe for concurrent use.
@@ -222,14 +260,9 @@ func (s *Service) Map() Map {
 	}
 	m.Joined, m.Device = true, s.device
 	for _, mb := range s.f.Members() {
-		if mb.State != group.StateApproved {
-			continue
+		if e, ok := entry(mb); ok {
+			m.Members = append(m.Members, e)
 		}
-		m.Members = append(m.Members, Member{
-			ID: mb.ID, App: mb.App.ID, Name: mb.App.Name, Version: mb.App.Version,
-			Device: mb.Device, Deployment: mb.Deployment, Kind: string(mb.Kind),
-			Online: mb.Online(), LastSeen: mb.LastSeen,
-		})
 	}
 	slices.SortFunc(m.Members, func(a, b Member) int {
 		return cmp.Or(cmp.Compare(a.Device, b.Device), cmp.Compare(a.Name, b.Name), cmp.Compare(a.ID, b.ID))
@@ -238,7 +271,8 @@ func (s *Service) Map() Map {
 }
 
 // Sources returns the members the tile reads: every instance of another app
-// that said which app it runs, less those that serve no status.
+// that said which app it runs, less those that serve no status. An app in
+// reach only while it runs serves none and would read as down all day.
 func (s *Service) Sources() []board.Source {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -248,13 +282,13 @@ func (s *Service) Sources() []board.Source {
 	now := time.Now()
 	var out []board.Source
 	for _, mb := range s.f.Members() {
-		if mb.State != group.StateApproved || mb.Kind != member.KindInstance || mb.App.ID == "" || mb.App.ID == AppID {
+		if mb.State != group.StateApproved || mb.Kind != member.KindInstance || mb.App.ID == "" || mb.App.ID == AppID || onDemand(mb.App) {
 			continue
 		}
 		if at, ok := s.silent[mb.ID]; ok && now.Sub(at) < silentFor {
 			continue
 		}
-		out = append(out, board.Source{ID: mb.ID, Name: mb.App.Name})
+		out = append(out, board.Source{ID: mb.ID, Name: appName(mb.App)})
 	}
 	slices.SortFunc(out, func(a, b board.Source) int { return cmp.Or(cmp.Compare(a.Name, b.Name), cmp.Compare(a.ID, b.ID)) })
 	return out

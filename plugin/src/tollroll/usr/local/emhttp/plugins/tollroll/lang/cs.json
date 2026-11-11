@@ -83,6 +83,8 @@
   "t_seen": "naposledy viděno {when}",
   "t_quiet": "bez stavu",
   "t_quiet_hint": "Nehlásí žádný stav, proto nemá v dlaždici řádek",
+  "t_on_demand": "online, jen když běží",
+  "t_on_demand_hint": "V pevnosti je jen tehdy, když běží, třeba při kontrole, a jinak běžně chybí",
   "t_show_log": "Zobrazit log aplikace {name}",
   "t_map_hint": "Klikněte na aplikaci a uvidíte její log.",
   "t_alone": "Do pevnosti se zatím nepřipojilo žádné další zařízení.",

@@ -73,6 +73,8 @@
   "t_seen": "last seen {when}",
   "t_quiet": "no status",
   "t_quiet_hint": "Reports no status, so it has no row in the tile",
+  "t_on_demand": "online while it runs",
+  "t_on_demand_hint": "Is in the fortress only while it runs, such as during a check, and away the rest of the time",
   "t_show_log": "Show the log of {name}",
   "t_map_hint": "Click an app to see its log.",
   "t_alone": "No other device has joined the fortress yet.",

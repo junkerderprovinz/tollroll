@@ -73,6 +73,8 @@
   "t_seen": "sidst set {when}",
   "t_quiet": "ingen status",
   "t_quiet_hint": "Melder ingen status og har derfor ingen række i flisen",
+  "t_on_demand": "online, mens den kører",
+  "t_on_demand_hint": "Er kun i fæstningen, mens den kører, for eksempel under et tjek, og er ellers væk",
   "t_show_log": "Vis loggen for {name}",
   "t_map_hint": "Klik på en app for at se dens log.",
   "t_alone": "Ingen anden enhed er kommet med i fæstningen endnu.",

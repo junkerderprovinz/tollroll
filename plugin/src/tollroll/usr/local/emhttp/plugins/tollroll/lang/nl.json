@@ -73,6 +73,8 @@
   "t_seen": "laatst gezien {when}",
   "t_quiet": "geen status",
   "t_quiet_hint": "Meldt geen status en heeft daarom geen regel in de tegel",
+  "t_on_demand": "online zolang het draait",
+  "t_on_demand_hint": "Zit alleen in de vesting zolang het draait, bijvoorbeeld tijdens een controle, en is verder weg",
   "t_show_log": "Het log van {name} tonen",
   "t_map_hint": "Klik op een app om het log ervan te zien.",
   "t_alone": "Er is nog geen ander apparaat lid van de vesting.",

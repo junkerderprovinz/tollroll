@@ -73,6 +73,8 @@
   "t_seen": "senast sedd {when}",
   "t_quiet": "ingen status",
   "t_quiet_hint": "Rapporterar ingen status och har därför ingen rad i rutan",
+  "t_on_demand": "online medan den körs",
+  "t_on_demand_hint": "Är bara i fästningen medan den körs, till exempel under en kontroll, och är annars borta",
   "t_show_log": "Visa loggen för {name}",
   "t_map_hint": "Klicka på en app för att se dess logg.",
   "t_alone": "Ingen annan enhet har gått med i fästningen än.",

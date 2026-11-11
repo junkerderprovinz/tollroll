@@ -73,6 +73,8 @@
   "t_seen": "utoljára látva {when}",
   "t_quiet": "nincs állapot",
   "t_quiet_hint": "Nem jelent állapotot, ezért nincs sora a csempén",
+  "t_on_demand": "futás közben elérhető",
+  "t_on_demand_hint": "Csak futás közben van az erődben, például egy ellenőrzéskor, máskor távol van",
   "t_show_log": "{name} naplójának mutatása",
   "t_map_hint": "Kattints egy alkalmazásra a naplója megtekintéséhez.",
   "t_alone": "Még egyetlen másik eszköz sem csatlakozott az erődhöz.",

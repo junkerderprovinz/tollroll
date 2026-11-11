@@ -73,6 +73,8 @@
   "t_seen": "sist sett {when}",
   "t_quiet": "ingen status",
   "t_quiet_hint": "Melder ingen status og har derfor ingen rad i flisen",
+  "t_on_demand": "tilkoblet mens den kjører",
+  "t_on_demand_hint": "Er bare i festningen mens den kjører, for eksempel under en sjekk, og er ellers borte",
   "t_show_log": "Vis loggen for {name}",
   "t_map_hint": "Klikk på en app for å se loggen.",
   "t_alone": "Ingen annen enhet har blitt med i festningen ennå.",

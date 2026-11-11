@@ -214,6 +214,21 @@ test('the map groups the members by device, this server first', () => {
   assert.equal(devs[2].members[0].row.key, 'alpha');
 });
 
+test('an app that joins only while it runs is calm on the map, not unreachable', () => {
+  const map = { joined: true, device: 'tower', members: [
+    { id: 'm1', app: 'firesquire', name: 'FireSquire', device: 'tower', online: false, onDemand: true },
+    { id: 'm2', app: 'firesquire', name: 'FireSquire', device: 'cellar', online: false, onDemand: true, lastSeen: '2026-11-10T08:00:00Z' },
+    { id: 'm3', app: 'alpha', name: 'Alpha', device: 'attic', online: false, onDemand: false },
+    { id: 'm4', app: 'firesquire', name: 'FireSquire', device: 'attic', online: false, onDemand: true },
+  ] };
+  const devs = core.mapDevices(map, []);
+  assert.deepEqual(devs[0].members.map((m) => [m.name, m.onDemand, m.quiet]), [['FireSquire', true, false]]);
+  const by = Object.fromEntries(devs.map((d) => [d.name, d]));
+  assert.equal(by.cellar.calm, true, 'a device with only such apps is calm');
+  assert.equal(by.attic.calm, false, 'another app away still shows the device away');
+  assert.equal(by.attic.online, false);
+});
+
 test('a time in the past reads as how long ago', () => {
   const now = new Date('2026-11-10T12:00:00Z');
   assert.equal(core.ago('2026-11-10T09:00:00Z', 'en', now), '3 hours ago');

@@ -83,6 +83,8 @@
   "t_seen": "ostatnio widziane {when}",
   "t_quiet": "bez stanu",
   "t_quiet_hint": "Nie zgłasza stanu, więc nie ma wiersza w kafelku",
+  "t_on_demand": "online, gdy działa",
+  "t_on_demand_hint": "Jest w twierdzy tylko wtedy, gdy działa, na przykład podczas sprawdzania, a poza tym go nie ma",
   "t_show_log": "Pokaż dziennik {name}",
   "t_map_hint": "Kliknij aplikację, aby zobaczyć jej dziennik.",
   "t_alone": "Do twierdzy nie dołączyło jeszcze żadne inne urządzenie.",

@@ -78,6 +78,8 @@
   "t_seen": "văzut ultima dată {when}",
   "t_quiet": "fără stare",
   "t_quiet_hint": "Nu raportează nicio stare, așa că nu are rând în plăcuță",
+  "t_on_demand": "conectat cât rulează",
+  "t_on_demand_hint": "Este în fortăreață doar cât rulează, de exemplu la o verificare, iar în rest lipsește",
   "t_show_log": "Arată jurnalul pentru {name}",
   "t_map_hint": "Dă clic pe o aplicație ca să-i vezi jurnalul.",
   "t_alone": "Niciun alt dispozitiv nu s-a alăturat încă fortăreței.",

@@ -225,7 +225,7 @@
     (apps || []).forEach(function (a) { rows[a.key] = a; });
     function device(name) {
       if (!by[name]) {
-        by[name] = { name: name, here: name === map.device, online: name === map.device, seen: '', members: [] };
+        by[name] = { name: name, here: name === map.device, online: name === map.device, calm: false, seen: '', members: [] };
         order.push(name);
       }
       return by[name];
@@ -236,7 +236,13 @@
       if (m.online) d.online = true;
       if (m.lastSeen && m.lastSeen > d.seen) d.seen = m.lastSeen;
       var row = rows[m.app] || null;
-      d.members.push({ id: m.id, app: m.app, name: row ? row.name : (m.name || m.app), version: m.version || '', online: !!m.online, quiet: !row, row: row });
+      d.members.push({ id: m.id, app: m.app, name: row ? row.name : (m.name || m.app), version: m.version || '', online: !!m.online,
+        onDemand: !!m.onDemand, quiet: !row && !m.onDemand, row: row });
+    });
+    // A device whose apps are all away by design is not lost, only resting.
+    order.forEach(function (n) {
+      var d = by[n];
+      d.calm = !d.here && !d.online && d.members.length > 0 && d.members.every(function (m) { return m.onDemand; });
     });
     return order.map(function (n) { return by[n]; }).sort(function (a, b) {
       return (b.here - a.here) || a.name.localeCompare(b.name);

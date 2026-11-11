@@ -78,6 +78,8 @@
   "t_seen": "visto pela última vez {when}",
   "t_quiet": "sem estado",
   "t_quiet_hint": "Não comunica estado, por isso não tem linha no mosaico",
+  "t_on_demand": "ligado enquanto corre",
+  "t_on_demand_hint": "Só está na fortaleza enquanto corre, por exemplo durante uma verificação, e no resto do tempo está ausente",
   "t_show_log": "Mostrar o registo de {name}",
   "t_map_hint": "Clique numa aplicação para ver o registo dela.",
   "t_alone": "Ainda nenhum outro dispositivo se juntou à fortaleza.",

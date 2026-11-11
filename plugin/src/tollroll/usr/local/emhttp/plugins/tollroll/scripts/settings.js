@@ -143,7 +143,7 @@
     var devices = C.mapDevices(fort, board ? board.apps : []);
     var others = devices.filter(function (d) { return !d.here; });
     var on = others.filter(function (d) { return d.online; });
-    var off = others.filter(function (d) { return !d.online; }).map(function (d) { return d.name; });
+    var off = others.filter(function (d) { return !d.online && !d.calm; }).map(function (d) { return d.name; });
     var conn = !others.length ? L.s_conn_alone : C.plural(L, 's_conn', on.length, lang);
     if (off.length) conn += ', ' + C.fmt(L.s_conn_off, { names: off.join(', ') });
 

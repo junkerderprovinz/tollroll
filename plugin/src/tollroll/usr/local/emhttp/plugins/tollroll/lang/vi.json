@@ -68,6 +68,8 @@
   "t_seen": "thấy lần cuối {when}",
   "t_quiet": "không có trạng thái",
   "t_quiet_hint": "Không báo trạng thái nên không có dòng trong ô",
+  "t_on_demand": "trực tuyến khi đang chạy",
+  "t_on_demand_hint": "Chỉ có mặt trong pháo đài khi đang chạy, chẳng hạn lúc kiểm tra, và vắng mặt vào thời gian còn lại",
   "t_show_log": "Hiện nhật ký của {name}",
   "t_map_hint": "Nhấp vào một ứng dụng để xem nhật ký của nó.",
   "t_alone": "Chưa có thiết bị nào khác tham gia pháo đài.",

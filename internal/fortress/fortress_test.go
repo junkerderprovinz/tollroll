@@ -441,3 +441,61 @@ func TestRemovedByAnotherMemberTheTileLeaves(t *testing.T) {
 		t.Errorf("joining again after removal: %+v", m)
 	}
 }
+
+func TestAnAppThatJoinsOnlyWhileItRunsIsNoProblem(t *testing.T) {
+	url := relayServer(t)
+	secret, words := newPhrase(t)
+	openApp(t, url, secret, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
+	squire := openApp(t, url, secret, "firesquire", "firesquire", "tower", nil)
+	s := openService(t, filepath.Join(t.TempDir(), "fortress"), url)
+	if err := s.Join(words); err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, "FireSquire on the map", func() bool { return hasApp(s.Map(), "firesquire") && hasApp(s.Map(), "alpha") })
+	if got := strings.Join(appsOf(s.Sources()), ","); got != "Alpha" {
+		t.Errorf("the tile reads %q, want only Alpha", got)
+	}
+	if err := squire.Close(); err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, "FireSquire to go", func() bool {
+		for _, mb := range s.Map().Members {
+			if mb.App == "firesquire" {
+				return !mb.Online
+			}
+		}
+		return false
+	})
+	if got := strings.Join(appsOf(s.Sources()), ","); got != "Alpha" {
+		t.Errorf("FireSquire away, the tile reads %q, want only Alpha", got)
+	}
+	for _, mb := range s.Map().Members {
+		if mb.App == "firesquire" && (mb.Name != "FireSquire" || !mb.OnDemand) {
+			t.Errorf("FireSquire on the map: %+v", mb)
+		}
+	}
+}
+
+func TestTheMapNamesEachMemberByItsAnnouncedApp(t *testing.T) {
+	approved := func(a kit.App) kit.Member {
+		return kit.Member{ID: "m", Kind: member.KindInstance, App: a, State: group.StateApproved}
+	}
+	for _, c := range []struct {
+		app      kit.App
+		name     string
+		onDemand bool
+	}{
+		{kit.App{ID: "bombvault", Name: "BombVault"}, "BombVault", false},
+		{kit.App{ID: "firesquire", Name: "firesquire"}, "FireSquire", true},
+		{kit.App{ID: "lantern", Name: "lantern"}, "lantern", true},
+		{kit.App{ID: "shiplog"}, "ShipLog", false},
+	} {
+		got, ok := entry(approved(c.app))
+		if !ok || got.Name != c.name || got.OnDemand != c.onDemand {
+			t.Errorf("%+v: %+v, %v", c.app, got, ok)
+		}
+	}
+	if got, ok := entry(approved(kit.App{})); ok {
+		t.Errorf("a member that has not said its app is on the map: %+v", got)
+	}
+}

@@ -68,6 +68,8 @@
   "t_seen": "最后在线 {when}",
   "t_quiet": "无状态",
   "t_quiet_hint": "不报告状态，因此在磁贴中没有对应的行",
+  "t_on_demand": "运行时在线",
+  "t_on_demand_hint": "仅在运行时（例如检查期间）位于堡垒中，其余时间不在",
   "t_show_log": "显示 {name} 的日志",
   "t_map_hint": "点击应用可查看它的日志。",
   "t_alone": "还没有其他设备加入堡垒。",

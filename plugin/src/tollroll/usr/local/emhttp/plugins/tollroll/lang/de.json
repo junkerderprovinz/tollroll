@@ -73,6 +73,8 @@
   "t_seen": "zuletzt gesehen {when}",
   "t_quiet": "ohne Zustand",
   "t_quiet_hint": "Meldet keinen Zustand, steht deshalb nicht in der Kachel",
+  "t_on_demand": "online, während es läuft",
+  "t_on_demand_hint": "Ist nur in der Festung, während es läuft, etwa bei einem Check, und sonst ganz normal weg",
   "t_show_log": "Log von {name} zeigen",
   "t_map_hint": "Ein Klick auf eine App zeigt ihr Log.",
   "t_alone": "Noch ist kein anderes Gerät in der Festung.",

@@ -78,6 +78,8 @@
   "t_seen": "vu pour la dernière fois {when}",
   "t_quiet": "sans état",
   "t_quiet_hint": "Ne signale aucun état, donc n'a pas de ligne dans la tuile",
+  "t_on_demand": "en ligne pendant qu'il tourne",
+  "t_on_demand_hint": "N'est dans la forteresse que pendant qu'il tourne, par exemple lors d'une vérification, et absent le reste du temps",
   "t_show_log": "Afficher le journal de {name}",
   "t_map_hint": "Cliquez sur une app pour voir son journal.",
   "t_alone": "Aucun autre appareil n'a encore rejoint la forteresse.",
