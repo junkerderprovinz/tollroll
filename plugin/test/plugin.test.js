@@ -84,6 +84,17 @@ test('the plg is plain XML', () => {
   assert.match(plg, /<!ENTITY name\s+"tollroll">/);
 });
 
+test('the newest changes block matches its release notes', () => {
+  const plg = fs.readFileSync(path.join(ROOT, 'tollroll.plg'), 'utf8');
+  const changes = /<CHANGES>([\s\S]*?)<\/CHANGES>/.exec(plg)[1];
+  const [, version, block] = /^### (\S+)\n([\s\S]*?)(?=^### |(?![\s\S]))/m.exec(changes);
+  const labels = ['✨ **Added**', '🎨 **Design**', '⚡ **Improved**', '🐛 **Fixed**', '🌐 **Translations**'];
+  for (const line of block.match(/^\S+ \*\*.+$/gm)) assert.ok(labels.includes(line), line);
+  // The release workflow turns the labels into headings for the release page.
+  const notes = fs.readFileSync(path.join(ROOT, '..', '.github', 'release-notes', `v${version}.md`), 'utf8');
+  assert.equal(notes.trim(), block.trim().replace(/^(\S+) \*\*(.+)\*\*$/gm, '## $1 $2'));
+});
+
 test('the tile keeps its English title as its identity', () => {
   assert.match(read('tollroll.Dashboard.page'), /<tbody title="TollRoll">/);
   assert.match(read('tollroll.Dashboard.page'), /^Menu="Dashboard:0"$/m);
