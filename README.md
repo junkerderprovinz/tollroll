@@ -23,13 +23,14 @@ It joins with the phrase of your fortress and keeps no phrase. The browser only 
 
 1. [Support](#1-support)
 2. [What is this?](#2-what-is-this)
-3. [How it works](#3-how-it-works)
-4. [Security](#4-security)
-5. [Install](#5-install)
-6. [Setup](#6-setup)
-7. [Development](#7-development)
-8. [License](#8-license)
-9. [How AI is used here](#9-how-ai-is-used-here)
+3. [The fortress](#3-the-fortress)
+4. [How it works](#4-how-it-works)
+5. [Security](#5-security)
+6. [Install](#6-install)
+7. [Setup](#7-setup)
+8. [Development](#8-development)
+9. [License](#9-license)
+10. [How AI is used here](#10-how-ai-is-used-here)
 
 <br>
 
@@ -57,7 +58,7 @@ If it has earned a place on your server or computer, toss a coin to your knight:
 
 An Unraid plugin that adds a dashboard tile named **TollRoll**. It shows up in Unraid's tile management like the built-in tiles, so you can hide it, move it or collapse it.
 
-The tile reads every app in your fortress, the group of apps you joined with one phrase. Each app gets a row with its logo, its name, a dot and a short line, and its version. An app whose report carries no logo gets its first letter on a colour of its own. The line is the app's own words when it has something to say (what needs you, or what it is working on right now) and otherwise its state: running, starting, needs a look, overdue, failed or not reachable. An app that runs on two devices gets one row that says so and shows the worse of the two states.
+The tile reads every app in your [fortress](#3-the-fortress), the group of apps you joined with one phrase. Each app gets a row with its logo, its name, a dot and a short line, and its version. An app whose report carries no logo gets its first letter on a colour of its own. The line is the app's own words when it has something to say (what needs you, or what it is working on right now) and otherwise its state: running, starting, needs a look, overdue, failed or not reachable. An app that runs on two devices gets one row that says so and shows the worse of the two states.
 
 Under the rows sits one log for all apps, newest at the bottom, in the dark terminal look it keeps on every Unraid theme. Click a row, or one of the buttons above the log, and the log shows only that app's lines. Once the filter names an app, the tile header gets a button that opens that app's web page.
 
@@ -69,7 +70,19 @@ TollRoll can also tell you when something changes. Switch on Unraid's notificati
 
 <br>
 
-<p><a id="3-how-it-works" href="#3-how-it-works"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/3-how-it-works-dark.svg"><img src=".github/assets/sections/3-how-it-works.svg" alt="3. How it works" width="100%"></picture></a></p>
+<p><a id="3-the-fortress" href="#3-the-fortress"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/3-the-fortress-dark.svg"><img src=".github/assets/sections/3-the-fortress.svg" alt="3. The fortress" width="100%"></picture></a></p>
+
+A fortress is the group your apps form once they share one phrase: twelve words that every app of the fortress shows under **Instances**. TollRoll joins it like any other app, as a member that only reads.
+
+To join, open **Settings → Utilities → TollRoll**, paste the phrase into the first field and press **Join**. The words spread over the twelve fields by themselves, and a mistyped or swapped word is caught before anything is saved. TollRoll keeps the keys it makes from the phrase, never the phrase itself.
+
+From then on the tile shows every app in the same fortress: a row with its state and version, its lines in the log and its place on the map. You add nothing by hand: an app shows up as soon as it is in the same fortress, whether it runs on this server or on another device. TollRoll talks to the other members directly on your network, and through a [ParleyPort](https://github.com/junkerderprovinz/parleyport) relay when they sit on another network. A member that reports no status, such as a plugin that joined only to read, stays off the tile.
+
+If the phrase is changed in one of your apps, enter the new one with **Enter a new phrase**. **Leave the fortress** takes TollRoll out again, and the other members then see this server as not reachable until someone removes it there.
+
+<br>
+
+<p><a id="4-how-it-works" href="#4-how-it-works"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/4-how-it-works-dark.svg"><img src=".github/assets/sections/4-how-it-works.svg" alt="4. How it works" width="100%"></picture></a></p>
 
 The plugin has three parts.
 
@@ -77,11 +90,9 @@ The plugin has three parts.
 - **A PHP proxy** (`server/api.php`) sits behind the Unraid login and passes a fixed list of calls to that socket. Nothing else in the plugin talks to the service.
 - **The tile and the settings page** call the proxy from the browser. The tile asks again every 15 seconds while the dashboard is visible.
 
-Apps come in one way only: through the fortress. Any app that joined with the same phrase shows up by itself, on this server or on another device. A member that reports no status, such as a plugin that joined only to read, stays off the tile.
-
 <br>
 
-<p><a id="4-security" href="#4-security"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/4-security-dark.svg"><img src=".github/assets/sections/4-security.svg" alt="4. Security" width="100%"></picture></a></p>
+<p><a id="5-security" href="#5-security"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/5-security-dark.svg"><img src=".github/assets/sections/5-security.svg" alt="5. Security" width="100%"></picture></a></p>
 
 - **No open port.** The service listens only on its socket, which belongs to root. The browser reaches it through the WebGUI and its login. Every write is a POST, which Unraid checks for its CSRF token.
 - **The phrase is never kept.** TollRoll turns the phrase into the keys of the fortress and its own member key and saves only those, in `/boot/config/plugins/tollroll/fortress`, readable by root alone. Neither the phrase nor any app's own key can be worked out from them. Whoever takes that folder is this one member at most, and any other member can remove it. After the phrase changes in one of your apps, enter the new one in TollRoll.
@@ -92,7 +103,7 @@ Apps come in one way only: through the fortress. Any app that joined with the sa
 
 <br>
 
-<p><a id="5-install" href="#5-install"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/5-install-dark.svg"><img src=".github/assets/sections/5-install.svg" alt="5. Install" width="100%"></picture></a></p>
+<p><a id="6-install" href="#6-install"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/6-install-dark.svg"><img src=".github/assets/sections/6-install.svg" alt="6. Install" width="100%"></picture></a></p>
 
 **By URL:** Unraid → **Plugins** → **Install Plugin**, paste:
 
@@ -104,7 +115,7 @@ TollRoll needs Unraid 6.12 or newer.
 
 <br>
 
-<p><a id="6-setup" href="#6-setup"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/6-setup-dark.svg"><img src=".github/assets/sections/6-setup.svg" alt="6. Setup" width="100%"></picture></a></p>
+<p><a id="7-setup" href="#7-setup"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/7-setup-dark.svg"><img src=".github/assets/sections/7-setup.svg" alt="7. Setup" width="100%"></picture></a></p>
 
 1. Open **Instances** in any app of your fortress and copy its phrase, the twelve words.
 2. In Unraid, open **Settings → Utilities → TollRoll**, paste the phrase and join. Every app of the fortress shows up by itself.
@@ -113,25 +124,25 @@ TollRoll needs Unraid 6.12 or newer.
 
 <br>
 
-<p><a id="7-development" href="#7-development"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/7-development-dark.svg"><img src=".github/assets/sections/7-development.svg" alt="7. Development" width="100%"></picture></a></p>
+<p><a id="8-development" href="#8-development"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/8-development-dark.svg"><img src=".github/assets/sections/8-development.svg" alt="8. Development" width="100%"></picture></a></p>
 
 ```bash
 go test ./...                       # the service
 node --test plugin/test/*.test.js   # the tile's logic, the language files and the plugin files
-bash plugin/pkg_build.sh 0.1.0      # builds plugin/out/tollroll-0.1.0-x86_64-1.txz
+bash plugin/pkg_build.sh 1.0.0      # builds plugin/out/tollroll-1.0.0-x86_64-1.txz
 ```
 
-The plugin files live under [`plugin/src/tollroll/`](plugin/src/tollroll/) in the layout they have on the server. Releases are built by CI from a `v*` tag; it builds the package, publishes it and only then writes the new version and checksum into `plugin/tollroll.plg`.
+The plugin files live under [`plugin/src/tollroll/`](plugin/src/tollroll/) in the layout they have on the server. CI builds every release from a `v*` tag: it builds the package, publishes it and only then writes the new version and checksum into `plugin/tollroll.plg`.
 
 <br>
 
-<p><a id="8-license" href="#8-license"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/8-license-dark.svg"><img src=".github/assets/sections/8-license.svg" alt="8. License" width="100%"></picture></a></p>
+<p><a id="9-license" href="#9-license"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/9-license-dark.svg"><img src=".github/assets/sections/9-license.svg" alt="9. License" width="100%"></picture></a></p>
 
 AGPL-3.0. See [LICENSE](LICENSE).
 
 <br>
 
-<p><a id="9-how-ai-is-used-here" href="#9-how-ai-is-used-here"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/9-how-ai-is-used-here-dark.svg"><img src=".github/assets/sections/9-how-ai-is-used-here.svg" alt="9. How AI is used here" width="100%"></picture></a></p>
+<p><a id="10-how-ai-is-used-here" href="#10-how-ai-is-used-here"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/10-how-ai-is-used-here-dark.svg"><img src=".github/assets/sections/10-how-ai-is-used-here.svg" alt="10. How AI is used here" width="100%"></picture></a></p>
 
 One knight builds this, and AI is one of the tools I work with, the same way I work with an editor or a compiler. It helps me write code and documentation and it checks my work, and that saves me a good many evenings. It does not make the decisions, though. I read and understand everything before it ships, and if something here breaks, that is on me and not on the tool.
 
