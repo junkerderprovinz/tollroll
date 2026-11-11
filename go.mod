@@ -2,4 +2,6 @@ module github.com/junkerderprovinz/tollroll
 
 go 1.26.10
 
+toolchain go1.27.4
+
 require github.com/junkerderprovinz/parleyport/kit v0.0.0-20261110025256-44d3847091ce
