@@ -29,16 +29,15 @@ foreach ($trl_L as $trl_k => $trl_v) {
   if (strncmp($trl_k, 's_', 2) !== 0 && strncmp($trl_k, 'n_', 2) !== 0) $trl_js[$trl_k] = $trl_v;
 }
 $trl_settings = htmlspecialchars($trl_L['t_settings'], ENT_QUOTES);
-$trl_filter   = htmlspecialchars($trl_L['t_filter'], ENT_QUOTES);
-$trl_log      = htmlspecialchars($trl_L['t_log'], ENT_QUOTES);
 $mytiles['tollroll']['column2'] = <<<EOT
 <tbody title="TollRoll">
-<tr><td><span class='tile-header'><span class='tile-header-left'><i class='icon-health f32'></i><div class='section'><h3 class='tile-header-main'>TollRoll</h3><span id='trl-sub' class='trl-sub'></span></div></span><span class='tile-header-right'><span class='tile-header-right-controls'><a id='trl-open' class='trl-open' href='#' target='_blank' rel='noopener noreferrer' hidden><i class='fa fa-fw fa-external-link control'></i></a><a href='/Settings/tollroll' title="{$trl_settings}"><i class='fa fa-fw fa-cog control'></i></a></span></span></span></td></tr>
-<tr><td class='trl-td'><div id='trl' class='trl'><ul id='trl-rows' class='trl-rows'></ul><div id='trl-chips' class='trl-chips' role='group' aria-label="{$trl_filter}"></div><div id='trl-log' class='trl-log' role='log' aria-label="{$trl_log}" tabindex='0'></div></div></td></tr>
+<tr><td class='trl-head'><span class='tile-header'><span class='tile-header-left'><img class='trl-ico' src='/plugins/tollroll/images/tollroll-unraid.svg' alt=''><div class='section'><h3 class='tile-header-main'>TollRoll</h3><span id='trl-sub' class='trl-sub'></span></div></span><span class='tile-header-right'><span class='tile-header-right-controls trl-ctl'><span id='trl-hs' class='trl-hs' role='radiogroup' hidden></span><a id='trl-open' class='trl-control' href='#' target='_blank' rel='noopener noreferrer' style='visibility:hidden' tabindex='-1'><span class='trl-gl' data-glyph='IconExternalLink'></span></a><a class='trl-control' href='/Settings/tollroll' title="{$trl_settings}" aria-label="{$trl_settings}"><span class='trl-gl' data-glyph='IconGear'></span></a></span></span></span></td></tr>
+<tr><td class='trl-td'><div id='trl' class='trl'></div></td></tr>
 </tbody>
 EOT;
 ?>
 <link rel="stylesheet" href="<?autov('/plugins/tollroll/styles/tile.css')?>">
 <script>window.TRL_T = <?=json_encode($trl_js, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)?>; window.TRL_LANG = <?=json_encode(preg_match('/^[a-z]{2}$/', $trl_lang) ? $trl_lang : 'en')?>;</script>
+<script src="<?autov('/plugins/tollroll/scripts/glyphs.js')?>"></script>
 <script src="<?autov('/plugins/tollroll/scripts/tollroll-core.js')?>"></script>
 <script src="<?autov('/plugins/tollroll/scripts/tile.js')?>"></script>

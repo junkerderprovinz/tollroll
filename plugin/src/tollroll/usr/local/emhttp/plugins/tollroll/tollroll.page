@@ -3,9 +3,10 @@ Title="TollRoll"
 Icon="tollroll.png"
 ---
 <?php
-/* Settings page. The notification channels live with the service, which
-   this page reads and writes through server/api.php. Tokens go in and never
-   come back.
+/* Settings page. The fortress membership and the notification channels live
+   with the service, which this page reads and writes through server/api.php.
+   Every change is saved at once. The phrase and tokens go in and never come
+   back.
    No functions here: Unraid may include a .page more than once. */
 $trl_locale = (string)(isset($_SESSION['locale']) ? $_SESSION['locale'] : '');
 $trl_lang   = strtolower(substr($trl_locale, 0, 2));
@@ -19,58 +20,57 @@ $h = function ($k) use ($L) { return htmlspecialchars(isset($L[$k]) ? $L[$k] : $
 ?>
 <link rel="stylesheet" href="<?autov('/plugins/tollroll/styles/settings.css')?>">
 
-<div class="trs">
-  <div class="trs-hd">
-    <img class="trs-logo" src="<?autov('/plugins/tollroll/images/tollroll-unraid.svg')?>" alt="">
-    <div>
-      <div class="trs-ttl">TollRoll</div>
-      <div class="trs-sub"><?=$h('s_sub')?></div>
+<div class="trs-page">
+  <div class="trs-hero">
+    <span class="trs-hero-mark" aria-hidden="true"></span>
+    <img class="trs-hero-logo" src="<?autov('/plugins/tollroll/images/tollroll-unraid.svg')?>" alt="">
+    <div class="trs-hero-text">
+      <h1 class="trs-hero-name">TollRoll</h1>
+      <p class="trs-hero-claim">Your apps report in. You just unroll.</p>
     </div>
   </div>
 
-  <section class="trs-card" aria-labelledby="trs-notify-h">
-    <h3 id="trs-notify-h"><?=$h('s_notify')?> <small><?=$h('s_notify_sub')?></small></h3>
-    <p class="trs-hint"><?=$h('s_notify_hint')?></p>
-    <div class="trs-grid">
-      <label for="trs-n-unraid"><?=$h('s_n_unraid')?></label>
-      <div><input type="checkbox" id="trs-n-unraid"></div>
-      <label for="trs-n-apprise"><?=$h('s_n_apprise')?></label>
-      <div>
-        <input type="text" class="trs-in" id="trs-n-apprise" placeholder="http://192.168.1.10:8000/notify/tollroll" spellcheck="false" autocomplete="off">
-        <p class="trs-hint"><?=$h('s_n_apprise_hint')?></p>
-      </div>
-      <label for="trs-n-hs"><?=$h('s_n_matrix')?></label>
-      <div class="trs-matrix">
-        <input type="text" class="trs-in" id="trs-n-hs" placeholder="https://matrix.org" aria-label="<?=$h('s_n_hs')?>" spellcheck="false" autocomplete="off">
-        <input type="text" class="trs-in" id="trs-n-room" placeholder="!room:matrix.org" aria-label="<?=$h('s_n_room')?>" spellcheck="false" autocomplete="off">
-        <input type="password" class="trs-in" id="trs-n-token" aria-label="<?=$h('s_n_token')?>" autocomplete="new-password">
-      </div>
-      <label for="trs-n-on"><?=$h('s_n_on')?></label>
-      <div>
-        <select id="trs-n-on" class="trs-in trs-select">
-          <option value="always"><?=$h('s_n_on_always')?></option>
-          <option value="failure"><?=$h('s_n_on_failure')?></option>
-        </select>
-      </div>
-    </div>
-    <div class="trs-tools">
-      <button type="button" id="trs-n-test" class="trs-btn"><?=$h('s_n_test')?></button>
-      <span id="trs-n-res" class="trs-res" role="status"></span>
-    </div>
-  </section>
+  <div class="trs">
+    <section class="trs-card" id="trs-fort" aria-live="polite"></section>
 
-  <section class="trs-card" aria-labelledby="trs-tile-h">
-    <h3 id="trs-tile-h"><?=$h('s_tile')?> <small><?=$h('s_tile_sub')?></small></h3>
-    <p class="trs-hint"><?=$h('s_tile_hint')?></p>
-  </section>
-
-  <div class="trs-actions">
-    <button type="button" id="trs-apply" class="trs-btn trs-primary"><?=$h('s_apply')?></button>
-    <button type="button" class="trs-btn" onclick="done()"><?=$h('s_done')?></button>
-    <span id="trs-apply-res" class="trs-res" role="status"></span>
+    <section class="trs-card" aria-labelledby="trs-notify-h">
+      <h3 id="trs-notify-h"><?=$h('s_notify')?> <small><?=$h('s_notify_sub')?></small><span id="trs-n-saved" class="trs-saved" role="status"></span></h3>
+      <p class="trs-hint"><?=$h('s_notify_hint')?> <?=$h('s_live')?></p>
+      <div class="trs-grid">
+        <div class="trs-switch-row">
+          <label for="trs-n-unraid"><?=$h('s_n_unraid')?></label>
+          <input type="checkbox" role="switch" class="trs-switch" id="trs-n-unraid">
+        </div>
+        <label for="trs-n-apprise"><?=$h('s_n_apprise')?></label>
+        <div>
+          <input type="text" class="trs-in" id="trs-n-apprise" placeholder="http://192.168.1.10:8000/notify/tollroll" spellcheck="false" autocomplete="off" aria-describedby="trs-n-apprise-err">
+          <p class="trs-field-err" id="trs-n-apprise-err" role="alert"></p>
+          <p class="trs-hint"><?=$h('s_n_apprise_hint')?></p>
+        </div>
+        <label for="trs-n-hs"><?=$h('s_n_matrix')?></label>
+        <div class="trs-matrix">
+          <input type="text" class="trs-in" id="trs-n-hs" placeholder="https://matrix.org" aria-label="<?=$h('s_n_hs')?>" spellcheck="false" autocomplete="off">
+          <input type="text" class="trs-in" id="trs-n-room" placeholder="!room:matrix.org" aria-label="<?=$h('s_n_room')?>" spellcheck="false" autocomplete="off">
+          <input type="password" class="trs-in" id="trs-n-token" aria-label="<?=$h('s_n_token')?>" autocomplete="new-password">
+        </div>
+        <label for="trs-n-on"><?=$h('s_n_on')?></label>
+        <div>
+          <select id="trs-n-on" class="trs-in trs-select">
+            <option value="always"><?=$h('s_n_on_always')?></option>
+            <option value="failure"><?=$h('s_n_on_failure')?></option>
+          </select>
+        </div>
+      </div>
+      <div class="trs-tools">
+        <button type="button" id="trs-n-test" class="trs-btn"><span class="trs-gl" data-glyph="IconSendTest"></span><span><?=$h('s_n_test')?></span></button>
+        <span id="trs-n-res" class="trs-res" role="status"></span>
+      </div>
+    </section>
   </div>
 </div>
+<div id="trs-dlg"></div>
 
 <script>window.TRS_T = <?=json_encode($L, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)?>; window.TRL_LANG = <?=json_encode(preg_match('/^[a-z]{2}$/', $trl_lang) ? $trl_lang : 'en')?>;</script>
+<script src="<?autov('/plugins/tollroll/scripts/glyphs.js')?>"></script>
 <script src="<?autov('/plugins/tollroll/scripts/tollroll-core.js')?>"></script>
 <script src="<?autov('/plugins/tollroll/scripts/settings.js')?>"></script>

@@ -61,6 +61,8 @@ The tile reads every app in your fortress, the group of apps you joined with one
 
 Under the rows sits one log for all apps, newest at the bottom, in the dark terminal look it keeps on every Unraid theme. Click a row, or one of the buttons above the log, and the log shows only that app's lines. Once the filter names an app, the tile header gets a button that opens that app's web page.
 
+A selector in the tile header switches between four views: **Everything**, the **Apps** alone, the **Log** alone over the whole height of the tile, and the **Map** of the fortress. In the apps and log views you tick apps on and off in a list, with **All** and **None** on top. The map shows every device of the fortress with its apps, and whether each one is connected right now. The tile remembers the view and the apps you chose on the server, so every browser finds it the way you left it.
+
 The tile and the settings page speak the language you picked in Unraid, in all 26 languages Unraid offers. The texts that come from the apps arrive in that language too, as far as each app has them.
 
 TollRoll can also tell you when something changes. Switch on Unraid's notifications, an Apprise URL or a Matrix room in the settings, and it sends a message when an app has not answered for a few minutes, when it answers again and when it shows something new that needs you. Each of these goes out once, not on every check. Pick **Only problems** to leave out the good news and the plain hints.
@@ -106,7 +108,7 @@ TollRoll needs Unraid 6.12 or newer.
 
 1. Open **Instances** in any app of your fortress and copy its phrase, the twelve words.
 2. In Unraid, open **Settings → Utilities → TollRoll**, paste the phrase and join. Every app of the fortress shows up by itself.
-3. To get notified, fill in a channel under **Notifications**, try it with **Send a test message** and click **Apply**.
+3. To get notified, fill in a channel under **Notifications** and try it with **Send a test message**. Every change in the settings is saved right away, a small tick says so.
 4. Open the **Dashboard**. The TollRoll tile sits in the middle column.
 
 <br>

@@ -75,3 +75,118 @@
 .trl-note a{color:#f4c63d}
 .trl-note.trl-l-error{color:#ff8389}
 @container (max-width:420px){.trl-app span:last-child{display:none}.trl-app{width:auto}}
+
+/* The header: the logo, the selector of the views and the controls. The
+   header cell defers to the column width like the body cell, and its row is
+   the container the selector measures itself against. */
+.trl-head{max-width:0}
+.trl-head > .tile-header{container-type:inline-size;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.trl-head .tile-header-left{min-width:0;flex:1 1 auto}
+.trl-head .tile-header-left .section{min-width:4.6em}
+.trl-head .tile-header-main{white-space:nowrap}
+.trl-ico{width:32px;height:32px;flex:none}
+.trl-ctl{display:flex;align-items:center;gap:4px;flex:none}
+.trl-gl{display:inline-grid;place-items:center;flex:none}
+.trl-gl svg{display:block;width:16px;height:16px}
+.trl-control{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:6px;color:inherit !important;opacity:.75}
+.trl-control:hover{opacity:1;background:color-mix(in srgb,currentColor 9%,transparent)}
+.trl-control:focus-visible{outline:2px solid #f4c63d;outline-offset:1px}
+.trl-control svg{width:17px;height:17px}
+
+/* The views of the tile: GlimStone's well in Unraid's colours. Only the
+   chosen segment is filled, in the tile's gold. */
+.trl-hs{display:inline-grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px;padding:3px;margin-right:6px;border-radius:999px;
+  background:color-mix(in srgb,currentColor 10%,transparent)}
+.trl-hs[hidden]{display:none}
+.trl-hs button{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:26px;padding:0 12px;border:0 !important;border-radius:999px;margin:0 !important;
+  background:transparent !important;color:inherit !important;font:500 12.5px/1 inherit;white-space:nowrap;cursor:pointer;opacity:.8;min-width:0 !important;
+  transition:background-color .15s,color .15s,opacity .15s}
+.trl-hs button:hover{background:color-mix(in srgb,currentColor 9%,transparent) !important;opacity:1}
+.trl-hs button[aria-checked="true"]{background:#f4c63d !important;color:#161616 !important;opacity:1}
+.trl-hs button:focus-visible{outline:2px solid #f4c63d;outline-offset:1px}
+.trl-hs svg{width:14px;height:14px}
+@media (prefers-reduced-motion:reduce){.trl-hs button{transition:none}}
+@container (max-width:720px){.trl-hs .trl-hs-word{display:none}.trl-hs button{padding:0 9px}}
+@container (max-width:400px){.trl-ico{display:none}}
+
+.trl [hidden]{display:none !important}
+
+/* The app list above the apps view and in the head of the log view. */
+.trl-apphd{position:relative;display:flex;align-items:center;gap:10px;padding:0 0 8px}
+.trl-logbox{position:relative}
+.trl-loghd{position:relative;display:flex;align-items:center;gap:10px;padding:8px 12px 6px;background:#161616;color:#e0e0e0;border-radius:4px 4px 0 0;
+  border-bottom:1px solid #2a2a2a;font-size:12px}
+.trl-loghd .trl-n{margin-left:auto;color:#8d8d8d;font-variant-numeric:tabular-nums}
+.trl-logbox-full .trl-log{border-radius:0 0 4px 4px}
+.trl-pick{display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 10px 0 9px;border:0 !important;border-radius:999px;margin:0 !important;min-width:0 !important;
+  background:#262626 !important;color:#e0e0e0 !important;font:500 12.5px/1 inherit;cursor:pointer}
+.trl-pick:hover{background:#333 !important}
+.trl-pick:focus-visible{outline:2px solid #f4c63d;outline-offset:1px}
+.trl-pick svg{width:13px;height:13px}
+.trl-pick .trl-caret{width:10px;height:10px;opacity:.7}
+.trl-pick-light{background:var(--trl-chip) !important;color:inherit !important}
+.trl-pick-light:hover{background:var(--trl-chip-hover) !important}
+.trl-pick-list{position:absolute;top:38px;left:10px;z-index:20;min-width:240px;max-height:320px;overflow:auto;padding:4px;
+  background:#262626;color:#e0e0e0;border-radius:8px;box-shadow:0 12px 30px rgba(0,0,0,.45);font-size:12.5px;line-height:1.2}
+.trl-apphd .trl-pick-list{top:34px;left:0}
+.trl-pick-top{display:flex;gap:6px;padding:4px 4px 8px;margin-bottom:4px;border-bottom:1px solid #353535}
+.trl-pick-top button{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border:0 !important;border-radius:999px;margin:0 !important;min-width:0 !important;
+  background:#333 !important;color:inherit !important;font:inherit;cursor:pointer}
+.trl-pick-top button:hover{background:#3d3d3d !important}
+.trl-pick-top svg{width:13px;height:13px}
+.trl-pick-item{display:flex !important;align-items:center;gap:8px;padding:6px 8px;margin:0 !important;border-radius:5px;cursor:pointer;font-weight:400 !important}
+.trl-pick-item:hover{background:#353535}
+.trl-pick-item input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.trl-check{width:16px;height:16px;border-radius:4px;box-shadow:inset 0 0 0 1.5px #6f6f6f}
+.trl-check svg{width:11px;height:11px;opacity:0}
+.trl-pick-item input:checked + .trl-check{background:#f4c63d;box-shadow:none;color:#161616}
+.trl-pick-item input:checked + .trl-check svg{opacity:1}
+.trl-pick-item input:focus-visible + .trl-check{outline:2px solid #f4c63d;outline-offset:1px}
+.trl-pick-item .trl-n{margin-left:auto;color:#8d8d8d}
+
+/* The map of the fortress: this server on the left, every other device on
+   the right, a wire between them. */
+.trl-map{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 72px minmax(0,1.15fr);align-items:center;padding:6px 0 4px}
+.trl-wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.trl-here{grid-column:1;grid-row:1}
+.trl-devs{grid-column:3;grid-row:1;display:flex;flex-direction:column;gap:10px}
+.trl-dev{position:relative;z-index:1;border:1px solid color-mix(in srgb,currentColor 16%,transparent);border-radius:9px;padding:8px 10px 6px}
+.trl-here .trl-dev{border-color:#f4c63d;box-shadow:0 0 0 1px #f4c63d inset}
+.trl-dev.trl-gone{opacity:.6}
+.trl-dev-hd{display:flex;align-items:baseline;gap:8px;min-width:0;margin-bottom:4px}
+.trl-dev-name{font-weight:700;font-size:13px}
+.trl-tag{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:11.5px;white-space:nowrap;opacity:.85}
+.trl-tag i{display:inline-block;width:14px;height:0;border-top:2px solid currentColor}
+.trl-tag.trl-off i{border-top-style:dotted}
+.trl-dev ul{list-style:none;margin:0;padding:0}
+.trl-dev li{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:7px;padding:3px 4px;border-radius:5px;font-size:12.5px;cursor:pointer}
+.trl-dev li:hover{background:var(--trl-hover)}
+.trl-dev li:focus-visible{outline:2px solid #f4c63d;outline-offset:1px}
+.trl-dev li .trl-ver{font-size:11.5px}
+.trl-dev li.trl-quiet{cursor:default;opacity:.7}
+.trl-dev li.trl-quiet:hover{background:none}
+.trl-quiet-word{font-size:11.5px;opacity:.8}
+.trl-dev-seen{font-size:11.5px;opacity:.75;margin:2px 4px}
+.trl-legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:11.5px;padding:10px 2px 0;margin-top:10px;border-top:1px solid color-mix(in srgb,currentColor 12%,transparent)}
+.trl-legend .trl-tag{margin:0}
+.trl-legend-hint{opacity:.75}
+.trl-wire-on{stroke:var(--trl-ok);stroke-width:2;fill:none}
+.trl-wire-off{stroke:var(--trl-off);stroke-width:2;fill:none;stroke-dasharray:2 5;stroke-linecap:round}
+@container (max-width:560px){
+  .trl-map{grid-template-columns:1fr;gap:10px}
+  .trl-here,.trl-devs{grid-column:1;grid-row:auto}
+  .trl-wires{display:none}
+}
+
+/* The tile in no fortress. */
+.trl-empty{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:18px 16px;margin:4px 0 6px;border-radius:9px;
+  background:color-mix(in srgb,currentColor 5%,transparent)}
+.trl-empty-gl{width:44px;height:44px;border-radius:50%;background:color-mix(in srgb,#f4c63d 22%,transparent);color:#b88a00}
+.Theme--black .trl-empty-gl,.Theme--gray .trl-empty-gl{color:#f4c63d}
+.trl-empty-gl svg{width:22px;height:22px}
+.trl-empty-text{flex:1 1 220px;display:grid;gap:3px;font-size:13px}
+.trl-empty-text span{opacity:.75}
+.trl-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 15px 8px 12px;border-radius:7px;font:600 13px/1.2 inherit;text-decoration:none !important;white-space:nowrap}
+.trl-btn-primary{background:#f4c63d;color:#161616 !important}
+.trl-btn-primary:hover{background:#ddb226}
+.trl-btn:focus-visible{outline:2px solid #f4c63d;outline-offset:1px}
