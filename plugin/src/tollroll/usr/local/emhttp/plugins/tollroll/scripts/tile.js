@@ -2,7 +2,11 @@
  * the dashboard is visible. Everything from the apps goes in as text, never
  * as HTML. The view and the apps chosen for the log are kept on the server, so
  * every browser finds the tile the way it was left. */
-(function () {
+(function (start) {
+  // The dashboard page runs before DashStats prints the tile it registered.
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})(function () {
   'use strict';
   var C = window.TollRollCore, L = window.TRL_T || {}, lang = window.TRL_LANG || 'en';
   var root = document.getElementById('trl');
@@ -561,4 +565,4 @@
       document.addEventListener('visibilitychange', schedule);
       schedule();
     });
-})();
+});
