@@ -54,6 +54,7 @@ Your whole fortress on one dashboard tile, with one log for every app. Joining t
 🎨 **Design**
 - Each row wears the app's own logo and colour from its status report, or its first letter when the report has none. A logo is checked and only ever drawn as an image, so nothing in it can run.
 - The log keeps its dark terminal look on every Unraid theme.
+- The fortress card on the settings page is the same in every one of our Unraid plugins and sits right at the top. It shows each app with its logo, how it runs and its version, and Open tells you how a plugin is doing.
 
 🌐 **Translations**
 - Every text in all 26 languages Unraid offers. Texts from your apps arrive in your language too, as far as each app has them.
