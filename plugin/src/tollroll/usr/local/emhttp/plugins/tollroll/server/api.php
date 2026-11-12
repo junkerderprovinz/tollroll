@@ -13,6 +13,7 @@
  *   POST api.php  path=notify_test data=JSON  -> POST /api/notify/test
  *   POST api.php  path=join        data=JSON  -> POST /api/fortress/join
  *   POST api.php  path=leave                  -> POST /api/fortress/leave
+ *   POST api.php  path=remove      data=JSON  -> POST /api/fortress/remove
  *   POST api.php  path=tile        data=JSON  -> PUT  /api/tile
  *
  * Notification secrets and the phrase go in through a POST and never come
@@ -25,6 +26,7 @@ $reads  = ['board' => '/api/board', 'icons' => '/api/icons', 'notify' => '/api/n
            'tile' => '/api/tile'];
 $writes = ['notify' => ['PUT', '/api/notify'], 'notify_test' => ['POST', '/api/notify/test'],
            'join' => ['POST', '/api/fortress/join'], 'leave' => ['POST', '/api/fortress/leave'],
+           'remove' => ['POST', '/api/fortress/remove'],
            'tile' => ['PUT', '/api/tile']];
 
 $fail = function ($code, $error) {

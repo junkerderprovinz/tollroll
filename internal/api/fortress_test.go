@@ -10,9 +10,10 @@ import (
 )
 
 type fakeFortress struct {
-	mu     sync.Mutex
-	joined string
-	fail   error
+	mu      sync.Mutex
+	joined  string
+	fail    error
+	removed []fortress.Removed
 }
 
 func (f *fakeFortress) Map() fortress.Map {
@@ -21,9 +22,27 @@ func (f *fakeFortress) Map() fortress.Map {
 	m := fortress.Map{Members: []fortress.Member{}}
 	if f.joined != "" {
 		m.Joined, m.Device = true, "tower"
-		m.Members = append(m.Members, fortress.Member{ID: "m1", App: "alpha", Name: "Alpha", Device: "cellar", Online: true})
+		m.Removed = f.removed
+		if len(f.removed) == 0 {
+			m.Members = append(m.Members, fortress.Member{ID: "m1", App: "alpha", Name: "Alpha", Device: "cellar", Online: true})
+		}
 	}
 	return m
+}
+
+func (f *fakeFortress) Remove(id string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	switch {
+	case f.fail != nil:
+		return f.fail
+	case f.joined == "":
+		return fortress.ErrNotJoined
+	case id != "m1" || len(f.removed) > 0:
+		return fortress.ErrNoMember
+	}
+	f.removed = []fortress.Removed{{App: "alpha", Name: "Alpha", Device: "cellar"}}
+	return nil
 }
 
 func (f *fakeFortress) Join(words string) error {
@@ -99,5 +118,36 @@ func TestLeavingIsServed(t *testing.T) {
 	code, out := e.do("POST", "/api/fortress/leave", "")
 	if code != 200 || out["joined"] != false || e.fort.joined != "" {
 		t.Fatalf("%d %v", code, out)
+	}
+}
+
+func TestRemovingAMemberAnswersWithTheMapThatNamesIt(t *testing.T) {
+	e := newEnv(t)
+	e.fort.joined = twelve
+	code, out := e.do("POST", "/api/fortress/remove", `{"id":"m1"}`)
+	if code != 200 || len(out["members"].([]any)) != 0 {
+		t.Fatalf("%d %v", code, out)
+	}
+	removed := out["removed"].([]any)
+	if len(removed) != 1 || removed[0].(map[string]any)["name"] != "Alpha" || removed[0].(map[string]any)["device"] != "cellar" {
+		t.Errorf("removed %v", out["removed"])
+	}
+}
+
+func TestARemovalThatCannotBeIsSaidSo(t *testing.T) {
+	e := newEnv(t)
+	if code, out := e.do("POST", "/api/fortress/remove", `{"id":"m1"}`); code != 409 || out["error"] != "not_joined" {
+		t.Errorf("outside a fortress: %d %v", code, out)
+	}
+	e.fort.joined = twelve
+	if code, out := e.do("POST", "/api/fortress/remove", `{"id":"m9"}`); code != 404 || out["error"] != "no_member" {
+		t.Errorf("a stranger: %d %v", code, out)
+	}
+	if code, out := e.do("POST", "/api/fortress/remove", `[`); code != 400 || out["error"] != "bad_request" {
+		t.Errorf("no body: %d %v", code, out)
+	}
+	e.fort.fail = errors.New("disk full")
+	if code, out := e.do("POST", "/api/fortress/remove", `{"id":"m1"}`); code != 500 || out["error"] != "remove_failed" {
+		t.Errorf("a failed removal: %d %v", code, out)
 	}
 }

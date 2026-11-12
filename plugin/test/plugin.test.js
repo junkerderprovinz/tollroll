@@ -60,7 +60,7 @@ test('the service, the proxy and the removal share one socket', () => {
 test('the proxy forwards only what the pages use', () => {
   const proxy = read('server', 'api.php');
   for (const route of ['/api/board', '/api/icons', '/api/notify', '/api/notify/test',
-    '/api/fortress', '/api/fortress/join', '/api/fortress/leave', '/api/tile']) {
+    '/api/fortress', '/api/fortress/join', '/api/fortress/leave', '/api/fortress/remove', '/api/tile']) {
     assert.ok(proxy.includes(`'${route}'`), route);
   }
   assert.doesNotMatch(proxy, /\/api\/(sources|discover|test)'/, 'apps come only through the fortress');

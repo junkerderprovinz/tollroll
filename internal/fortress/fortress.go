@@ -12,6 +12,7 @@ import (
 	"cmp"
 	"context"
 	_ "embed"
+	"encoding/json"
 	"errors"
 	"io/fs"
 	"os"
@@ -55,6 +56,13 @@ var (
 // ErrPhrase is a phrase that is not twelve words of the list.
 var ErrPhrase = errors.New("fortress: the phrase is not valid")
 
+// ErrNoMember is a removal of an ID that is no other member of the fortress.
+var ErrNoMember = errors.New("fortress: no other member has that id")
+
+// removedFile keeps the members the tile took out, with the keys of the
+// phrase they were taken out under.
+const removedFile = "removed.json"
+
 // Options say where the membership is kept and how the members are reached.
 type Options struct {
 	Dir string
@@ -73,8 +81,12 @@ type Options struct {
 // business and stays off the map.
 type Map struct {
 	Joined bool `json:"joined"`
-	// Removed says another member took the tile out, until it joins again.
-	Removed bool `json:"removed,omitempty"`
+	// RemovedHere says another member took the tile out, until it joins
+	// again.
+	RemovedHere bool `json:"removedHere,omitempty"`
+	// Removed are the members the tile took out since the phrase last
+	// changed, which the phrase would let back in.
+	Removed []Removed `json:"removed,omitempty"`
 	// PhraseChanged says the fortress has a new phrase the tile could not
 	// follow on its own, until the new words are entered.
 	PhraseChanged bool     `json:"phraseChanged,omitempty"`
@@ -96,6 +108,18 @@ type Member struct {
 	Online     bool      `json:"online"`
 	OnDemand   bool      `json:"onDemand,omitempty"`
 	LastSeen   time.Time `json:"lastSeen,omitzero"`
+}
+
+// Removed is a member the tile took out of the fortress.
+type Removed struct {
+	App    string `json:"app"`
+	Name   string `json:"name"`
+	Device string `json:"device"`
+}
+
+type removedList struct {
+	Group   string    `json:"group"`
+	Members []Removed `json:"members"`
 }
 
 // names are how the house's apps write their names, for a member that
@@ -142,9 +166,13 @@ type Service struct {
 	f             *kit.Fortress
 	lan           *lan.Service
 	device        string
-	removed       bool
+	removedHere   bool
 	phraseChanged bool
-	silent        map[string]time.Time
+	// group names the keys the fortress runs on and out the members taken out
+	// under them.
+	group  string
+	out    []Removed
+	silent map[string]time.Time
 	// following lets one follow run at a time without holding mu, so the
 	// tile is not kept waiting.
 	following sync.Mutex
@@ -207,24 +235,30 @@ func (s *Service) Join(words string) error {
 	if err != nil {
 		return err
 	}
-	s.removed, s.phraseChanged = false, false
+	s.removedHere, s.phraseChanged = false, false
 	return s.start(cfg)
 }
 
 // keepKey copies the membership kept in dir to next, where kit.Join finds
-// the member key and joins under it.
+// the member key and joins under it. The members taken out come along and
+// stay named if the phrase is the same.
 func keepKey(dir, next string) error {
-	raw, err := os.ReadFile(filepath.Join(dir, "fortress.json"))
-	if errors.Is(err, fs.ErrNotExist) {
-		return nil
+	for _, name := range []string{"fortress.json", removedFile} {
+		raw, err := os.ReadFile(filepath.Join(dir, name)) //nolint:gosec // G304: the operator names the directory
+		if errors.Is(err, fs.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		if err := os.MkdirAll(next, 0o700); err != nil {
+			return err
+		}
+		if err := os.WriteFile(filepath.Join(next, name), raw, 0o600); err != nil {
+			return err
+		}
 	}
-	if err != nil {
-		return err
-	}
-	if err := os.MkdirAll(next, 0o700); err != nil {
-		return err
-	}
-	return os.WriteFile(filepath.Join(next, "fortress.json"), raw, 0o600)
+	return nil
 }
 
 // Leave takes the tile out of its fortress and forgets the membership. The
@@ -232,7 +266,7 @@ func keepKey(dir, next string) error {
 func (s *Service) Leave() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.removed, s.phraseChanged = false, false
+	s.removedHere, s.phraseChanged = false, false
 	if err := s.stop(); err != nil {
 		return err
 	}
@@ -263,6 +297,7 @@ func (s *Service) start(cfg kit.Config) error {
 		return err
 	}
 	s.f, s.lan, s.device = f, cfg.LAN, cfg.Self.Name
+	s.group, s.out = cfg.Keys.Group, loadRemoved(s.opt.Dir, cfg.Keys.Group)
 	clear(s.silent)
 	return nil
 }
@@ -276,7 +311,74 @@ func (s *Service) stop() error {
 		errs = append(errs, s.lan.Close())
 	}
 	s.f, s.lan, s.device = nil, nil, ""
+	s.group, s.out = "", nil
 	return errors.Join(errs...)
+}
+
+// Remove takes member id out of the fortress, here and at every member in
+// reach, and names it until the phrase changes. The kit keeps it out after a
+// restart as well. The tile's own ID is no other member: it leaves
+// instead.
+func (s *Service) Remove(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.f == nil {
+		return ErrNotJoined
+	}
+	for _, mb := range s.f.Members() {
+		if mb.ID != id {
+			continue
+		}
+		if err := s.f.Remove(id); err != nil {
+			return err
+		}
+		out := append(slices.Clone(s.out), Removed{App: mb.App.ID, Name: appName(mb.App), Device: mb.Device})
+		if err := saveRemoved(s.opt.Dir, removedList{Group: s.group, Members: out}); err != nil {
+			return err
+		}
+		s.out = out
+		return nil
+	}
+	return ErrNoMember
+}
+
+// loadRemoved reads the members taken out under the keys of group. A list
+// kept under other keys is from a phrase the fortress has left, which lets
+// nobody back in, so it goes.
+func loadRemoved(dir, group string) []Removed {
+	path := filepath.Join(dir, removedFile)
+	raw, err := os.ReadFile(path) //nolint:gosec // G304: the operator names the directory
+	if err != nil {
+		return nil
+	}
+	var l removedList
+	if json.Unmarshal(raw, &l) != nil || l.Group != group {
+		_ = os.Remove(path)
+		return nil
+	}
+	return l.Members
+}
+
+// saveRemoved replaces the list in dir, readable by its owner alone, so that
+// a crash leaves the old list or the new one.
+func saveRemoved(dir string, l removedList) error {
+	raw, err := json.Marshal(l)
+	if err != nil {
+		return err
+	}
+	tmp, err := os.CreateTemp(dir, ".removed-*")
+	if err != nil {
+		return err
+	}
+	defer func() { _ = os.Remove(tmp.Name()) }()
+	if _, err := tmp.Write(raw); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmp.Name(), filepath.Join(dir, removedFile))
 }
 
 // removedBy forgets the membership once another member took it out. The key
@@ -292,7 +394,7 @@ func (s *Service) removedBy(gen int) {
 		}
 		_ = s.stop()
 		_ = os.RemoveAll(s.opt.Dir)
-		s.removed, s.phraseChanged = true, false
+		s.removedHere, s.phraseChanged = true, false
 	}()
 }
 
@@ -300,11 +402,11 @@ func (s *Service) removedBy(gen int) {
 func (s *Service) Map() Map {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	m := Map{Removed: s.removed, PhraseChanged: s.phraseChanged, Members: []Member{}}
+	m := Map{RemovedHere: s.removedHere, PhraseChanged: s.phraseChanged, Members: []Member{}}
 	if s.f == nil {
 		return m
 	}
-	m.Joined, m.Device = true, s.device
+	m.Joined, m.Device, m.Removed = true, s.device, slices.Clone(s.out)
 	for _, mb := range s.f.Members() {
 		if e, ok := entry(mb); ok {
 			m.Members = append(m.Members, e)

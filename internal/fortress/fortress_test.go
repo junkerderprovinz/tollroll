@@ -450,14 +450,14 @@ func TestRemovedByAnotherMemberTheTileLeaves(t *testing.T) {
 	if err := a.Remove(self); err != nil {
 		t.Fatal(err)
 	}
-	waitFor(t, "the tile to leave", func() bool { m := s.Map(); return !m.Joined && m.Removed })
+	waitFor(t, "the tile to leave", func() bool { m := s.Map(); return !m.Joined && m.RemovedHere })
 	if _, err := os.Stat(dir); !errors.Is(err, os.ErrNotExist) {
 		t.Errorf("a removed tile kept %s: %v", dir, err)
 	}
 	if err := s.Join(words); err != nil {
 		t.Fatal(err)
 	}
-	if m := s.Map(); !m.Joined || m.Removed {
+	if m := s.Map(); !m.Joined || m.RemovedHere {
 		t.Errorf("joining again after removal: %+v", m)
 	}
 }
@@ -532,9 +532,10 @@ func tilesOf(f *kit.Fortress) []kit.Member {
 }
 
 // changedPhrase has the tile in alpha's fortress, then alpha take a new
-// phrase while the tile holds the old keys. It returns the new phrase, alpha
-// as it runs under it and the tile's member ID.
-func changedPhrase(t *testing.T, url string, s *Service) (words string, alpha *kit.Fortress, tile string) {
+// phrase while the tile holds the old keys. before, unless nil, runs in the
+// old fortress just ahead of the change. It returns the new phrase, alpha as
+// it runs under it and the tile's member ID.
+func changedPhrase(t *testing.T, url string, s *Service, before func(old []byte)) (words string, alpha *kit.Fortress, tile string) {
 	t.Helper()
 	old, oldWords := newPhrase(t)
 	in := newInstance(t)
@@ -548,6 +549,9 @@ func changedPhrase(t *testing.T, url string, s *Service) (words string, alpha *k
 	}
 	waitFor(t, "alpha to know the tile", func() bool { return len(tilesOf(a)) == 1 })
 	tile = tilesOf(a)[0].ID
+	if before != nil {
+		before(old)
+	}
 
 	online := func() bool {
 		for _, mb := range s.Map().Members {
@@ -571,7 +575,7 @@ func TestAChangedPhraseIsFollowedAndTheReadTriedAgain(t *testing.T) {
 	url := relayServer(t)
 	dir := filepath.Join(t.TempDir(), "fortress")
 	s := openService(t, dir, url)
-	_, alpha, tile := changedPhrase(t, url, s)
+	_, alpha, tile := changedPhrase(t, url, s, nil)
 	src := s.Sources()[0]
 
 	rep, err := s.Reader().Report(context.Background(), src, "")
@@ -607,7 +611,7 @@ func TestAPhraseTheTileCannotFollowAsksForTheNewWords(t *testing.T) {
 
 	url := relayServer(t)
 	s := openService(t, filepath.Join(t.TempDir(), "fortress"), url)
-	words, alpha, tile := changedPhrase(t, url, s)
+	words, alpha, tile := changedPhrase(t, url, s, nil)
 
 	if _, err := s.Reader().Report(context.Background(), s.Sources()[0], ""); err == nil {
 		t.Fatal("the tile read alpha on the phrase it left")

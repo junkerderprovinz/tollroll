@@ -69,7 +69,7 @@
   function drawJoin(problem) {
     var changed = !!(fort && fort.phraseChanged), again = rejoin || changed;
     heading(again ? L.s_rejoin_sub : L.s_fortress_sub);
-    if (fort && (fort.removed || changed) && !rejoin) {
+    if (fort && (fort.removedHere || changed) && !rejoin) {
       var n = el('div', 'trs-note');
       n.appendChild(glyph('IconInfo'));
       n.appendChild(el('span', '', changed ? L.s_changed_note : L.s_removed_note));

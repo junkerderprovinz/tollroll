@@ -35,6 +35,7 @@ type Fortress interface {
 	Map() fortress.Map
 	Join(words string) error
 	Leave() error
+	Remove(id string) error
 }
 
 // New returns the handler. texts gives the words of a channel's test message.
@@ -49,6 +50,7 @@ func New(b *board.Board, ch *channels.Store, texts func() (string, alert.Texts),
 	mux.HandleFunc("GET /api/fortress", h.fortressMap)
 	mux.HandleFunc("POST /api/fortress/join", h.join)
 	mux.HandleFunc("POST /api/fortress/leave", h.leave)
+	mux.HandleFunc("POST /api/fortress/remove", h.remove)
 	mux.HandleFunc("GET /api/tile", h.tile)
 	mux.HandleFunc("PUT /api/tile", h.setTile)
 	return mux
@@ -106,6 +108,28 @@ func (h *handler) leave(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, h.fortress.Map())
+}
+
+// remove takes another member out of the fortress. The answer is the map,
+// which names it until the phrase changes.
+func (h *handler) remove(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		ID string `json:"id"`
+	}
+	if !readJSON(w, r, &body) {
+		return
+	}
+	err := h.fortress.Remove(body.ID)
+	switch {
+	case errors.Is(err, fortress.ErrNotJoined):
+		writeJSON(w, http.StatusConflict, map[string]string{"error": "not_joined"})
+	case errors.Is(err, fortress.ErrNoMember):
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "no_member"})
+	case err != nil:
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "remove_failed"})
+	default:
+		writeJSON(w, http.StatusOK, h.fortress.Map())
+	}
 }
 
 func (h *handler) view(w http.ResponseWriter, r *http.Request) {

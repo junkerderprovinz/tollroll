@@ -447,7 +447,7 @@
 
   function drawEmpty() {
     emptyEl.textContent = '';
-    var removed = fort && fort.removed;
+    var removed = fort && fort.removedHere;
     emptyEl.appendChild(glyph('IconFortress', 'trl-empty-gl'));
     var text = el('div', 'trl-empty-text');
     text.appendChild(el('b', '', removed ? L.t_removed_title : L.t_join_title));
