@@ -139,3 +139,16 @@ test('a removed TollRoll points at the current phrase, since the one it knew may
     assert.doesNotMatch(de[k], /entfernt/, `de.${k} says herausgenommen, as the apps do`);
   }
 });
+
+test('the phrase is found in an app that shows it, not on a page some apps lack', () => {
+  for (const l of LANGS) {
+    const tr = JSON.parse(read('lang', l + '.json'));
+    for (const k of ['s_join_hint', 's_change_where']) assert.ok(tr[k].includes('BombVault'), `${l}.${k}`);
+  }
+  const en = JSON.parse(read('lang', 'en.json'));
+  const de = JSON.parse(read('lang', 'de.json'));
+  for (const k of ['s_join_hint', 's_change_where']) {
+    assert.doesNotMatch(en[k], /Instances/, `en.${k}`);
+    assert.doesNotMatch(de[k], /Instanzen/, `de.${k}`);
+  }
+});

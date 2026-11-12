@@ -72,7 +72,7 @@ TollRoll can also tell you when something changes. Switch on Unraid's notificati
 
 <p><a id="3-the-fortress" href="#3-the-fortress"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/3-the-fortress-dark.svg"><img src=".github/assets/sections/3-the-fortress.svg" alt="3. The fortress" width="100%"></picture></a></p>
 
-A fortress is the group your apps form once they share one phrase: twelve words that every app of the fortress shows under **Instances**. TollRoll joins it like any other app, as a member that only reads.
+A fortress is the group your apps form once they share one phrase: twelve words that an app such as BombVault shows you. TollRoll joins it like any other app, as a member that only reads.
 
 To join, open **Settings → Utilities → TollRoll**, paste the phrase into the first field and press **Join**. The words spread over the twelve fields by themselves, and a mistyped or swapped word is caught before anything is saved. TollRoll keeps the keys it makes from the phrase, never the phrase itself.
 
@@ -117,7 +117,7 @@ TollRoll needs Unraid 6.12 or newer and at least one of your apps in a fortress,
 
 <p><a id="7-setup" href="#7-setup"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/7-setup-dark.svg"><img src=".github/assets/sections/7-setup.svg" alt="7. Setup" width="100%"></picture></a></p>
 
-1. Open **Instances** in any app of your fortress and copy its phrase, the twelve words.
+1. Copy the phrase, the twelve words, from an app of your fortress that shows it, such as BombVault.
 2. In Unraid, open **Settings → Utilities → TollRoll**, paste the phrase and join. Every app of the fortress shows up by itself.
 3. To get notified, fill in a channel under **Notifications** and try it with **Send a test message**. Every change in the settings is saved right away, a small tick says so.
 4. Open the **Dashboard**. The TollRoll tile sits in the middle column.
