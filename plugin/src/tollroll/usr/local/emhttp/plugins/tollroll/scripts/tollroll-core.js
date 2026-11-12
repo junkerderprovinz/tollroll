@@ -1,6 +1,6 @@
 /* What the pages show, worked out without the DOM: row texts and tones, the
  * log filter, the chips above the log, the apps chosen for the log view, the
- * map of the fortress, the labels, an app's mark and the
+ * map of the fortress, the labels, an app's mark, the members and the
  * notification form. tile.js and settings.js draw it, plugin/test/core.test.js
  * checks it under node. */
 (function (root, factory) {
@@ -249,6 +249,25 @@
     });
   }
 
+  function memberName(L, m) {
+    return fmt(L.s_member_on, { app: m.name || m.app, device: m.device });
+  }
+
+  // phrasePage is the web page of an app that keeps the phrase and so can
+  // change it, or null. TollRoll and the other plugins keep only keys.
+  function phrasePage(map, apps) {
+    var rows = {};
+    (apps || []).forEach(function (a) { rows[a.key] = a; });
+    var members = (map && map.members) || [];
+    for (var i = 0; i < members.length; i++) {
+      var m = members[i], row = rows[m.app];
+      if (m.deployment === 'plugin' || !m.online || !row) continue;
+      var href = safeLink(row.ui);
+      if (href) return { name: row.name, href: href };
+    }
+    return null;
+  }
+
   function ago(iso, lang, now) {
     var s = Math.round((new Date(iso) - (now || new Date())) / 1000);
     var steps = [[60, 'second'], [3600, 'minute'], [86400, 'hour'], [Infinity, 'day']];
@@ -270,5 +289,5 @@
   return { fmt: fmt, plural: plural, rowStatus: rowStatus, filterLog: filterLog, chips: chips, validFilter: validFilter,
     safeLink: safeLink, hue: hue, mark: mark, timeLabel: timeLabel, subtitle: subtitle, needsYou: needsYou, lang: lang,
     safeIcon: safeIcon, markColors: markColors, notifyForm: notifyForm, notifyChannels: notifyChannels,
-    shown: shown, selLabel: selLabel, mapDevices: mapDevices, ago: ago };
+    shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, phrasePage: phrasePage, ago: ago };
 });

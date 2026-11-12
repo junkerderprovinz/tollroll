@@ -107,6 +107,21 @@
 .trs-note{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:9px;background:color-mix(in srgb,#f4c63d 16%,transparent);font-size:12.5px;margin:12px 2px 4px}
 .trs-note svg{width:16px;height:16px;margin-top:1px}
 
+/* The other members, each with a quiet Remove at the end of its row. Nothing
+   that removes is painted red; the window asks first. */
+.trs-members{list-style:none;margin:0;padding:0;width:100%;display:grid;gap:4px}
+.trs-member{display:flex;align-items:center;gap:8px;min-width:0}
+.trs-member-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trs-dot.trs-away{opacity:.35}
+a.trs-btn,a.trs-btn:hover{text-decoration:none !important}
+.trs-btn.trs-quiet{padding:4px 10px 4px 8px;background:transparent !important;font-size:12.5px;opacity:.8}
+.trs-btn.trs-quiet:hover{background:var(--trs-btn) !important;opacity:1}
+.trs-btn.trs-quiet svg{width:14px;height:14px}
+/* Until the phrase changes, a line names who was taken out. */
+.trs-removed{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 2px 4px;font-size:12.5px;opacity:.85}
+.trs-removed > .trs-gl svg{width:15px;height:15px}
+.trs-removed-where{flex-basis:100%;padding-inline-start:23px;opacity:.85}
+
 .trs-dlg-back{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px;
   font:14px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif}
 .trs-dlg{width:min(460px,100%);background:#fff;color:#1c1c1c;border-radius:12px;padding:20px 22px 16px;box-shadow:0 18px 50px rgba(0,0,0,.35)}

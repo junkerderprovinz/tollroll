@@ -54,6 +54,8 @@
   /* The fortress card: the twelve words while the tile is in no fortress or
    * could not follow a changed phrase, what it sees once it is. */
   var fort = null, board = null, rejoin = false, words = [];
+  // landing takes the focus once the button that opened a window is gone.
+  var landing = null;
 
   function drawFort() {
     fortEl.textContent = '';
@@ -159,10 +161,48 @@
     fact(L.s_this_server, C.fmt(L.s_in_fortress, { device: fort.device }));
     fact(L.s_connection, conn, true);
     if (board) fact(L.s_in_tile, C.subtitle(board, L, lang, devices.length));
+    var peers = fort.members || [];
+    if (peers.length) {
+      dl.appendChild(el('dt', '', L.s_members));
+      var dd = el('dd');
+      var list = el('ul', 'trs-members');
+      peers.forEach(function (m, i) {
+        var li = el('li', 'trs-member');
+        li.appendChild(el('span', 'trs-dot ' + (m.online ? 'ok' : 'trs-away')));
+        var name = el('span', 'trs-member-name', C.memberName(L, m));
+        name.id = 'trs-member-' + i;
+        li.appendChild(name);
+        var rm = button('IconTrash', L.s_remove);
+        rm.classList.add('trs-quiet');
+        rm.setAttribute('aria-describedby', name.id);
+        rm.addEventListener('click', function () { confirmRemove(m, rm); });
+        li.appendChild(rm);
+        list.appendChild(li);
+      });
+      dd.appendChild(list);
+      dl.appendChild(dd);
+    }
     fortEl.appendChild(dl);
 
-    var tools = el('div', 'trs-tools');
     var map = button('IconFleet', L.s_map);
+    landing = map;
+    var gone = fort.removed || [];
+    if (gone.length) {
+      var note = el('div', 'trs-removed');
+      note.appendChild(glyph('IconInfo'));
+      var names = gone.map(function (r) { return C.memberName(L, r); }).join(', ');
+      note.appendChild(el('span', '', C.fmt(L.s_removed_list, { devices: names })));
+      var page = C.phrasePage(fort, board ? board.apps : []);
+      if (page) {
+        landing = phraseLink(page);
+        note.appendChild(landing);
+      } else {
+        note.appendChild(el('span', 'trs-removed-where', L.s_change_where));
+      }
+      fortEl.appendChild(note);
+    }
+
+    var tools = el('div', 'trs-tools');
     map.addEventListener('click', function () {
       get('tile').then(function (p) {
         return post('tile', { view: 'map', hidden: (p && p.hidden) || [] });
@@ -179,51 +219,134 @@
     fortEl.appendChild(tools);
   }
 
-  function confirmLeave(opener) {
-    var back = el('div', 'trs-dlg-back');
+  // The button to change the phrase opens an app that keeps it, since
+  // TollRoll has only keys.
+  function phraseLink(page, primary) {
+    var a = el('a', 'trs-btn ' + (primary ? 'trs-primary' : 'trs-quiet'));
+    a.href = page.href;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.title = C.fmt(L.t_open, { name: page.name });
+    a.appendChild(glyph('IconExternalLink'));
+    a.appendChild(el('span', '', L.s_change));
+    return a;
+  }
+
+  // dialog opens a window over the page. Each step replaces what it shows
+  // and returns the row for its buttons. Escape and a click beside it close
+  // it. The focus then goes back to the button that opened it, or where
+  // backTo says once that button is gone.
+  function dialog(back) {
+    var shade = el('div', 'trs-dlg-back');
     var box = el('div', 'trs-dlg');
     box.setAttribute('role', 'dialog');
     box.setAttribute('aria-modal', 'true');
     box.setAttribute('aria-labelledby', 'trs-dlg-h');
-    var h = el('h4', '', L.s_leave_q);
-    h.id = 'trs-dlg-h';
-    box.appendChild(h);
-    box.appendChild(el('p', '', L.s_leave_text));
-    var res = el('p', 'trs-res');
-    res.setAttribute('role', 'status');
-    var tools = el('div', 'trs-tools trs-dlg-tools');
-    var cancel = button('IconClose', L.s_cancel);
-    var yes = button('IconSignOut', L.s_leave_yes, true);
     function close() {
       dlgEl.textContent = '';
       document.removeEventListener('keydown', onKey);
-      opener.focus();
+      if (back) back.focus();
     }
     function onKey(e) { if (e.key === 'Escape') close(); }
-    cancel.addEventListener('click', close);
-    back.addEventListener('click', function (e) { if (e.target === back) close(); });
+    shade.addEventListener('click', function (e) { if (e.target === shade) close(); });
+    shade.appendChild(box);
+    dlgEl.appendChild(shade);
+    document.addEventListener('keydown', onKey);
+    return {
+      close: close,
+      backTo: function (n) { back = n; },
+      step: function (title, nodes) {
+        box.textContent = '';
+        var h = el('h4', '', title);
+        h.id = 'trs-dlg-h';
+        box.appendChild(h);
+        nodes.forEach(function (n) { box.appendChild(n); });
+        var tools = el('div', 'trs-tools trs-dlg-tools');
+        box.appendChild(tools);
+        return tools;
+      }
+    };
+  }
+
+  function statusLine() {
+    var res = el('p', 'trs-res');
+    res.setAttribute('role', 'status');
+    return res;
+  }
+
+  function failed(res, text) {
+    res.textContent = '';
+    res.appendChild(el('span', 'err', text));
+  }
+
+  function confirmLeave(opener) {
+    var d = dialog(opener);
+    var res = statusLine();
+    var tools = d.step(L.s_leave_q, [el('p', '', L.s_leave_text), res]);
+    var cancel = button('IconClose', L.s_cancel);
+    var yes = button('IconSignOut', L.s_leave_yes, true);
+    cancel.addEventListener('click', d.close);
     yes.addEventListener('click', function () {
       yes.disabled = true;
       post('leave').then(function (r) {
         if (r.error) {
           yes.disabled = false;
-          res.textContent = '';
-          res.appendChild(el('span', 'err', errorText(r.error === 'engine' ? 'engine' : 'leave_failed')));
+          failed(res, errorText(r.error === 'engine' ? 'engine' : 'leave_failed'));
           return;
         }
         fort = r;
-        close();
+        d.close();
         drawFort();
       });
     });
     tools.appendChild(cancel);
     tools.appendChild(yes);
-    box.appendChild(res);
-    box.appendChild(tools);
-    back.appendChild(box);
-    dlgEl.appendChild(back);
-    document.addEventListener('keydown', onKey);
     cancel.focus();
+  }
+
+  // confirmRemove asks before member m is taken out, then offers to change
+  // the phrase, which would still let it back in.
+  function confirmRemove(m, opener) {
+    var d = dialog(opener);
+    var name = C.memberName(L, m);
+    var res = statusLine();
+    var tools = d.step(C.fmt(L.s_remove_q, { device: name }), [el('p', '', C.fmt(L.s_remove_text, { device: name })), res]);
+    var cancel = button('IconClose', L.s_cancel);
+    var yes = button('IconTrash', L.s_remove, true);
+    cancel.addEventListener('click', d.close);
+    yes.addEventListener('click', function () {
+      yes.disabled = true;
+      post('remove', { id: m.id }).then(function (r) {
+        if (r.error) {
+          yes.disabled = false;
+          failed(res, errorText(/^(engine|no_member|not_joined)$/.test(r.error) ? r.error : 'remove_failed'));
+          return;
+        }
+        fort = r;
+        drawFort();
+        d.backTo(landing);
+        offer(d, name);
+      });
+    });
+    tools.appendChild(cancel);
+    tools.appendChild(yes);
+    yes.focus();
+  }
+
+  function offer(d, name) {
+    var page = C.phrasePage(fort, board ? board.apps : []);
+    var tools = d.step(L.s_removed_q, [el('p', '', C.fmt(L.s_removed_text, { device: name })), el('p', 'trs-hint', L.s_change_where)]);
+    var later = button('IconClose', L.s_later);
+    later.addEventListener('click', d.close);
+    tools.appendChild(later);
+    if (!page) {
+      later.focus();
+      return;
+    }
+    var change = phraseLink(page, true);
+    change.addEventListener('click', d.close);
+    tools.appendChild(change);
+    change.focus();
   }
 
   function loadFort() {

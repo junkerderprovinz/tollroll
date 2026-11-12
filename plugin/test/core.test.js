@@ -234,3 +234,25 @@ test('a time in the past reads as how long ago', () => {
   assert.equal(core.ago('2026-11-10T09:00:00Z', 'en', now), '3 hours ago');
   assert.equal(core.ago('2026-11-10T11:58:00Z', 'de', now), 'vor 2 Minuten');
 });
+
+test('a member is named by its app and its device', () => {
+  assert.equal(core.memberName(en, { app: 'bombvault', name: 'BombVault', device: 'cellar' }), 'BombVault on cellar');
+  assert.equal(core.memberName(de, { app: 'bombvault', name: 'BombVault', device: 'cellar' }), 'BombVault auf cellar');
+  assert.equal(core.memberName(en, { app: 'lantern', device: 'attic' }), 'lantern on attic');
+});
+
+test('a new phrase is made in an app that keeps the phrase, never in a plugin', () => {
+  const map = { device: 'tower', members: [
+    { id: 'p', app: 'shiplog', device: 'tower', deployment: 'plugin', online: true },
+    { id: 'k', app: 'knightloader', device: 'cellar', deployment: 'container', online: false },
+    { id: 'b', app: 'bombvault', device: 'cellar', deployment: 'container', online: true }
+  ] };
+  const apps = [
+    app({ key: 'shiplog', name: 'ShipLog', ui: 'http://tower/Settings/shiplog' }),
+    app({ key: 'knightloader', name: 'KnightLoader', ui: 'http://cellar:8080' }),
+    app({ key: 'bombvault', name: 'BombVault', ui: 'http://cellar:3000' })
+  ];
+  assert.deepEqual(core.phrasePage(map, apps), { name: 'BombVault', href: 'http://cellar:3000' });
+  assert.equal(core.phrasePage(map, apps.slice(0, 2)), null);
+  assert.equal(core.phrasePage(map, [app({ key: 'bombvault', name: 'BombVault', ui: 'javascript:alert(1)' })]), null);
+});
