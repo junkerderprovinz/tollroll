@@ -155,5 +155,11 @@
   "t_win_next": "Na řadě",
   "t_win_quiet": "Teď nic nepotřebuje tvou pozornost a nic neběží.",
   "t_win_where": "Nastavení najdeš v Unraidu na {devices}.",
-  "t_close": "Zavřít"
+  "t_close": "Zavřít",
+  "r_next_check": "Kontroluje tvoje aplikace",
+  "r_told_down": "Dal ti vědět, že {name} není dostupná",
+  "r_told_back": "Dal ti vědět, že {name} je zase dostupná",
+  "r_told_need": "Dal ti vědět, že {name} tě potřebuje",
+  "r_send_failed": "Oznámení přes {channel} se nepodařilo odeslat",
+  "r_removed": "{app} na {device} vyjmut z pevnosti"
 }

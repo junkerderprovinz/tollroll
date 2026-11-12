@@ -244,6 +244,32 @@ func TestAWatcherReadsTheAppsOnlyWhileAChannelIsOn(t *testing.T) {
 	}
 }
 
+type journal struct {
+	checks int
+	told   []string
+}
+
+func (j *journal) Checked(time.Time) { j.checks++ }
+
+func (j *journal) Told(e notify.Event, _ []notify.Result) { j.told = append(j.told, e.Kind) }
+
+func TestTheJournalHearsEveryCheckAndWhatWasSent(t *testing.T) {
+	seen := []board.Seen{up()}
+	j := &journal{}
+	w := &Watcher{
+		Check:    func(context.Context, string) []board.Seen { return seen },
+		Channels: &sender{on: true},
+		Texts:    func() (string, Texts) { return "en", en },
+		Journal:  j,
+	}
+	w.step(context.Background())
+	seen = []board.Seen{up(need("n1", status.SeverityWarn, "x"))}
+	w.step(context.Background())
+	if j.checks != 2 || strings.Join(j.told, ",") != KindNeed {
+		t.Errorf("the journal heard %d checks and %v", j.checks, j.told)
+	}
+}
+
 func TestAppTextsReachTheChannelsAsShortPlainText(t *testing.T) {
 	var tr Tracker
 	s := board.Seen{Source: "s1", Name: "Al<b>pha\x07"}

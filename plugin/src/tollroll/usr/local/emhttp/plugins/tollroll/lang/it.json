@@ -147,5 +147,11 @@
   "t_win_next": "In arrivo",
   "t_win_quiet": "Al momento niente ha bisogno di te e niente è in corso.",
   "t_win_where": "Le sue impostazioni sono in Unraid su {devices}.",
-  "t_close": "Chiudi"
+  "t_close": "Chiudi",
+  "r_next_check": "Controlla le tue app",
+  "r_told_down": "Ti ha avvisato che {name} non è raggiungibile",
+  "r_told_back": "Ti ha avvisato che {name} è di nuovo raggiungibile",
+  "r_told_need": "Ti ha avvisato che {name} ha bisogno di te",
+  "r_send_failed": "Impossibile inviare una notifica tramite {channel}",
+  "r_removed": "Ha tolto {app} su {device} dalla fortezza"
 }

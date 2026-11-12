@@ -230,14 +230,21 @@ type Sender interface {
 	Send(ctx context.Context, e notify.Event) []notify.Result
 }
 
+// Journal hears what a Watcher does, for TollRoll's own status.
+type Journal interface {
+	Checked(at time.Time)
+	Told(e notify.Event, results []notify.Result)
+}
+
 // Watcher reads the apps every so often while a channel is on and sends what
 // changed. Check reads the board in a language, Texts names the language to
-// write in and its strings.
+// write in and its strings. Journal may be nil.
 type Watcher struct {
 	Every    time.Duration
 	Check    func(ctx context.Context, lang string) []board.Seen
 	Channels Sender
 	Texts    func() (string, Texts)
+	Journal  Journal
 
 	tracker *Tracker
 }
@@ -267,7 +274,11 @@ func (w *Watcher) step(ctx context.Context) {
 		w.tracker = &Tracker{}
 	}
 	lang, tx := w.Texts()
-	for _, e := range w.tracker.Next(w.Check(ctx, lang), tx) {
+	events := w.tracker.Next(w.Check(ctx, lang), tx)
+	if w.Journal != nil {
+		w.Journal.Checked(time.Now())
+	}
+	for _, e := range events {
 		sctx, cancel := context.WithTimeout(ctx, sendFor)
 		results := w.Channels.Send(sctx, e)
 		cancel()
@@ -275,6 +286,9 @@ func (w *Watcher) step(ctx context.Context) {
 			if !r.OK() {
 				slog.Warn("notification failed", "channel", r.Channel, "code", r.Code, "err", r.Err)
 			}
+		}
+		if w.Journal != nil {
+			w.Journal.Told(e, results)
 		}
 	}
 }

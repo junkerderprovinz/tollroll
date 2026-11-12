@@ -139,5 +139,11 @@
   "t_win_next": "Következik",
   "t_win_quiet": "Most semmi sem vár rád, és semmi sem fut.",
   "t_win_where": "A beállításai az Unraidben vannak, itt: {devices}.",
-  "t_close": "Bezárás"
+  "t_close": "Bezárás",
+  "r_next_check": "Ellenőrzi az alkalmazásaidat",
+  "r_told_down": "Szólt, hogy a(z) {name} nem érhető el",
+  "r_told_back": "Szólt, hogy a(z) {name} újra elérhető",
+  "r_told_need": "Szólt, hogy a(z) {name} rád vár",
+  "r_send_failed": "Nem sikerült értesítést küldeni ezen: {channel}",
+  "r_removed": "Kivette a(z) {app} alkalmazást ({device}) az erődből"
 }

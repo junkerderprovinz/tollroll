@@ -17,12 +17,14 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/parleyport/kit/notify"
+	"github.com/junkerderprovinz/parleyport/kit/status"
 
 	"github.com/junkerderprovinz/tollroll/internal/alert"
 	"github.com/junkerderprovinz/tollroll/internal/api"
 	"github.com/junkerderprovinz/tollroll/internal/board"
 	"github.com/junkerderprovinz/tollroll/internal/channels"
 	"github.com/junkerderprovinz/tollroll/internal/fortress"
+	"github.com/junkerderprovinz/tollroll/internal/journal"
 	"github.com/junkerderprovinz/tollroll/internal/prefs"
 )
 
@@ -68,7 +70,12 @@ func run(ctx context.Context, cfg config) error {
 		return err
 	}
 	device, _ := os.Hostname()
-	fort, err := fortress.Open(fortress.Options{Dir: cfg.Fortress, Device: device, Version: version, LAN: true})
+	j := &journal.Journal{
+		App:   status.App{ID: fortress.AppID, Name: "TollRoll", Version: version, Icon: fortress.Icon},
+		Every: checkEvery,
+		Texts: func(lang string) map[string]string { return alert.LoadTexts(cfg.LangDir, lang) },
+	}
+	fort, err := fortress.Open(fortress.Options{Dir: cfg.Fortress, Device: device, Version: version, LAN: true, Journal: j})
 	if err != nil {
 		return err
 	}
@@ -86,7 +93,7 @@ func run(ctx context.Context, cfg config) error {
 		Handler:           api.New(b, ch, texts, fort, prefs.Open(cfg.Tile)),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
-	w := &alert.Watcher{Every: checkEvery, Check: b.Check, Channels: ch, Texts: texts}
+	w := &alert.Watcher{Every: checkEvery, Check: b.Check, Channels: ch, Texts: texts, Journal: j}
 	go w.Run(ctx)
 	go func() {
 		<-ctx.Done()

@@ -139,5 +139,11 @@
   "t_win_next": "Härnäst",
   "t_win_quiet": "Just nu behöver inget dig och inget körs.",
   "t_win_where": "Inställningarna finns i Unraid på {devices}.",
-  "t_close": "Stäng"
+  "t_close": "Stäng",
+  "r_next_check": "Kollar dina appar",
+  "r_told_down": "Sa till att {name} inte går att nå",
+  "r_told_back": "Sa till att {name} går att nå igen",
+  "r_told_need": "Sa till att {name} behöver dig",
+  "r_send_failed": "Kunde inte skicka en avisering via {channel}",
+  "r_removed": "Tog ut {app} på {device} ur fästningen"
 }

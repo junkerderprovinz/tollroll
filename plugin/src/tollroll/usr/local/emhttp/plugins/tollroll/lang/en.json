@@ -139,5 +139,11 @@
   "t_win_next": "Coming up",
   "t_win_quiet": "Nothing needs you and nothing is running right now.",
   "t_win_where": "Its settings are in Unraid on {devices}.",
-  "t_close": "Close"
+  "t_close": "Close",
+  "r_next_check": "Checking your apps",
+  "r_told_down": "Let you know that {name} is not reachable",
+  "r_told_back": "Let you know that {name} is reachable again",
+  "r_told_need": "Let you know that {name} needs you",
+  "r_send_failed": "Couldn't send a notification through {channel}",
+  "r_removed": "Took {app} on {device} out of the fortress"
 }

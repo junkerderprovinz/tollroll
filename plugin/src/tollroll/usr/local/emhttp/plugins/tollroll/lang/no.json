@@ -139,5 +139,11 @@
   "t_win_next": "Neste",
   "t_win_quiet": "Akkurat nå trenger ingenting deg, og ingenting kjører.",
   "t_win_where": "Innstillingene ligger i Unraid på {devices}.",
-  "t_close": "Lukk"
+  "t_close": "Lukk",
+  "r_next_check": "Sjekker appene dine",
+  "r_told_down": "Ga deg beskjed om at {name} ikke kan nås",
+  "r_told_back": "Ga deg beskjed om at {name} kan nås igjen",
+  "r_told_need": "Ga deg beskjed om at {name} trenger deg",
+  "r_send_failed": "Kunne ikke sende et varsel via {channel}",
+  "r_removed": "Tok {app} på {device} ut av festningen"
 }

@@ -147,5 +147,11 @@
   "t_win_next": "בהמשך",
   "t_win_quiet": "כרגע שום דבר לא צריך אותך ושום דבר לא פועל.",
   "t_win_where": "ההגדרות שלו נמצאות ב-Unraid על {devices}.",
-  "t_close": "סגירה"
+  "t_close": "סגירה",
+  "r_next_check": "בודק את האפליקציות שלך",
+  "r_told_down": "עדכן אותך ש-{name} לא זמין",
+  "r_told_back": "עדכן אותך ש-{name} זמין שוב",
+  "r_told_need": "עדכן אותך ש-{name} צריך אותך",
+  "r_send_failed": "לא הצליח לשלוח התראה דרך {channel}",
+  "r_removed": "הוציא את {app} ב-{device} מהמבצר"
 }

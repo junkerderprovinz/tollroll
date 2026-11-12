@@ -139,5 +139,11 @@
   "t_win_next": "Næste",
   "t_win_quiet": "Lige nu har intet brug for dig, og intet kører.",
   "t_win_where": "Indstillingerne ligger i Unraid på {devices}.",
-  "t_close": "Luk"
+  "t_close": "Luk",
+  "r_next_check": "Tjekker dine apps",
+  "r_told_down": "Gav dig besked om, at {name} ikke kan nås",
+  "r_told_back": "Gav dig besked om, at {name} kan nås igen",
+  "r_told_need": "Gav dig besked om, at {name} har brug for dig",
+  "r_send_failed": "Kunne ikke sende en besked via {channel}",
+  "r_removed": "Tog {app} på {device} ud af fæstningen"
 }

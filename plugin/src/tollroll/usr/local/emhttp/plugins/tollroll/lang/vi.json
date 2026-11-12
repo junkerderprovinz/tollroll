@@ -131,5 +131,11 @@
   "t_win_next": "Sắp tới",
   "t_win_quiet": "Lúc này không có gì cần bạn và không có gì đang chạy.",
   "t_win_where": "Cài đặt nằm trong Unraid trên {devices}.",
-  "t_close": "Đóng"
+  "t_close": "Đóng",
+  "r_next_check": "Đang kiểm tra các ứng dụng của bạn",
+  "r_told_down": "Đã báo bạn rằng {name} không truy cập được",
+  "r_told_back": "Đã báo bạn rằng {name} truy cập lại được",
+  "r_told_need": "Đã báo bạn rằng {name} cần bạn",
+  "r_send_failed": "Không gửi được thông báo qua {channel}",
+  "r_removed": "Đã đưa {app} trên {device} ra khỏi pháo đài"
 }

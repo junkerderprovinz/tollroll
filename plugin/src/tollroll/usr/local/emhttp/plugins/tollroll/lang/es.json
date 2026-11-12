@@ -147,5 +147,11 @@
   "t_win_next": "A continuación",
   "t_win_quiet": "Ahora mismo nada te necesita y nada está en marcha.",
   "t_win_where": "Sus ajustes están en Unraid en {devices}.",
-  "t_close": "Cerrar"
+  "t_close": "Cerrar",
+  "r_next_check": "Revisando tus apps",
+  "r_told_down": "Te avisó de que {name} no está accesible",
+  "r_told_back": "Te avisó de que {name} vuelve a estar accesible",
+  "r_told_need": "Te avisó de que {name} te necesita",
+  "r_send_failed": "No se pudo enviar un aviso por {channel}",
+  "r_removed": "Sacó {app} en {device} de la fortaleza"
 }

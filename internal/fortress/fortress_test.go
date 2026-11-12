@@ -21,6 +21,7 @@ import (
 	"github.com/junkerderprovinz/parleyport/kit/status"
 
 	"github.com/junkerderprovinz/tollroll/internal/board"
+	"github.com/junkerderprovinz/tollroll/internal/journal"
 )
 
 func relayServer(t *testing.T) string {
@@ -693,4 +694,40 @@ func TestTheOtherMembersSeeTheTilesLogoAndServer(t *testing.T) {
 		}
 		return false
 	})
+}
+
+func TestTheOtherMembersReadTheTilesOwnStatus(t *testing.T) {
+	url := relayServer(t)
+	secret, words := newPhrase(t)
+	a := openApp(t, url, secret, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
+	j := &journal.Journal{App: status.App{ID: AppID, Name: "TollRoll", Version: "0.2.0"}, Every: time.Minute,
+		Texts: func(string) map[string]string { return map[string]string{"r_removed": "Took {app} on {device} out"} }}
+	s, err := Open(Options{Dir: filepath.Join(t.TempDir(), "fortress"), Device: "tower", Version: "0.2.0", Relay: url, Journal: j})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = s.Close() })
+	if err := s.Join(words); err != nil {
+		t.Fatal(err)
+	}
+	var self string
+	waitFor(t, "alpha to see the tile", func() bool {
+		for _, m := range a.Members() {
+			if m.App.ID == AppID {
+				self = m.ID
+				return true
+			}
+		}
+		return false
+	})
+	var rep status.Report
+	waitFor(t, "the tile's status", func() bool {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		rep, err = a.Status(ctx, self, "en")
+		return err == nil
+	})
+	if rep.App.ID != AppID || rep.App.Version != "0.2.0" || rep.Instance.ID != self || rep.Instance.Name != "tower" || rep.State != status.StateOK {
+		t.Errorf("the tile reports %+v", rep)
+	}
 }

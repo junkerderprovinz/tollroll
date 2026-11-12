@@ -3,9 +3,9 @@
 // member key. The phrase itself is never kept.
 //
 // The tile takes part as an instance of the app "tollroll" that offers no
-// action and uses none: it only reads. It opens no port of its own, so it
-// reaches the others directly on this network or through the relay, and
-// nobody needs to reach it.
+// action and uses none: it reads the others and reports only its own status.
+// It opens no port of its own, so it reaches the others directly on this
+// network or through the relay, which carries their calls back to it.
 package fortress
 
 import (
@@ -29,17 +29,17 @@ import (
 	"github.com/junkerderprovinz/parleyport/kit/status"
 
 	"github.com/junkerderprovinz/tollroll/internal/board"
+	"github.com/junkerderprovinz/tollroll/internal/journal"
 )
 
 // AppID is the app the tile joins as.
 const AppID = "tollroll"
 
-// logoSVG is the TollRoll mark the other members show for the tile.
-//
 //go:embed logo.svg
 var logoSVG []byte
 
-var icon, _ = status.IconFromSVG(logoSVG)
+// Icon is the TollRoll mark the other members show for the tile.
+var Icon, _ = status.IconFromSVG(logoSVG)
 
 // silentFor is how long a member that serves no status stays off the tile
 // before it is asked again, in case its app learned to report.
@@ -78,6 +78,9 @@ type Options struct {
 	Relay string
 	// LAN finds the members on this network too.
 	LAN bool
+	// Journal is what the other members read about the tile, nil for no
+	// status.
+	Journal *journal.Journal
 }
 
 // Map is the fortress as the tile sees it: this server and every other
@@ -287,8 +290,12 @@ func (s *Service) Close() error {
 }
 
 func (s *Service) start(cfg kit.Config) error {
-	cfg.App = kit.App{ID: AppID, Name: "TollRoll", Version: s.opt.Version, Icon: icon}
+	cfg.App = kit.App{ID: AppID, Name: "TollRoll", Version: s.opt.Version, Icon: Icon}
 	cfg.Host = s.opt.Device
+	if j := s.opt.Journal; j != nil {
+		cfg.Status = j
+		j.SetInstance(status.Instance{ID: cfg.Identity.ID(), Name: cfg.Self.Name})
+	}
 	if cfg.LAN != nil {
 		cfg.LAN.Start()
 	}
@@ -343,6 +350,9 @@ func (s *Service) Remove(id string) error {
 			return err
 		}
 		s.out = out
+		if s.opt.Journal != nil {
+			s.opt.Journal.Removed(appName(mb.App), mb.Device)
+		}
 		return nil
 	}
 	return ErrNoMember

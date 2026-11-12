@@ -147,5 +147,11 @@
   "t_win_next": "À venir",
   "t_win_quiet": "Rien ne te réclame et rien ne tourne en ce moment.",
   "t_win_where": "Ses réglages sont dans Unraid sur {devices}.",
-  "t_close": "Fermer"
+  "t_close": "Fermer",
+  "r_next_check": "Vérifie tes apps",
+  "r_told_down": "T'a prévenu que {name} est injoignable",
+  "r_told_back": "T'a prévenu que {name} est de nouveau joignable",
+  "r_told_need": "T'a prévenu que {name} a besoin de toi",
+  "r_send_failed": "Impossible d'envoyer une notification via {channel}",
+  "r_removed": "A retiré {app} sur {device} de la forteresse"
 }

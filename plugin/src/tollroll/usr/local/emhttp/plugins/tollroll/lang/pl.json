@@ -155,5 +155,11 @@
   "t_win_next": "Wkrótce",
   "t_win_quiet": "Teraz nic nie potrzebuje twojej uwagi i nic nie działa.",
   "t_win_where": "Ustawienia są w Unraidzie na {devices}.",
-  "t_close": "Zamknij"
+  "t_close": "Zamknij",
+  "r_next_check": "Sprawdza twoje aplikacje",
+  "r_told_down": "Dał ci znać, że {name} jest nieosiągalny",
+  "r_told_back": "Dał ci znać, że {name} znów jest osiągalny",
+  "r_told_need": "Dał ci znać, że {name} cię potrzebuje",
+  "r_send_failed": "Nie udało się wysłać powiadomienia przez {channel}",
+  "r_removed": "Wyjął {app} na {device} z twierdzy"
 }

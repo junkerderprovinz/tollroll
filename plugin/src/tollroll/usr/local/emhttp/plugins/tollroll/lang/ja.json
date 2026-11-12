@@ -131,5 +131,11 @@
   "t_win_next": "予定",
   "t_win_quiet": "いま対応が必要なものも、実行中のものもありません。",
   "t_win_where": "設定は {devices} の Unraid にあります。",
-  "t_close": "閉じる"
+  "t_close": "閉じる",
+  "r_next_check": "アプリを確認中",
+  "r_told_down": "{name} に接続できないことを知らせました",
+  "r_told_back": "{name} に再び接続できることを知らせました",
+  "r_told_need": "{name} が対応を求めていることを知らせました",
+  "r_send_failed": "{channel} で通知を送れませんでした",
+  "r_removed": "{device} の {app} を砦から外しました"
 }

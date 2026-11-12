@@ -139,5 +139,11 @@
   "t_win_next": "Als Nächstes",
   "t_win_quiet": "Gerade braucht dich nichts und nichts läuft.",
   "t_win_where": "Die Einstellungen liegen in Unraid auf {devices}.",
-  "t_close": "Schließen"
+  "t_close": "Schließen",
+  "r_next_check": "Prüft deine Apps",
+  "r_told_down": "Dir gemeldet, dass {name} nicht erreichbar ist",
+  "r_told_back": "Dir gemeldet, dass {name} wieder erreichbar ist",
+  "r_told_need": "Dir gemeldet, dass {name} dich braucht",
+  "r_send_failed": "Konnte keine Benachrichtigung über {channel} senden",
+  "r_removed": "{app} auf {device} aus der Festung herausgenommen"
 }

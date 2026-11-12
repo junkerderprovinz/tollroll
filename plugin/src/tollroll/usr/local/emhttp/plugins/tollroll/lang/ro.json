@@ -147,5 +147,11 @@
   "t_win_next": "Urmează",
   "t_win_quiet": "Acum nimic nu are nevoie de tine și nimic nu rulează.",
   "t_win_where": "Setările sunt în Unraid pe {devices}.",
-  "t_close": "Închide"
+  "t_close": "Închide",
+  "r_next_check": "Verifică aplicațiile tale",
+  "r_told_down": "Ți-a spus că {name} nu este accesibil",
+  "r_told_back": "Ți-a spus că {name} este din nou accesibil",
+  "r_told_need": "Ți-a spus că {name} are nevoie de tine",
+  "r_send_failed": "Nu a putut trimite o notificare prin {channel}",
+  "r_removed": "A scos {app} de pe {device} din fortăreață"
 }

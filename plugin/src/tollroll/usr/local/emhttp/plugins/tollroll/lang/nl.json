@@ -139,5 +139,11 @@
   "t_win_next": "Hierna",
   "t_win_quiet": "Er heeft je nu niets nodig en er loopt niets.",
   "t_win_where": "De instellingen staan in Unraid op {devices}.",
-  "t_close": "Sluiten"
+  "t_close": "Sluiten",
+  "r_next_check": "Controleert je apps",
+  "r_told_down": "Liet je weten dat {name} niet bereikbaar is",
+  "r_told_back": "Liet je weten dat {name} weer bereikbaar is",
+  "r_told_need": "Liet je weten dat {name} je nodig heeft",
+  "r_send_failed": "Kon geen melding sturen via {channel}",
+  "r_removed": "Haalde {app} op {device} uit het fort"
 }

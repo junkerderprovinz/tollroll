@@ -139,5 +139,11 @@
   "t_win_next": "Seuraavaksi",
   "t_win_quiet": "Juuri nyt mikään ei tarvitse sinua eikä mikään ole käynnissä.",
   "t_win_where": "Asetukset ovat Unraidissa laitteella {devices}.",
-  "t_close": "Sulje"
+  "t_close": "Sulje",
+  "r_next_check": "Tarkistaa sovelluksesi",
+  "r_told_down": "Kertoi, ettei {name} ole tavoitettavissa",
+  "r_told_back": "Kertoi, että {name} on taas tavoitettavissa",
+  "r_told_need": "Kertoi, että {name} tarvitsee sinua",
+  "r_send_failed": "Ilmoitusta ei saatu lähetettyä kautta {channel}",
+  "r_removed": "Otti {app} laitteella {device} pois linnoituksesta"
 }

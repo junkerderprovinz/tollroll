@@ -139,5 +139,11 @@
   "t_win_next": "Sırada",
   "t_win_quiet": "Şu an seni bekleyen bir şey yok ve hiçbir şey çalışmıyor.",
   "t_win_where": "Ayarları {devices} üzerindeki Unraid içinde.",
-  "t_close": "Kapat"
+  "t_close": "Kapat",
+  "r_next_check": "Uygulamalarını kontrol ediyor",
+  "r_told_down": "{name} uygulamasına ulaşılamadığını bildirdi",
+  "r_told_back": "{name} uygulamasına yeniden ulaşılabildiğini bildirdi",
+  "r_told_need": "{name} uygulamasının seni beklediğini bildirdi",
+  "r_send_failed": "{channel} üzerinden bildirim gönderilemedi",
+  "r_removed": "{device} üzerindeki {app} uygulamasını kaleden çıkardı"
 }

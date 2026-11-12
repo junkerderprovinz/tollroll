@@ -131,5 +131,11 @@
   "t_win_next": "接下来",
   "t_win_quiet": "现在没有需要你处理的事，也没有正在运行的任务。",
   "t_win_where": "它的设置在 {devices} 上的 Unraid 里。",
-  "t_close": "关闭"
+  "t_close": "关闭",
+  "r_next_check": "正在检查你的应用",
+  "r_told_down": "已告诉你 {name} 无法连接",
+  "r_told_back": "已告诉你 {name} 又能连接了",
+  "r_told_need": "已告诉你 {name} 需要你处理",
+  "r_send_failed": "无法通过 {channel} 发送通知",
+  "r_removed": "已将 {device} 上的 {app} 移出堡垒"
 }

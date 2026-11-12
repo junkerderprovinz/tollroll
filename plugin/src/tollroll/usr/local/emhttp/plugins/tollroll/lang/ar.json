@@ -171,5 +171,11 @@
   "t_win_next": "التالي",
   "t_win_quiet": "لا شيء يحتاجك ولا شيء قيد التشغيل الآن.",
   "t_win_where": "إعداداته في Unraid على {devices}.",
-  "t_close": "إغلاق"
+  "t_close": "إغلاق",
+  "r_next_check": "يفحص تطبيقاتك",
+  "r_told_down": "أخبرك أن {name} غير متاح",
+  "r_told_back": "أخبرك أن {name} متاح من جديد",
+  "r_told_need": "أخبرك أن {name} يحتاجك",
+  "r_send_failed": "تعذّر إرسال إشعار عبر {channel}",
+  "r_removed": "أخرج {app} على {device} من الحصن"
 }
