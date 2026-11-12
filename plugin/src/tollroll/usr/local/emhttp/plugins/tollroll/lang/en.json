@@ -116,7 +116,7 @@
   "e_leave_failed": "TollRoll could not leave, try again in a moment",
   "s_members": "Other members",
   "s_remove": "Remove",
-  "s_member_on": "{app} on {device}",
+  "t_member_on": "{app} on {device}",
   "s_remove_q": "Remove {device}?",
   "s_remove_text": "{device} loses its access right away. This can't be undone.",
   "s_removed_q": "Change the phrase now?",

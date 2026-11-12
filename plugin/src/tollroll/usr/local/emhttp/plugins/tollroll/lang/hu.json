@@ -116,7 +116,7 @@
   "e_leave_failed": "A TollRoll nem tudott kilépni, próbáld újra egy kicsit később",
   "s_members": "További tagok",
   "s_remove": "Eltávolítás",
-  "s_member_on": "{app} itt: {device}",
+  "t_member_on": "{app} itt: {device}",
   "s_remove_q": "Eltávolítod: {device}?",
   "s_remove_text": "{device} azonnal elveszíti a hozzáférését. Ez nem vonható vissza.",
   "s_removed_q": "Megváltoztatod most a jelmondatot?",

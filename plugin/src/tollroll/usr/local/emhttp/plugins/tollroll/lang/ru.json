@@ -128,7 +128,7 @@
   "e_leave_failed": "TollRoll не удалось покинуть крепость, попробуйте ещё раз чуть позже",
   "s_members": "Другие участники",
   "s_remove": "Удалить",
-  "s_member_on": "{app} на {device}",
+  "t_member_on": "{app} на {device}",
   "s_remove_q": "Удалить {device}?",
   "s_remove_text": "{device} сразу теряет доступ. Это нельзя отменить.",
   "s_removed_q": "Сменить фразу сейчас?",

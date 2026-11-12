@@ -128,7 +128,7 @@
   "e_leave_failed": "TollRoll nemohl opustit pevnost, zkuste to za chvíli znovu",
   "s_members": "Další členové",
   "s_remove": "Odebrat",
-  "s_member_on": "{app} na {device}",
+  "t_member_on": "{app} na {device}",
   "s_remove_q": "Odebrat {device}?",
   "s_remove_text": "{device} okamžitě ztratí přístup. Nelze to vrátit zpět.",
   "s_removed_q": "Změnit frázi hned teď?",

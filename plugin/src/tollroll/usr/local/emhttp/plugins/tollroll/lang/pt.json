@@ -122,7 +122,7 @@
   "e_leave_failed": "O TollRoll não conseguiu sair, tente novamente daqui a pouco",
   "s_members": "Outros membros",
   "s_remove": "Retirar",
-  "s_member_on": "{app} em {device}",
+  "t_member_on": "{app} em {device}",
   "s_remove_q": "Retirar {device}?",
   "s_remove_text": "{device} perde o acesso de imediato. Não é possível desfazer.",
   "s_removed_q": "Mudar a frase agora?",

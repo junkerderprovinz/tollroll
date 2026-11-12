@@ -128,7 +128,7 @@
   "e_leave_failed": "TollRoll не вдалося покинути фортецю, спробуйте ще раз за мить",
   "s_members": "Інші учасники",
   "s_remove": "Вилучити",
-  "s_member_on": "{app} на {device}",
+  "t_member_on": "{app} на {device}",
   "s_remove_q": "Вилучити {device}?",
   "s_remove_text": "{device} одразу втрачає доступ. Це не можна скасувати.",
   "s_removed_q": "Змінити фразу зараз?",

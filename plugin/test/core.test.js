@@ -110,6 +110,13 @@ test('the status window of a plugin says where its settings are', () => {
   assert.equal(w.quiet, 'Nothing needs you and nothing is running right now.');
 });
 
+test('the status window names the devices with the texts the tile gets', () => {
+  // tollroll.Dashboard.page leaves the settings and notification texts out.
+  const tile = Object.fromEntries(Object.entries(en).filter(([k]) => !/^(s|n)_/.test(k)));
+  const fort = { members: [{ app: 'alpha', name: 'Alpha', device: 'Bottich', deployment: 'container', kind: 'instance', online: true }] };
+  assert.deepEqual(core.statusWindow(app(), fort, [], tile, 'en').devices, ['Alpha on Bottich']);
+});
+
 test('an app keeps its colour', () => {
   assert.equal(core.hue('alpha'), core.hue('alpha'));
   assert.notEqual(core.hue('alpha'), core.hue('bravo'));

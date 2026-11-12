@@ -110,7 +110,7 @@
   "e_leave_failed": "TollRoll 无法离开，请稍后再试",
   "s_members": "其他成员",
   "s_remove": "移出",
-  "s_member_on": "{device} 上的 {app}",
+  "t_member_on": "{device} 上的 {app}",
   "s_remove_q": "移出 {device}？",
   "s_remove_text": "{device} 会立即失去访问权限。此操作无法撤销。",
   "s_removed_q": "现在更改口令？",

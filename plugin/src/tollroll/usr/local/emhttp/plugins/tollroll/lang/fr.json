@@ -122,7 +122,7 @@
   "e_leave_failed": "TollRoll n'a pas pu quitter la forteresse, réessayez dans un instant",
   "s_members": "Autres membres",
   "s_remove": "Retirer",
-  "s_member_on": "{app} sur {device}",
+  "t_member_on": "{app} sur {device}",
   "s_remove_q": "Retirer {device} ?",
   "s_remove_text": "{device} perd son accès tout de suite. Impossible de revenir en arrière.",
   "s_removed_q": "Changer la phrase maintenant ?",

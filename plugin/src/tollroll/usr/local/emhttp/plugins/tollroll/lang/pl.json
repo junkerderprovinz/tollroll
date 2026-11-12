@@ -128,7 +128,7 @@
   "e_leave_failed": "TollRoll nie mógł opuścić twierdzy, spróbuj ponownie za chwilę",
   "s_members": "Pozostali członkowie",
   "s_remove": "Usuń",
-  "s_member_on": "{app} na {device}",
+  "t_member_on": "{app} na {device}",
   "s_remove_q": "Usunąć {device}?",
   "s_remove_text": "{device} od razu traci dostęp. Tego nie da się cofnąć.",
   "s_removed_q": "Zmienić frazę teraz?",

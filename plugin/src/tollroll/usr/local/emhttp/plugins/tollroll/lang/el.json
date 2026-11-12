@@ -116,7 +116,7 @@
   "e_leave_failed": "Το TollRoll δεν μπόρεσε να αποχωρήσει, δοκιμάστε ξανά σε λίγο",
   "s_members": "Άλλα μέλη",
   "s_remove": "Αφαίρεση",
-  "s_member_on": "{app} στο {device}",
+  "t_member_on": "{app} στο {device}",
   "s_remove_q": "Αφαίρεση του {device}",
   "s_remove_text": "Το {device} χάνει αμέσως την πρόσβασή του. Αυτό δεν αναιρείται.",
   "s_removed_q": "Αλλαγή της φράσης τώρα",

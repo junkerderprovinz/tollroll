@@ -116,7 +116,7 @@
   "e_leave_failed": "TollRoll kunne ikke forlate festningen, prøv igjen om litt",
   "s_members": "Andre medlemmer",
   "s_remove": "Fjern",
-  "s_member_on": "{app} på {device}",
+  "t_member_on": "{app} på {device}",
   "s_remove_q": "Fjerne {device}?",
   "s_remove_text": "{device} mister tilgangen med en gang. Dette kan ikke angres.",
   "s_removed_q": "Endre frasen nå?",

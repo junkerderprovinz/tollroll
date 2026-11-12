@@ -116,7 +116,7 @@
   "e_leave_failed": "TollRoll kon de vesting niet verlaten, probeer het zo nog eens",
   "s_members": "Andere leden",
   "s_remove": "Verwijderen",
-  "s_member_on": "{app} op {device}",
+  "t_member_on": "{app} op {device}",
   "s_remove_q": "{device} verwijderen?",
   "s_remove_text": "{device} verliest meteen zijn toegang. Dit kun je niet ongedaan maken.",
   "s_removed_q": "De frase nu wijzigen?",

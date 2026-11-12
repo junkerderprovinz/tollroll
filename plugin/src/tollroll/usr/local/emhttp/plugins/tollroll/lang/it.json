@@ -122,7 +122,7 @@
   "e_leave_failed": "TollRoll non è riuscito a uscire, riprova tra un momento",
   "s_members": "Altri membri",
   "s_remove": "Rimuovi",
-  "s_member_on": "{app} su {device}",
+  "t_member_on": "{app} su {device}",
   "s_remove_q": "Rimuovere {device}?",
   "s_remove_text": "{device} perde subito l'accesso. Non si può annullare.",
   "s_removed_q": "Cambiare la frase adesso?",

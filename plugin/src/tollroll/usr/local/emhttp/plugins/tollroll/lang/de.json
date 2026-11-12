@@ -116,7 +116,7 @@
   "e_leave_failed": "TollRoll konnte die Festung nicht verlassen, versuch es gleich noch einmal",
   "s_members": "Weitere Mitglieder",
   "s_remove": "Herausnehmen",
-  "s_member_on": "{app} auf {device}",
+  "t_member_on": "{app} auf {device}",
   "s_remove_q": "{device} herausnehmen?",
   "s_remove_text": "{device} verliert sofort den Zugang. Das lässt sich nicht rückgängig machen.",
   "s_removed_q": "Phrase jetzt ändern?",

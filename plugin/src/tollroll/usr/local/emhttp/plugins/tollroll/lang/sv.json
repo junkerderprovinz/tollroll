@@ -116,7 +116,7 @@
   "e_leave_failed": "TollRoll kunde inte lämna fästningen, försök igen om en stund",
   "s_members": "Andra medlemmar",
   "s_remove": "Ta bort",
-  "s_member_on": "{app} på {device}",
+  "t_member_on": "{app} på {device}",
   "s_remove_q": "Ta bort {device}?",
   "s_remove_text": "{device} förlorar sin åtkomst direkt. Det går inte att ångra.",
   "s_removed_q": "Byta frasen nu?",

@@ -116,7 +116,7 @@
   "e_leave_failed": "TollRoll ei voinut poistua, yritä hetken päästä uudelleen",
   "s_members": "Muut jäsenet",
   "s_remove": "Poista",
-  "s_member_on": "{app} laitteella {device}",
+  "t_member_on": "{app} laitteella {device}",
   "s_remove_q": "Poistetaanko {device}?",
   "s_remove_text": "{device} menettää pääsynsä heti. Tätä ei voi perua.",
   "s_removed_q": "Vaihdetaanko lause nyt?",

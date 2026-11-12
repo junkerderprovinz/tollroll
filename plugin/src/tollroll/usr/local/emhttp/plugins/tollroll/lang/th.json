@@ -110,7 +110,7 @@
   "e_leave_failed": "TollRoll ออกไม่ได้ ลองอีกครั้งในอีกสักครู่",
   "s_members": "สมาชิกอื่น",
   "s_remove": "นำออก",
-  "s_member_on": "{app} บน {device}",
+  "t_member_on": "{app} บน {device}",
   "s_remove_q": "นำ {device} ออกหรือไม่",
   "s_remove_text": "{device} จะเสียสิทธิ์เข้าถึงทันที และย้อนกลับไม่ได้",
   "s_removed_q": "เปลี่ยนวลีตอนนี้เลยหรือไม่",

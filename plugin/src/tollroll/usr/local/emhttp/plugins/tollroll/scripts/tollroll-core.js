@@ -245,7 +245,7 @@
   }
 
   function memberName(L, m) {
-    return fmt(L.s_member_on, { app: m.name || m.app, device: m.device });
+    return fmt(L.t_member_on, { app: m.name || m.app, device: m.device });
   }
 
   // changeWhere names the apps that keep the phrase and so change it, those

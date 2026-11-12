@@ -110,7 +110,7 @@
   "e_leave_failed": "TollRoll は抜けられませんでした。少し待ってからもう一度お試しください",
   "s_members": "ほかのメンバー",
   "s_remove": "外す",
-  "s_member_on": "{device} の {app}",
+  "t_member_on": "{device} の {app}",
   "s_remove_q": "{device} を外しますか？",
   "s_remove_text": "{device} はすぐにアクセスを失います。元に戻すことはできません。",
   "s_removed_q": "今すぐフレーズを変更しますか？",

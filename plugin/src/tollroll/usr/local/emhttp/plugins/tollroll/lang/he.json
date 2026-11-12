@@ -122,7 +122,7 @@
   "e_leave_failed": "TollRoll לא הצליח לצאת, כדאי לנסות שוב בעוד רגע",
   "s_members": "חברים נוספים",
   "s_remove": "הסרה",
-  "s_member_on": "{app} על {device}",
+  "t_member_on": "{app} על {device}",
   "s_remove_q": "להסיר את {device}?",
   "s_remove_text": "{device} מאבד את הגישה מיד. אי אפשר לבטל את זה.",
   "s_removed_q": "לשנות את הביטוי עכשיו?",

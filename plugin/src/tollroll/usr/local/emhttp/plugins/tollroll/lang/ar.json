@@ -140,7 +140,7 @@
   "e_leave_failed": "تعذّر على TollRoll المغادرة، حاول مرة أخرى بعد قليل",
   "s_members": "الأعضاء الآخرون",
   "s_remove": "إزالة",
-  "s_member_on": "{app} على {device}",
+  "t_member_on": "{app} على {device}",
   "s_remove_q": "إزالة {device}؟",
   "s_remove_text": "يفقد {device} وصوله فورًا. لا يمكن التراجع عن ذلك.",
   "s_removed_q": "تغيير العبارة الآن؟",
