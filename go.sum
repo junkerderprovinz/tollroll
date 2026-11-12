@@ -1,7 +1,7 @@
 github.com/coder/websocket v1.8.15 h1:6B2JPeOGlpff2Uz6vOEH1Vzpi0iUz20A+lPVhPHtNUA=
 github.com/coder/websocket v1.8.15/go.mod h1:NX3SzP+inril6yawo5CQXx8+fk145lPDC6pumgx0mVg=
-github.com/junkerderprovinz/parleyport/kit v0.0.0-20261112135843-a04cf968dbe9 h1:YBYhlXP7WQrPhwxo5jrbWm61Q6/2U1vrjvBQeAZ0XLA=
-github.com/junkerderprovinz/parleyport/kit v0.0.0-20261112135843-a04cf968dbe9/go.mod h1:VvXmRbkWZsOzDVnLswkwKtG64qx5TlUb+vnKqb21WJA=
+github.com/junkerderprovinz/parleyport/kit v0.0.0-20261112154539-e62c65355c6d h1:lYqiCev+uZaTU2ZtHYIoKTc0fJ1nyusND8+HPoDlCcI=
+github.com/junkerderprovinz/parleyport/kit v0.0.0-20261112154539-e62c65355c6d/go.mod h1:VvXmRbkWZsOzDVnLswkwKtG64qx5TlUb+vnKqb21WJA=
 github.com/santhosh-tekuri/jsonschema/v6 v6.0.3 h1:1EYB5IzjZawrrnELUi78f9fPu57HuXjmddZPjrls/28=
 github.com/santhosh-tekuri/jsonschema/v6 v6.0.3/go.mod h1:JXeL+ps8p7/KNMjDQk3TCwPpBy0wYklyWTfbkIzdIFU=
 go.uber.org/goleak v1.3.0 h1:2K3zAYmnTNqV73imy9J1T3WC+gmCePx2hEGkimedGto=

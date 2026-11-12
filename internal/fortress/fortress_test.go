@@ -630,3 +630,21 @@ func TestAPhraseTheTileCannotFollowAsksForTheNewWords(t *testing.T) {
 		t.Errorf("alpha lists the tile as %+v, want one member %s", tiles, tile)
 	}
 }
+
+func TestTheOtherMembersSeeTheTilesLogoAndServer(t *testing.T) {
+	url := relayServer(t)
+	secret, words := newPhrase(t)
+	alpha := openApp(t, url, secret, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
+	s := openService(t, filepath.Join(t.TempDir(), "fortress"), url)
+	if err := s.Join(words); err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, "alpha to see the tile's logo on tower", func() bool {
+		for _, m := range alpha.Members() {
+			if m.App.ID == AppID && m.Host == "tower" && status.CheckIcon(m.App.Icon) == nil {
+				return true
+			}
+		}
+		return false
+	})
+}

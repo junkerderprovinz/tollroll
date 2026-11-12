@@ -11,6 +11,7 @@ package fortress
 import (
 	"cmp"
 	"context"
+	_ "embed"
 	"errors"
 	"io/fs"
 	"os"
@@ -32,6 +33,13 @@ import (
 // AppID is the app the tile joins as.
 const AppID = "tollroll"
 
+// logoSVG is the TollRoll mark the other members show for the tile.
+//
+//go:embed logo.svg
+var logoSVG []byte
+
+var icon, _ = status.IconFromSVG(logoSVG)
+
 // silentFor is how long a member that serves no status stays off the tile
 // before it is asked again, in case its app learned to report.
 const silentFor = 10 * time.Minute
@@ -50,7 +58,8 @@ var ErrPhrase = errors.New("fortress: the phrase is not valid")
 // Options say where the membership is kept and how the members are reached.
 type Options struct {
 	Dir string
-	// Device is the name of this server, which the other members show.
+	// Device is the name of this server, which the other members show and
+	// find the apps on this server by.
 	Device  string
 	Version string
 	// Relay is "" for the project's relay, "off" or the address of an own one.
@@ -238,7 +247,8 @@ func (s *Service) Close() error {
 }
 
 func (s *Service) start(cfg kit.Config) error {
-	cfg.App = kit.App{ID: AppID, Name: "TollRoll", Version: s.opt.Version}
+	cfg.App = kit.App{ID: AppID, Name: "TollRoll", Version: s.opt.Version, Icon: icon}
+	cfg.Host = s.opt.Device
 	if cfg.LAN != nil {
 		cfg.LAN.Start()
 	}
