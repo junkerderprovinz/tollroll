@@ -271,17 +271,3 @@ test('a member is named by its app and its device', () => {
   assert.equal(core.memberName(de, { app: 'bombvault', name: 'BombVault', device: 'cellar' }), 'BombVault auf cellar');
   assert.equal(core.memberName(en, { app: 'lantern', device: 'attic' }), 'lantern on attic');
 });
-
-test('a new phrase is made in an app that keeps the phrase, never in a plugin', () => {
-  const shiplog = { id: 'p', app: 'shiplog', kind: 'instance', name: 'ShipLog', device: 'tower', deployment: 'plugin', online: true };
-  const phone = { id: 'f', app: 'bombvault', kind: 'viewer', name: 'BombVault', device: 'phone', online: true };
-  const away = { id: 'k', app: 'knightloader', kind: 'instance', name: 'KnightLoader', device: 'cellar', deployment: 'container', online: false };
-  const bombvault = { id: 'b', app: 'bombvault', kind: 'instance', name: 'BombVault', device: 'cellar', deployment: 'container', online: true };
-  const before = Object.assign({}, bombvault, { id: 'b0', online: false });
-  assert.equal(core.changeWhere(en, { members: [shiplog, phone, bombvault] }, 'en'), 'You change the phrase in BombVault on cellar.');
-  assert.equal(core.changeWhere(en, { members: [shiplog, away, before, bombvault] }, 'en'), 'You change the phrase in BombVault on cellar or KnightLoader on cellar.',
-    'the apps in reach come first, and an app known from an earlier install is named once');
-  assert.equal(core.changeWhere(de, { members: [bombvault, away] }, 'de'), 'Die Phrase änderst du in BombVault auf cellar oder KnightLoader auf cellar.');
-  assert.equal(core.changeWhere(en, { members: [shiplog, phone] }, 'en'), en.s_change_where);
-  assert.equal(core.changeWhere(en, null, 'en'), en.s_change_where);
-});

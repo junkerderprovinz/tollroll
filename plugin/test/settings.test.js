@@ -9,44 +9,23 @@ const PLUGIN = path.join(__dirname, '..', 'src', 'tollroll', 'usr', 'local', 'em
 const core = require(path.join(PLUGIN, 'scripts', 'tollroll-core.js'));
 const en = JSON.parse(fs.readFileSync(path.join(PLUGIN, 'lang', 'en.json'), 'utf8'));
 
-// Just enough of a DOM for settings.js to draw the fortress card and its
-// windows, and to be clicked through.
+// Runs settings.js with just enough of a page for the notification card,
+// and a fortress card that only keeps what it was given.
 function page(answers) {
-  const doc = { activeElement: null, listeners: {} };
   class Node {
-    constructor(tag) {
-      this.tagName = tag.toUpperCase();
-      this.children = [];
-      this.attrs = {};
-      this.listeners = {};
-      this.dataset = {};
-      this.style = {};
-      this.className = '';
-      this.ownText = '';
-      this.value = '';
-      this.classList = { add: (c) => { this.className += ' ' + c; } };
-    }
-    get textContent() { return this.ownText + this.children.map((c) => c.textContent).join(''); }
-    set textContent(v) { this.ownText = String(v); this.children = []; }
-    set innerHTML(v) { this.html = v; }
-    appendChild(c) { this.children.push(c); return c; }
-    setAttribute(k, v) { this.attrs[k] = String(v); }
-    getAttribute(k) { return this.attrs[k]; }
+    constructor() { this.listeners = {}; this.value = ''; this.className = ''; }
     addEventListener(type, fn) { (this.listeners[type] = this.listeners[type] || []).push(fn); }
-    removeEventListener() {}
-    focus() { doc.activeElement = this; }
-    click() { if (!this.disabled) for (const fn of this.listeners.click || []) fn({ target: this }); }
+    appendChild(c) { return c; }
+    set textContent(v) {}
   }
   const byId = {};
   const document = {
-    getElementById: (id) => byId[id] || (byId[id] = new Node('div')),
-    createElement: (tag) => new Node(tag),
-    createTextNode: (text) => { const n = new Node('#text'); n.ownText = String(text); return n; },
-    querySelectorAll: () => [],
-    addEventListener(type, fn) { (doc.listeners[type] = doc.listeners[type] || []).push(fn); },
-    removeEventListener() {},
-    get activeElement() { return doc.activeElement; }
+    getElementById: (id) => byId[id] || (byId[id] = new Node()),
+    createElement: () => new Node(),
+    createTextNode: () => new Node(),
+    querySelectorAll: () => []
   };
+  const gets = [];
   const posts = [];
   const reply = (body) => Promise.resolve({ json: () => Promise.resolve(body) });
   function fetch(url, opt) {
@@ -55,105 +34,129 @@ function page(answers) {
       posts.push({ path: p.path, data: JSON.parse(p.data) });
       return reply(answers[p.path] || {});
     }
+    gets.push(url);
     return reply(answers[/path=(\w+)/.exec(url)[1]] || {});
   }
-  const window = { TollRollCore: core, TRS_T: en, TRL_LANG: 'en', TollRollGlyphs: {}, csrf_token: 't', fetch };
-  const ctx = vm.createContext({ window, document, fetch, URLSearchParams, location: {}, setTimeout, clearTimeout });
+  const mounted = { refreshed: 0 };
+  const GlimFortressCard = {
+    mount(el, adapter, opts) {
+      Object.assign(mounted, { el, adapter, opts });
+      return { refresh() { mounted.refreshed++; }, destroy() {} };
+    }
+  };
+  const location = {};
+  const window = { TollRollCore: core, TRS_T: en, TRL_LANG: 'en', TollRollGlyphs: {}, csrf_token: 't', fetch, GlimFortressCard };
+  const ctx = vm.createContext({ window, document, fetch, URLSearchParams, location, setTimeout, clearTimeout });
   vm.runInContext(fs.readFileSync(path.join(PLUGIN, 'scripts', 'settings.js'), 'utf8'), ctx);
-  return { fort: byId['trs-fort'], dlg: byId['trs-dlg'], posts, focused: () => doc.activeElement };
+  return { card: mounted, fortEl: byId['trs-fort'], gets, posts, location };
 }
 
+// The script builds its objects in its own realm.
+const plain = (v) => JSON.parse(JSON.stringify(v));
 const settle = async () => { for (let i = 0; i < 20; i++) await new Promise((r) => setImmediate(r)); };
 
-function all(n, pred, out = []) {
-  if (pred(n)) out.push(n);
-  n.children.forEach((c) => all(c, pred, out));
-  return out;
-}
-const buttons = (n, text) => all(n, (x) => (x.tagName === 'BUTTON' || x.tagName === 'A') && x.textContent === text);
-
+const ICON = 'data:image/svg+xml;base64,' + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>').toString('base64');
 const members = [
-  { id: 'k1', app: 'knightloader', kind: 'instance', name: 'KnightLoader', device: 'cellar', deployment: 'container', online: true },
-  { id: 'b1', app: 'bombvault', kind: 'instance', name: 'BombVault', device: 'attic', deployment: 'container', online: true },
-  { id: 's1', app: 'shiplog', kind: 'instance', name: 'ShipLog', device: 'tower', deployment: 'plugin', online: true }
+  { id: 'k1', app: 'knightloader', kind: 'instance', name: 'KnightLoader', version: '2.1.0', device: 'cellar', deployment: 'container', online: true, icon: ICON },
+  { id: 's1', app: 'shiplog', kind: 'instance', name: 'ShipLog', version: '1.4.0', device: 'attic', deployment: 'plugin', online: true, relay: true, icon: 'javascript:alert(1)' },
+  { id: 'v1', app: 'bombvault', kind: 'viewer', name: 'BombVault', device: 'phone', online: true },
+  { id: 'f1', app: 'firesquire', kind: 'instance', name: 'FireSquire', version: '1.0.0', device: 'attic', deployment: 'plugin', online: false, lastSeen: '2026-11-12T08:00:00Z' }
 ];
 const apps = [
   { key: 'knightloader', name: 'KnightLoader', state: 'ok', instances: 1 },
-  { key: 'bombvault', name: 'BombVault', state: 'ok', instances: 1 }
+  { key: 'shiplog', name: 'ShipLog', state: 'warning', instances: 1 }
 ];
-const onlyPlugins = members.map((m) => Object.assign({}, m, { deployment: 'plugin' }));
-const links = (n) => all(n, (x) => x.tagName === 'A');
 const joined = (over) => Object.assign({ joined: true, device: 'tower', members }, over);
+const out = { joined: false, members: [] };
 
-test('every other member of the fortress has its own Remove', async () => {
-  const p = page({ fortress: joined(), board: { apps } });
-  await settle();
-  assert.equal(buttons(p.fort, en.s_remove).length, 3);
-  assert.ok(p.fort.textContent.includes('KnightLoader on cellar'), p.fort.textContent);
-  assert.ok(p.fort.textContent.includes('ShipLog on tower'));
+test('the card sits in its own element, in the page language, for TollRoll', () => {
+  const p = page({});
+  assert.equal(p.card.el, p.fortEl);
+  assert.equal(p.card.opts.lang, 'en');
+  assert.deepEqual({ ...p.card.opts.app }, { id: 'tollroll', name: 'TollRoll' });
 });
 
-test('Remove asks first, naming the app and its device, and focuses the button that goes on', async () => {
-  const p = page({ fortress: joined(), board: { apps } });
-  await settle();
-  buttons(p.fort, en.s_remove)[0].click();
-  assert.ok(p.dlg.textContent.includes('Remove KnightLoader on cellar?'), p.dlg.textContent);
-  assert.ok(p.dlg.textContent.includes('KnightLoader on cellar loses its access right away.'));
-  assert.equal(p.focused().textContent, en.s_remove);
-  buttons(p.dlg, en.s_cancel)[0].click();
-  assert.equal(p.dlg.children.length, 0);
-  assert.equal(p.posts.length, 0, 'cancel removed something');
+test('the card gets the instances of other apps with their form, logo and way in', async () => {
+  const p = page({ fortress: joined({ removed: [{ app: 'lantern', name: 'lantern', device: 'attic' }] }) });
+  const s = await p.card.adapter.load();
+  assert.equal(s.joined, true);
+  assert.equal(s.device, 'tower');
+  assert.deepEqual(s.removed.map((r) => r.name), ['lantern']);
+  assert.deepEqual(s.members.map((m) => m.id), ['k1', 's1', 'f1'], 'a viewer is no app instance');
+  const [k, sl, f] = s.members;
+  assert.deepEqual([k.form, k.version, k.icon, k.relay], ['container', '2.1.0', ICON, false]);
+  assert.deepEqual([sl.form, sl.icon, sl.relay], ['plugin', '', true], 'a logo that is no SVG data URI stays off');
+  assert.deepEqual([f.online, f.lastSeen], [false, '2026-11-12T08:00:00Z']);
 });
 
-test('after a removal the window names the app and device where the phrase is changed', async () => {
-  const removed = [{ app: 'knightloader', name: 'KnightLoader', device: 'cellar' }];
-  const p = page({ fortress: joined(), board: { apps }, remove: joined({ members: members.slice(1), removed }) });
-  await settle();
-  buttons(p.fort, en.s_remove)[0].click();
-  buttons(p.dlg, en.s_remove)[0].click();
-  await settle();
-  assert.deepEqual(p.posts, [{ path: 'remove', data: { id: 'k1' } }]);
-  assert.ok(p.dlg.textContent.includes(en.s_removed_q), p.dlg.textContent);
-  assert.ok(p.dlg.textContent.includes('KnightLoader on cellar is out.'));
-  assert.ok(p.dlg.textContent.includes('You change the phrase in BombVault on attic.'), p.dlg.textContent);
-  assert.equal(links(p.dlg).length, 0, 'the window links to no member');
-  assert.equal(p.focused().textContent, en.s_later);
-
-  buttons(p.dlg, en.s_later)[0].click();
-  assert.equal(p.dlg.children.length, 0);
-  assert.ok(p.fort.textContent.includes('Removed: KnightLoader on cellar. Change the phrase to close the way back in.'), p.fort.textContent);
-  assert.equal(buttons(p.fort, en.s_remove).length, 2);
+test('a service that does not answer hides the card', async () => {
+  const p = page({ fortress: { error: 'engine' } });
+  assert.equal(await p.card.adapter.load(), null);
 });
 
-test('without an app that keeps the phrase the offer says where it is changed', async () => {
-  const removed = [{ app: 'knightloader', name: 'KnightLoader', device: 'cellar' }];
-  const p = page({ fortress: joined({ members: onlyPlugins }), board: { apps }, remove: joined({ members: onlyPlugins.slice(1), removed }) });
-  await settle();
-  buttons(p.fort, en.s_remove)[0].click();
-  buttons(p.dlg, en.s_remove)[0].click();
-  await settle();
-  assert.ok(p.dlg.textContent.includes(en.s_change_where), p.dlg.textContent);
-  assert.equal(p.focused().textContent, en.s_later);
+test('a phrase the tile could not follow, and a removal by another app, reach the card', async () => {
+  let s = await page({ fortress: joined({ phraseChanged: true }) }).card.adapter.load();
+  assert.equal(s.phraseChanged, true);
+  s = await page({ fortress: { joined: false, removedHere: true, members: [] } }).card.adapter.load();
+  assert.deepEqual([s.joined, s.removedHere], [false, true]);
 });
 
-test('the reminder stays until the phrase changes', async () => {
-  const removed = [{ app: 'knightloader', name: 'KnightLoader', device: 'cellar' }, { app: 'lantern', name: 'lantern', device: 'attic' }];
-  let p = page({ fortress: joined({ removed }), board: { apps } });
-  await settle();
-  assert.ok(p.fort.textContent.includes('Removed: KnightLoader on cellar, lantern on attic.'), p.fort.textContent);
-  assert.ok(p.fort.textContent.includes('You change the phrase in KnightLoader on cellar or BombVault on attic.'), p.fort.textContent);
-  assert.equal(links(p.fort).length, 0, 'the card links to no member');
-  p = page({ fortress: joined(), board: { apps } });
-  await settle();
-  assert.ok(!p.fort.textContent.includes('Removed:'), p.fort.textContent);
+test('the twelve words join, and words that open no fortress are said so', async () => {
+  const words = 'one two three four five six seven eight nine ten eleven twelve'.split(' ');
+  let p = page({ join: joined() });
+  const s = await p.card.adapter.join(words);
+  assert.deepEqual(p.posts[0], { path: 'join', data: { phrase: words.join(' ') } });
+  assert.equal(s.joined, true);
+  p = page({ join: { error: 'phrase_invalid' } });
+  await assert.rejects(p.card.adapter.join(words), (e) => e.code === 'phrase');
+  p = page({ join: { error: 'join_failed' } });
+  await assert.rejects(p.card.adapter.join(words), (e) => e.code === 'join_failed');
 });
 
-test('a removal the service refuses is said in the window', async () => {
-  const p = page({ fortress: joined(), board: { apps }, remove: { error: 'no_member' } });
+test('leaving and removing answer with the new state, a member already gone closes quietly', async () => {
+  let p = page({ leave: out });
+  assert.equal((await p.card.adapter.leave()).joined, false);
+  assert.equal(p.posts[0].path, 'leave');
+  p = page({ remove: joined({ members: members.slice(1), removed: [{ app: 'knightloader', name: 'KnightLoader', device: 'cellar' }] }) });
+  const s = await p.card.adapter.remove('k1');
+  assert.deepEqual(p.posts[0], { path: 'remove', data: { id: 'k1' } });
+  assert.equal(s.removed.length, 1);
+  p = page({ remove: { error: 'no_member' } });
+  await assert.rejects(p.card.adapter.remove('k1'), (e) => e.code === 'noMember');
+});
+
+test("a member's status comes with its times written for the reader", async () => {
+  const p = page({ status: {
+    report: { state: 'warning', needsYou: [{ severity: 'warn', text: 'Low on space' }], work: [{ title: 'Copying', progress: 0.5 }], next: [{ title: 'Check', at: '2026-11-12T22:00:00Z' }] },
+    log: [{ at: '2026-11-12T10:05:00Z', level: 'warn', text: 'Slow disk' }]
+  } });
+  const r = await p.card.adapter.status('s1');
+  assert.match(p.gets[p.gets.length - 1], /path=status&id=s1&lang=en$/);
+  assert.equal(r.report.state, 'warning');
+  assert.deepEqual(r.report.needsYou, [{ severity: 'warn', text: 'Low on space' }]);
+  assert.deepEqual(plain(r.report.next), [{ title: 'Check', at: core.timeLabel('2026-11-12T22:00:00Z', 'en') }]);
+  assert.deepEqual(plain(r.log), [{ at: core.timeLabel('2026-11-12T10:05:00Z', 'en'), level: 'warn', text: 'Slow disk' }]);
+  await assert.rejects(page({ status: { error: 'unreachable' } }).card.adapter.status('s1'));
+});
+
+test('in a fortress the card has the line on what the tile shows and the way to its map', async () => {
+  const p = page({ fortress: joined(), board: { apps }, tile: { view: 'rows', hidden: ['shiplog'] } });
+  await p.card.adapter.load();
+  const rows = p.card.opts.rows;
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].label, en.s_in_tile);
+  assert.equal(rows[0].button.label, en.s_map);
   await settle();
-  buttons(p.fort, en.s_remove)[0].click();
-  buttons(p.dlg, en.s_remove)[0].click();
-  await settle();
-  assert.ok(p.dlg.textContent.includes(en.e_no_member), p.dlg.textContent);
-  assert.ok(!p.dlg.textContent.includes(en.s_removed_q));
+  assert.equal(rows[0].value, core.subtitle({ apps }, en, 'en', core.mapDevices(joined(), apps).length), 'the line says what the tile says');
+  assert.equal(p.card.refreshed, 1, 'the card was not drawn again with the line');
+  await rows[0].run();
+  assert.deepEqual(p.posts, [{ path: 'tile', data: { view: 'map', hidden: ['shiplog'] } }]);
+  assert.equal(p.location.href, '/Dashboard');
+});
+
+test('outside a fortress the card has no row of TollRoll', async () => {
+  const p = page({ fortress: out });
+  await p.card.adapter.load();
+  assert.equal(p.card.opts.rows.length, 0);
+  assert.ok(!p.gets.some((u) => u.includes('path=board')), 'the board was read outside a fortress');
 });

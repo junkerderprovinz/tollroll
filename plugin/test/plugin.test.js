@@ -8,7 +8,7 @@ const ROOT = path.join(__dirname, '..');
 const PLUGIN = path.join(ROOT, 'src', 'tollroll', 'usr', 'local', 'emhttp', 'plugins', 'tollroll');
 const read = (...p) => fs.readFileSync(path.join(PLUGIN, ...p), 'utf8');
 const LANGS = ['ar', 'cs', 'da', 'de', 'el', 'en', 'es', 'fi', 'fr', 'he', 'hu', 'it', 'ja', 'ko', 'nl', 'no', 'pl', 'pt', 'ro', 'ru', 'sv', 'th', 'tr', 'uk', 'vi', 'zh'];
-const PLURALS = ['t_apps', 't_attn', 't_inst', 't_dev', 't_map', 't_lines', 't_sel', 's_conn'];
+const PLURALS = ['t_apps', 't_attn', 't_inst', 't_dev', 't_map', 't_lines', 't_sel'];
 
 function walk(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
@@ -121,34 +121,12 @@ test('the tile gets no settings or notification texts', () => {
   assert.match(page, /strncmp\(\$trl_k, 's_', 2\) !== 0 && strncmp\(\$trl_k, 'n_', 2\) !== 0/);
 });
 
-test('a phrase the tile could not follow opens the field for the new words', () => {
-  const js = read('scripts', 'settings.js');
-  assert.match(js, /fort\.phraseChanged/);
-  assert.ok(js.includes('L.s_changed_note'), 'settings.js never says that the phrase changed');
-  assert.ok(JSON.parse(read('lang', 'en.json')).s_changed_note, 'en.json lacks s_changed_note');
-});
-
 test('a removed TollRoll points at the current phrase, since the one it knew may have changed', () => {
   const en = JSON.parse(read('lang', 'en.json'));
   const de = JSON.parse(read('lang', 'de.json'));
-  for (const k of ['t_removed_text', 's_removed_note']) {
-    assert.match(en[k], /current phrase/, `en.${k}`);
-    assert.match(de[k], /aktuellen Phrase/, `de.${k}`);
-  }
-  for (const k of ['t_removed_title', 't_removed_text', 's_removed_note']) {
+  assert.match(en.t_removed_text, /current phrase/);
+  assert.match(de.t_removed_text, /aktuellen Phrase/);
+  for (const k of ['t_removed_title', 't_removed_text']) {
     assert.doesNotMatch(de[k], /entfernt/, `de.${k} says herausgenommen, as the apps do`);
-  }
-});
-
-test('the phrase is found in an app that shows it, not on a page some apps lack', () => {
-  for (const l of LANGS) {
-    const tr = JSON.parse(read('lang', l + '.json'));
-    for (const k of ['s_join_hint', 's_change_where']) assert.ok(tr[k].includes('BombVault'), `${l}.${k}`);
-  }
-  const en = JSON.parse(read('lang', 'en.json'));
-  const de = JSON.parse(read('lang', 'de.json'));
-  for (const k of ['s_join_hint', 's_change_where']) {
-    assert.doesNotMatch(en[k], /Instances/, `en.${k}`);
-    assert.doesNotMatch(de[k], /Instanzen/, `de.${k}`);
   }
 });

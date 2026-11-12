@@ -1,15 +1,13 @@
-/* The settings page: the fortress and the notification channels. Every
+/* The settings page: the fortress and the notification channels. The
+ * fortress is GlimStone's card, the same in every plugin. Every channel
  * change is saved the moment it is made, with a tick when it worked and a
- * plain line when it did not. Only joining has a button, since twelve words
- * are typed before they mean anything. A token field stays empty: typing in
- * it replaces the saved token, leaving it empty keeps that one. */
+ * plain line when it did not. A token field stays empty: typing in it
+ * replaces the saved token, leaving it empty keeps that one. */
 (function () {
   'use strict';
   var C = window.TollRollCore, L = window.TRS_T || {}, lang = window.TRL_LANG || 'en';
   var API = '/plugins/tollroll/server/api.php';
   var GLYPH = window.TollRollGlyphs || {};
-  var fortEl = document.getElementById('trs-fort');
-  var dlgEl = document.getElementById('trs-dlg');
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -22,14 +20,6 @@
     var s = el('span', 'trs-gl');
     s.innerHTML = GLYPH[name] || '';
     return s;
-  }
-
-  function button(name, text, primary) {
-    var b = el('button', 'trs-btn' + (primary ? ' trs-primary' : ''));
-    b.type = 'button';
-    b.appendChild(glyph(name));
-    b.appendChild(el('span', '', text));
-    return b;
   }
 
   function errorText(code) {
@@ -51,296 +41,100 @@
       .then(function (r) { return r.json().catch(function () { return { error: 'engine' }; }); });
   }
 
-  /* The fortress card: the twelve words while the tile is in no fortress or
-   * could not follow a changed phrase, what it sees once it is. */
-  var fort = null, board = null, rejoin = false, words = [];
-  // landing takes the focus once the button that opened a window is gone.
-  var landing = null;
-
-  function drawFort() {
-    fortEl.textContent = '';
-    if (fort && fort.joined && !rejoin && !fort.phraseChanged) drawJoined(); else drawJoin();
-  }
-
-  function heading(sub) {
-    var h = el('h3', '', L.s_fortress + ' ');
-    h.appendChild(el('small', '', sub));
-    fortEl.appendChild(h);
-  }
-
-  function drawJoin(problem) {
-    var changed = !!(fort && fort.phraseChanged), again = rejoin || changed;
-    heading(again ? L.s_rejoin_sub : L.s_fortress_sub);
-    if (fort && (fort.removedHere || changed) && !rejoin) {
-      var n = el('div', 'trs-note');
-      n.appendChild(glyph('IconInfo'));
-      n.appendChild(el('span', '', changed ? L.s_changed_note : L.s_removed_note));
-      fortEl.appendChild(n);
-    }
-    fortEl.appendChild(el('p', 'trs-hint', again ? L.s_rejoin_hint : L.s_join_hint));
-    var grid = el('div', 'trs-words' + (problem === 'phrase_invalid' ? ' trs-bad' : ''));
-    var inputs = [];
-    for (var i = 0; i < 12; i++) {
-      var lab = el('label', 'trs-word');
-      lab.appendChild(el('span', '', String(i + 1)));
-      var inp = el('input', 'trs-in');
-      inp.autocomplete = 'off';
-      inp.spellcheck = false;
-      inp.setAttribute('autocapitalize', 'off');
-      inp.setAttribute('aria-label', C.fmt(L.s_word, { n: i + 1 }));
-      inp.value = words[i] || '';
-      lab.appendChild(inp);
-      grid.appendChild(lab);
-      inputs.push(inp);
-    }
-    // A pasted phrase spreads over the fields from the one it went into.
-    inputs.forEach(function (inp, i) {
-      inp.addEventListener('input', function () {
-        var parts = inp.value.trim().split(/\s+/);
-        if (parts.length > 1) {
-          parts.slice(0, 12 - i).forEach(function (w, k) { inputs[i + k].value = w; });
-          inputs[Math.min(11, i + parts.length - 1)].focus();
-        }
-        words = inputs.map(function (x) { return x.value.trim(); });
-      });
-    });
-    fortEl.appendChild(grid);
-    fortEl.appendChild(el('p', 'trs-hint', L.s_words_hint));
-    var tools = el('div', 'trs-tools');
-    var join = button('IconSignIn', L.s_join, true);
-    var res = el('span', 'trs-res');
-    res.setAttribute('role', 'status');
-    if (problem) {
-      res.appendChild(el('span', 'err', problem === 'phrase_invalid' ? L.s_phrase_bad : errorText(problem)));
-    }
-    join.addEventListener('click', function () {
-      words = inputs.map(function (x) { return x.value.trim(); });
-      join.disabled = true;
-      res.textContent = '';
-      res.appendChild(el('span', 'run', L.s_joining));
-      post('join', { phrase: words.join(' ') }).then(function (r) {
-        if (r.error) {
-          fortEl.textContent = '';
-          drawJoin(r.error === 'phrase_invalid' || r.error === 'bad_request' ? 'phrase_invalid' : r.error === 'engine' ? 'engine' : 'join_failed');
-          return;
-        }
-        fort = r;
-        rejoin = false;
-        words = [];
-        drawFort();
-        loadBoard();
-      });
-    });
-    tools.appendChild(join);
-    if (rejoin) {
-      var cancel = button('IconClose', L.s_cancel);
-      cancel.addEventListener('click', function () { rejoin = false; words = []; drawFort(); });
-      tools.appendChild(cancel);
-    }
-    tools.appendChild(res);
-    fortEl.appendChild(tools);
-  }
-
-  function drawJoined() {
-    heading(L.s_fortress_sub);
-    var devices = C.mapDevices(fort, board ? board.apps : []);
-    var others = devices.filter(function (d) { return !d.here; });
-    var on = others.filter(function (d) { return d.online; });
-    var off = others.filter(function (d) { return !d.online && !d.calm; }).map(function (d) { return d.name; });
-    var conn = !others.length ? L.s_conn_alone : C.plural(L, 's_conn', on.length, lang);
-    if (off.length) conn += ', ' + C.fmt(L.s_conn_off, { names: off.join(', ') });
-
-    var dl = el('dl', 'trs-facts');
-    function fact(term, value, dot) {
-      dl.appendChild(el('dt', '', term));
-      var dd = el('dd');
-      if (dot) dd.appendChild(el('span', 'trs-dot ' + (off.length && !on.length ? 'err' : 'ok')));
-      dd.appendChild(document.createTextNode(value));
-      dl.appendChild(dd);
-    }
-    fact(L.s_this_server, C.fmt(L.s_in_fortress, { device: fort.device }));
-    fact(L.s_connection, conn, true);
-    if (board) fact(L.s_in_tile, C.subtitle(board, L, lang, devices.length));
-    var peers = fort.members || [];
-    if (peers.length) {
-      dl.appendChild(el('dt', '', L.s_members));
-      var dd = el('dd');
-      var list = el('ul', 'trs-members');
-      peers.forEach(function (m, i) {
-        var li = el('li', 'trs-member');
-        li.appendChild(el('span', 'trs-dot ' + (m.online ? 'ok' : 'trs-away')));
-        var name = el('span', 'trs-member-name', C.memberName(L, m));
-        name.id = 'trs-member-' + i;
-        li.appendChild(name);
-        var rm = button('IconTrash', L.s_remove);
-        rm.classList.add('trs-quiet');
-        rm.setAttribute('aria-describedby', name.id);
-        rm.addEventListener('click', function () { confirmRemove(m, rm); });
-        li.appendChild(rm);
-        list.appendChild(li);
-      });
-      dd.appendChild(list);
-      dl.appendChild(dd);
-    }
-    fortEl.appendChild(dl);
-
-    var map = button('IconFleet', L.s_map);
-    landing = map;
-    var gone = fort.removed || [];
-    if (gone.length) {
-      var note = el('div', 'trs-removed');
-      note.appendChild(glyph('IconInfo'));
-      var names = gone.map(function (r) { return C.memberName(L, r); }).join(', ');
-      note.appendChild(el('span', '', C.fmt(L.s_removed_list, { devices: names })));
-      note.appendChild(el('span', 'trs-removed-where', C.changeWhere(L, fort, lang)));
-      fortEl.appendChild(note);
-    }
-
-    var tools = el('div', 'trs-tools');
-    map.addEventListener('click', function () {
-      get('tile').then(function (p) {
+  /* The card gets the fortress from the service and the steps go back to it.
+   * While the tile is in a fortress, TollRoll's own row says what the tile
+   * shows and leads to its map. The board fills it in once it answers. */
+  var JOIN = { phrase_invalid: 'phrase', bad_request: 'phrase' };
+  var REMOVE = { no_member: 'noMember', not_joined: 'noMember' };
+  var fort = null, card = null, tileLine = '', reading = false, rows = [];
+  var tileRow = {
+    label: L.s_in_tile,
+    get value() { return tileLine; },
+    button: { label: L.s_map, glyph: 'IconExternalLink' },
+    run: function () {
+      return get('tile').then(function (p) {
         return post('tile', { view: 'map', hidden: (p && p.hidden) || [] });
-      }).then(function () { location.href = '/Dashboard'; });
-    });
-    var again = button('IconKey', L.s_rejoin);
-    again.addEventListener('click', function () { rejoin = true; words = []; drawFort(); });
-    var leave = button('IconSignOut', L.s_leave);
-    leave.classList.add('trs-end');
-    leave.addEventListener('click', function () { confirmLeave(leave); });
-    tools.appendChild(map);
-    tools.appendChild(again);
-    tools.appendChild(leave);
-    fortEl.appendChild(tools);
-  }
-
-  // dialog opens a window over the page. Each step replaces what it shows
-  // and returns the row for its buttons. Escape and a click beside it close
-  // it. The focus then goes back to the button that opened it, or where
-  // backTo says once that button is gone.
-  function dialog(back) {
-    var shade = el('div', 'trs-dlg-back');
-    var box = el('div', 'trs-dlg');
-    box.setAttribute('role', 'dialog');
-    box.setAttribute('aria-modal', 'true');
-    box.setAttribute('aria-labelledby', 'trs-dlg-h');
-    function close() {
-      dlgEl.textContent = '';
-      document.removeEventListener('keydown', onKey);
-      if (back) back.focus();
+      }).then(function (r) {
+        if (r.error) throw r;
+        location.href = '/Dashboard';
+      });
     }
-    function onKey(e) { if (e.key === 'Escape') close(); }
-    shade.addEventListener('click', function (e) { if (e.target === shade) close(); });
-    shade.appendChild(box);
-    dlgEl.appendChild(shade);
-    document.addEventListener('keydown', onKey);
+  };
+
+  // cardState keeps the map for the tile's row and gives the card the
+  // instances of other apps, as it draws them.
+  function cardState(f) {
+    fort = f;
+    rows.length = 0;
+    if (f.joined) {
+      rows.push(tileRow);
+      readBoard();
+    } else {
+      tileLine = '';
+    }
     return {
-      close: close,
-      backTo: function (n) { back = n; },
-      step: function (title, nodes) {
-        box.textContent = '';
-        var h = el('h4', '', title);
-        h.id = 'trs-dlg-h';
-        box.appendChild(h);
-        nodes.forEach(function (n) { box.appendChild(n); });
-        var tools = el('div', 'trs-tools trs-dlg-tools');
-        box.appendChild(tools);
-        return tools;
-      }
+      joined: !!f.joined, device: f.device || '', removedHere: !!f.removedHere, phraseChanged: !!f.phraseChanged,
+      removed: f.removed || [],
+      members: (f.members || []).filter(function (m) { return m.kind === 'instance'; }).map(function (m) {
+        return { id: m.id, app: m.app, name: m.name, device: m.device, form: m.deployment, version: m.version,
+          icon: C.safeIcon(m.icon), online: !!m.online, relay: !!m.relay, lastSeen: m.lastSeen || '' };
+      })
     };
   }
 
-  function statusLine() {
-    var res = el('p', 'trs-res');
-    res.setAttribute('role', 'status');
-    return res;
+  function answer(codes) {
+    return function (r) {
+      if (r.error) throw { code: codes[r.error] || r.error };
+      return cardState(r);
+    };
   }
 
-  function failed(res, text) {
-    res.textContent = '';
-    res.appendChild(el('span', 'err', text));
-  }
-
-  function confirmLeave(opener) {
-    var d = dialog(opener);
-    var res = statusLine();
-    var tools = d.step(L.s_leave_q, [el('p', '', L.s_leave_text), res]);
-    var cancel = button('IconClose', L.s_cancel);
-    var yes = button('IconSignOut', L.s_leave_yes, true);
-    cancel.addEventListener('click', d.close);
-    yes.addEventListener('click', function () {
-      yes.disabled = true;
-      post('leave').then(function (r) {
-        if (r.error) {
-          yes.disabled = false;
-          failed(res, errorText(r.error === 'engine' ? 'engine' : 'leave_failed'));
-          return;
-        }
-        fort = r;
-        d.close();
-        drawFort();
-      });
-    });
-    tools.appendChild(cancel);
-    tools.appendChild(yes);
-    cancel.focus();
-  }
-
-  // confirmRemove asks before member m is taken out, then offers to change
-  // the phrase, which would still let it back in.
-  function confirmRemove(m, opener) {
-    var d = dialog(opener);
-    var name = C.memberName(L, m);
-    var res = statusLine();
-    var tools = d.step(C.fmt(L.s_remove_q, { device: name }), [el('p', '', C.fmt(L.s_remove_text, { device: name })), res]);
-    var cancel = button('IconClose', L.s_cancel);
-    var yes = button('IconTrash', L.s_remove, true);
-    cancel.addEventListener('click', d.close);
-    yes.addEventListener('click', function () {
-      yes.disabled = true;
-      post('remove', { id: m.id }).then(function (r) {
-        if (r.error) {
-          yes.disabled = false;
-          failed(res, errorText(/^(engine|no_member|not_joined)$/.test(r.error) ? r.error : 'remove_failed'));
-          return;
-        }
-        fort = r;
-        drawFort();
-        d.backTo(landing);
-        offer(d, name);
-      });
-    });
-    tools.appendChild(cancel);
-    tools.appendChild(yes);
-    yes.focus();
-  }
-
-  function offer(d, name) {
-    var tools = d.step(L.s_removed_q, [el('p', '', C.fmt(L.s_removed_text, { device: name })), el('p', 'trs-hint', C.changeWhere(L, fort, lang))]);
-    var later = button('IconClose', L.s_later);
-    later.addEventListener('click', d.close);
-    tools.appendChild(later);
-    later.focus();
-  }
-
-  function loadFort() {
-    get('fortress').then(function (r) {
-      if (r.error) {
-        fortEl.textContent = '';
-        heading(L.s_fortress_sub);
-        fortEl.appendChild(el('p', 'trs-res err', errorText(r.error)));
-        return;
-      }
-      fort = r;
-      drawFort();
-      if (fort.joined) loadBoard();
-    });
-  }
-
-  function loadBoard() {
+  function readBoard() {
+    if (reading) return;
+    reading = true;
     get('board&lang=' + encodeURIComponent(lang)).then(function (r) {
-      if (r.apps) { board = { apps: r.apps, log: [] }; if (fort && fort.joined && !rejoin && !fort.phraseChanged) drawFort(); }
-    });
+      reading = false;
+      if (!r.apps || !fort || !fort.joined) return;
+      var line = C.subtitle({ apps: r.apps }, L, lang, C.mapDevices(fort, r.apps).length);
+      if (line !== tileLine) {
+        tileLine = line;
+        card.refresh();
+      }
+    }, function () { reading = false; });
   }
+
+  function report(r) {
+    return {
+      state: r.state, needsYou: r.needsYou || [], work: r.work || [],
+      next: (r.next || []).map(function (n) { return { title: n.title, at: C.timeLabel(n.at, lang) }; })
+    };
+  }
+
+  var adapter = {
+    // A service that does not answer has no fortress to show.
+    load: function () {
+      return get('fortress').then(function (r) {
+        if (r.error === 'engine') return null;
+        return answer({})(r);
+      });
+    },
+    join: function (words) { return post('join', { phrase: words.join(' ') }).then(answer(JOIN)); },
+    leave: function () { return post('leave').then(answer({})); },
+    remove: function (id) { return post('remove', { id: id }).then(answer(REMOVE)); },
+    status: function (id) {
+      return get('status&id=' + encodeURIComponent(id) + '&lang=' + encodeURIComponent(lang)).then(function (r) {
+        if (r.error) throw { code: r.error };
+        return {
+          report: report(r.report || {}),
+          log: (r.log || []).map(function (l) { return { at: C.timeLabel(l.at, lang), level: l.level, text: l.text }; })
+        };
+      });
+    }
+  };
+
+  card = window.GlimFortressCard.mount(document.getElementById('trs-fort'), adapter, {
+    lang: lang, app: { id: 'tollroll', name: 'TollRoll' }, rows: rows
+  });
 
   /* The notification channels. Switches and choices save at once, text a
    * moment after the last key, so a half typed address is not sent. */
@@ -461,6 +255,5 @@
 
   document.querySelectorAll('[data-glyph]').forEach(function (n) { n.innerHTML = GLYPH[n.dataset.glyph] || ''; });
   document.getElementById('trs-n-test').addEventListener('click', testNotify);
-  loadFort();
   loadNotify();
 })();

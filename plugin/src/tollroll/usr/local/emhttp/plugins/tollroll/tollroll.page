@@ -19,6 +19,7 @@ if (preg_match('/^[a-z]{2}$/', $trl_lang) && $trl_lang !== 'en' && is_file("$trl
 $h = function ($k) use ($L) { return htmlspecialchars(isset($L[$k]) ? $L[$k] : $k, ENT_QUOTES); };
 ?>
 <link rel="stylesheet" href="<?autov('/plugins/tollroll/styles/settings.css')?>">
+<link rel="stylesheet" href="<?autov('/plugins/tollroll/styles/fortress-card.css')?>">
 
 <div class="trs-page">
   <div class="trs-hero">
@@ -31,7 +32,7 @@ $h = function ($k) use ($L) { return htmlspecialchars(isset($L[$k]) ? $L[$k] : $
   </div>
 
   <div class="trs">
-    <section class="trs-card" id="trs-fort" aria-live="polite"></section>
+    <div id="trs-fort"></div>
 
     <section class="trs-card" aria-labelledby="trs-notify-h">
       <h3 id="trs-notify-h"><?=$h('s_notify')?> <small><?=$h('s_notify_sub')?></small><span id="trs-n-saved" class="trs-saved" role="status"></span></h3>
@@ -68,9 +69,9 @@ $h = function ($k) use ($L) { return htmlspecialchars(isset($L[$k]) ? $L[$k] : $
     </section>
   </div>
 </div>
-<div id="trs-dlg"></div>
 
 <script>window.TRS_T = <?=json_encode($L, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)?>; window.TRL_LANG = <?=json_encode(preg_match('/^[a-z]{2}$/', $trl_lang) ? $trl_lang : 'en')?>;</script>
 <script src="<?autov('/plugins/tollroll/scripts/glyphs.js')?>"></script>
 <script src="<?autov('/plugins/tollroll/scripts/tollroll-core.js')?>"></script>
+<script src="<?autov('/plugins/tollroll/scripts/fortress-card.js')?>"></script>
 <script src="<?autov('/plugins/tollroll/scripts/settings.js')?>"></script>

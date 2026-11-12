@@ -248,20 +248,6 @@
     return fmt(L.t_member_on, { app: m.name || m.app, device: m.device });
   }
 
-  // changeWhere names the apps that keep the phrase and so change it, those
-  // in reach first. TollRoll and the other plugins keep only keys. An app the
-  // fortress still knows from an earlier install is named once.
-  function changeWhere(L, map, lang) {
-    var keepers = ((map && map.members) || []).filter(function (m) { return m.kind === 'instance' && m.deployment !== 'plugin'; });
-    var names = [];
-    keepers.filter(function (m) { return m.online; }).concat(keepers.filter(function (m) { return !m.online; })).forEach(function (m) {
-      var n = memberName(L, m);
-      if (names.indexOf(n) < 0) names.push(n);
-    });
-    if (!names.length) return L.s_change_where;
-    return fmt(L.s_change_in, { apps: new Intl.ListFormat(lang, { type: 'disjunction' }).format(names) });
-  }
-
   /* statusWindow is what Open shows for an app. A plugin's pages need
    * Unraid's sign-in and an app's pages open through the fortress in an app
    * that shows pages, so the tile shows the app's state instead of leading
@@ -307,5 +293,5 @@
   return { fmt: fmt, plural: plural, rowStatus: rowStatus, filterLog: filterLog, chips: chips, validFilter: validFilter,
     hue: hue, mark: mark, timeLabel: timeLabel, subtitle: subtitle, needsYou: needsYou, lang: lang,
     safeIcon: safeIcon, markColors: markColors, notifyForm: notifyForm, notifyChannels: notifyChannels,
-    shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, changeWhere: changeWhere, statusWindow: statusWindow, ago: ago };
+    shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, statusWindow: statusWindow, ago: ago };
 });
