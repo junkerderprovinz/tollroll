@@ -63,6 +63,10 @@ var ErrNoMember = errors.New("fortress: no other member has that id")
 // phrase they were taken out under.
 const removedFile = "removed.json"
 
+// removedHereFile is all that stays of a membership another member ended, so
+// the tile still says so after a restart.
+const removedHereFile = "removed-here"
+
 // Options say where the membership is kept and how the members are reached.
 type Options struct {
 	Dir string
@@ -186,6 +190,8 @@ func Open(o Options) (*Service, error) {
 	s := &Service{opt: o, silent: map[string]time.Time{}}
 	cfg, err := kit.Load(o.Dir)
 	if errors.Is(err, fs.ErrNotExist) {
+		_, err := os.Stat(filepath.Join(o.Dir, removedHereFile))
+		s.removedHere = err == nil
 		return s, nil
 	}
 	if err != nil {
@@ -394,6 +400,9 @@ func (s *Service) removedBy(gen int) {
 		}
 		_ = s.stop()
 		_ = os.RemoveAll(s.opt.Dir)
+		if os.MkdirAll(s.opt.Dir, 0o700) == nil {
+			_ = os.WriteFile(filepath.Join(s.opt.Dir, removedHereFile), nil, 0o600)
+		}
 		s.removedHere, s.phraseChanged = true, false
 	}()
 }

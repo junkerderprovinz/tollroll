@@ -451,14 +451,56 @@ func TestRemovedByAnotherMemberTheTileLeaves(t *testing.T) {
 		t.Fatal(err)
 	}
 	waitFor(t, "the tile to leave", func() bool { m := s.Map(); return !m.Joined && m.RemovedHere })
-	if _, err := os.Stat(dir); !errors.Is(err, os.ErrNotExist) {
-		t.Errorf("a removed tile kept %s: %v", dir, err)
+	if _, err := os.Stat(filepath.Join(dir, "fortress.json")); !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("a removed tile kept its membership: %v", err)
 	}
 	if err := s.Join(words); err != nil {
 		t.Fatal(err)
 	}
 	if m := s.Map(); !m.Joined || m.RemovedHere {
 		t.Errorf("joining again after removal: %+v", m)
+	}
+}
+
+func TestTheTileStillSaysItWasRemovedAfterARestart(t *testing.T) {
+	url := relayServer(t)
+	secret, words := newPhrase(t)
+	a := openApp(t, url, secret, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
+	dir := filepath.Join(t.TempDir(), "fortress")
+	s := openService(t, dir, url)
+	if err := s.Join(words); err != nil {
+		t.Fatal(err)
+	}
+	var self string
+	waitFor(t, "alpha to see the tile", func() bool {
+		for _, m := range a.Members() {
+			if m.App.ID == AppID {
+				self = m.ID
+				return true
+			}
+		}
+		return false
+	})
+	if err := a.Remove(self); err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, "the tile to leave", func() bool { return s.Map().RemovedHere })
+	if err := s.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	again := openService(t, dir, url)
+	if m := again.Map(); m.Joined || !m.RemovedHere {
+		t.Fatalf("after a restart the map is %+v", m)
+	}
+	if err := again.Join(words); err != nil {
+		t.Fatal(err)
+	}
+	if err := again.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if m := openService(t, dir, url).Map(); m.RemovedHere {
+		t.Errorf("joining again did not clear the hint: %+v", m)
 	}
 }
 
