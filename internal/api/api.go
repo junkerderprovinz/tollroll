@@ -36,6 +36,7 @@ type Fortress interface {
 	Join(words string) error
 	Leave() error
 	Remove(id string) error
+	Source(id string) (board.Source, error)
 }
 
 // New returns the handler. texts gives the words of a channel's test message.
@@ -51,6 +52,7 @@ func New(b *board.Board, ch *channels.Store, texts func() (string, alert.Texts),
 	mux.HandleFunc("POST /api/fortress/join", h.join)
 	mux.HandleFunc("POST /api/fortress/leave", h.leave)
 	mux.HandleFunc("POST /api/fortress/remove", h.remove)
+	mux.HandleFunc("GET /api/fortress/status", h.memberStatus)
 	mux.HandleFunc("GET /api/tile", h.tile)
 	mux.HandleFunc("PUT /api/tile", h.setTile)
 	return mux
@@ -132,12 +134,35 @@ func (h *handler) remove(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// memberStatus reads one member for the status window of the settings page.
+func (h *handler) memberStatus(w http.ResponseWriter, r *http.Request) {
+	src, err := h.fortress.Source(r.URL.Query().Get("id"))
+	switch {
+	case errors.Is(err, fortress.ErrNotJoined):
+		writeJSON(w, http.StatusConflict, map[string]string{"error": "not_joined"})
+		return
+	case err != nil:
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "no_member"})
+		return
+	}
+	st, err := h.board.Status(r.Context(), src, language(r))
+	if err != nil {
+		writeJSON(w, http.StatusBadGateway, map[string]string{"error": "unreachable"})
+		return
+	}
+	writeJSON(w, http.StatusOK, st)
+}
+
 func (h *handler) view(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, h.board.View(r.Context(), language(r)))
+}
+
+func language(r *http.Request) string {
 	lang := r.URL.Query().Get("lang")
 	if !langTag.MatchString(lang) {
-		lang = ""
+		return ""
 	}
-	writeJSON(w, http.StatusOK, h.board.View(r.Context(), lang))
+	return lang
 }
 
 func (h *handler) icons(w http.ResponseWriter, _ *http.Request) {

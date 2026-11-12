@@ -179,7 +179,7 @@ func (b *Board) read(ctx context.Context, srcs []Source, lang string) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			b.readOne(ctx, src, s, lang)
+			_ = b.readOne(ctx, src, s, lang)
 		}()
 	}
 	wg.Wait()
@@ -190,14 +190,15 @@ func (b *Board) read(ctx context.Context, srcs []Source, lang string) {
 	}
 }
 
-// readOne touches only s, so the sources can be read side by side.
-func (b *Board) readOne(ctx context.Context, src Source, s *source, lang string) {
+// readOne touches only s, so the sources can be read side by side. The error
+// is the report's: a log that stops answering keeps what was read.
+func (b *Board) readOne(ctx context.Context, src Source, s *source, lang string) error {
 	ctx, cancel := context.WithTimeout(ctx, b.budget)
 	defer cancel()
 	rep, err := b.reader.Report(ctx, src, lang)
 	if err != nil {
 		s.down = true
-		return
+		return err
 	}
 	s.down = false
 	rep.App.ID = clip(rep.App.ID)
@@ -225,7 +226,7 @@ func (b *Board) readOne(ctx context.Context, src Source, s *source, lang string)
 	for range pages {
 		page, err := b.reader.Log(ctx, src, buf.cursor, lang, status.MaxLogLimit)
 		if err != nil {
-			return
+			return nil
 		}
 		for _, e := range page.Entries {
 			e.ID, e.Text = clip(e.ID), cut(e.Text, maxText)
@@ -241,9 +242,10 @@ func (b *Board) readOne(ctx context.Context, src Source, s *source, lang string)
 			buf.cursor = page.Next
 		}
 		if len(page.Entries) < status.MaxLogLimit {
-			return
+			return nil
 		}
 	}
+	return nil
 }
 
 var rank = map[string]int{

@@ -8,6 +8,7 @@
  *   GET  api.php?path=icons                  -> GET  /api/icons
  *   GET  api.php?path=notify                 -> GET  /api/notify
  *   GET  api.php?path=fortress               -> GET  /api/fortress
+ *   GET  api.php?path=status&id=<id>&lang=<tag> -> GET /api/fortress/status
  *   GET  api.php?path=tile                   -> GET  /api/tile
  *   POST api.php  path=notify      data=JSON  -> PUT  /api/notify
  *   POST api.php  path=notify_test data=JSON  -> POST /api/notify/test
@@ -23,7 +24,7 @@
 
 $sock   = '/var/run/tollroll.sock';
 $reads  = ['board' => '/api/board', 'icons' => '/api/icons', 'notify' => '/api/notify', 'fortress' => '/api/fortress',
-           'tile' => '/api/tile'];
+           'status' => '/api/fortress/status', 'tile' => '/api/tile'];
 $writes = ['notify' => ['PUT', '/api/notify'], 'notify_test' => ['POST', '/api/notify/test'],
            'join' => ['POST', '/api/fortress/join'], 'leave' => ['POST', '/api/fortress/leave'],
            'remove' => ['POST', '/api/fortress/remove'],
@@ -50,10 +51,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($reads[$path])) {
         $fail(400, 'not_allowed');
     }
-    $url  = $reads[$path];
+    $url   = $reads[$path];
+    $query = [];
+    if ($path === 'status') {
+        // A member's ID is forty hex digits, and nothing else goes on to the service.
+        $id = isset($_GET['id']) ? (string) $_GET['id'] : '';
+        if (!preg_match('/^[0-9a-f]{40}$/', $id)) {
+            $fail(400, 'bad_request');
+        }
+        $query['id'] = $id;
+    }
     $lang = isset($_GET['lang']) ? (string) $_GET['lang'] : '';
-    if ($path === 'board' && preg_match('/^[a-z]{2}$/', $lang)) {
-        $url .= '?lang=' . $lang;
+    if (($path === 'board' || $path === 'status') && preg_match('/^[a-z]{2}$/', $lang)) {
+        $query['lang'] = $lang;
+    }
+    if ($query) {
+        $url .= '?' . http_build_query($query);
     }
 } else {
     $fail(405, 'method_not_allowed');

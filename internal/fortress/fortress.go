@@ -102,17 +102,20 @@ type Map struct {
 }
 
 // Member is one instance in the fortress. App is its app's ID, the key of
-// its row on the board. OnDemand marks an app that is in reach only while it
-// runs, so being away is how it should be.
+// its row on the board. Icon is its app's logo as a checked SVG data URI.
+// Relay says only the relay reaches it. OnDemand marks an app that is in
+// reach only while it runs, so being away is how it should be.
 type Member struct {
 	ID         string    `json:"id"`
 	App        string    `json:"app"`
 	Name       string    `json:"name"`
 	Version    string    `json:"version"`
+	Icon       string    `json:"icon,omitempty"`
 	Device     string    `json:"device"`
 	Deployment string    `json:"deployment"`
 	Kind       string    `json:"kind"`
 	Online     bool      `json:"online"`
+	Relay      bool      `json:"relay,omitempty"`
 	OnDemand   bool      `json:"onDemand,omitempty"`
 	LastSeen   time.Time `json:"lastSeen,omitzero"`
 }
@@ -158,11 +161,15 @@ func entry(mb kit.Member) (Member, bool) {
 	if mb.State != group.StateApproved || mb.App.ID == "" {
 		return Member{}, false
 	}
-	return Member{
+	e := Member{
 		ID: mb.ID, App: mb.App.ID, Name: appName(mb.App), Version: mb.App.Version,
 		Device: mb.Device, Deployment: mb.Deployment, Kind: string(mb.Kind),
-		Online: mb.Online(), OnDemand: mb.Kind == member.KindInstance && onDemand(mb.App), LastSeen: mb.LastSeen,
-	}, true
+		Online: mb.Online(), Relay: mb.Relay && !mb.Direct, OnDemand: mb.Kind == member.KindInstance && onDemand(mb.App), LastSeen: mb.LastSeen,
+	}
+	if status.CheckIcon(mb.App.Icon) == nil {
+		e.Icon = mb.App.Icon
+	}
+	return e, true
 }
 
 // Service is the tile's membership. It is safe for concurrent use.
@@ -459,6 +466,23 @@ func (s *Service) Sources() []board.Source {
 	}
 	slices.SortFunc(out, func(a, b board.Source) int { return cmp.Or(cmp.Compare(a.Name, b.Name), cmp.Compare(a.ID, b.ID)) })
 	return out
+}
+
+// Source is member id as the board reads it, for its status window. Any
+// instance that said which app it runs can be asked, the ones off the tile
+// as well.
+func (s *Service) Source(id string) (board.Source, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.f == nil {
+		return board.Source{}, ErrNotJoined
+	}
+	for _, mb := range s.f.Members() {
+		if mb.ID == id && mb.State == group.StateApproved && mb.Kind == member.KindInstance && mb.App.ID != "" {
+			return board.Source{ID: mb.ID, Name: appName(mb.App)}, nil
+		}
+	}
+	return board.Source{}, ErrNoMember
 }
 
 // ErrNotJoined is a read while the tile is in no fortress.

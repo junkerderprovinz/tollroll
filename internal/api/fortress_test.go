@@ -6,6 +6,9 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/junkerderprovinz/parleyport/kit/status"
+
+	"github.com/junkerderprovinz/tollroll/internal/board"
 	"github.com/junkerderprovinz/tollroll/internal/fortress"
 )
 
@@ -43,6 +46,18 @@ func (f *fakeFortress) Remove(id string) error {
 	}
 	f.removed = []fortress.Removed{{App: "alpha", Name: "Alpha", Device: "cellar"}}
 	return nil
+}
+
+func (f *fakeFortress) Source(id string) (board.Source, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	switch {
+	case f.joined == "":
+		return board.Source{}, fortress.ErrNotJoined
+	case id != "m1" && id != "m2":
+		return board.Source{}, fortress.ErrNoMember
+	}
+	return board.Source{ID: id, Name: "Alpha"}, nil
 }
 
 func (f *fakeFortress) Join(words string) error {
@@ -149,5 +164,44 @@ func TestARemovalThatCannotBeIsSaidSo(t *testing.T) {
 	e.fort.fail = errors.New("disk full")
 	if code, out := e.do("POST", "/api/fortress/remove", `{"id":"m1"}`); code != 500 || out["error"] != "remove_failed" {
 		t.Errorf("a failed removal: %d %v", code, out)
+	}
+}
+
+func TestAMembersStatusIsServedForItsWindow(t *testing.T) {
+	e := newEnv(t)
+	e.fort.joined = twelve
+	rep := app("alpha", "Alpha", "1.0.0")
+	rep.State = status.StateWarning
+	rep.NeedsYou = []status.Need{{ID: "n", Severity: status.SeverityWarn, Text: "Low on space"}}
+	e.f.apps["m1"] = rep
+	code, out := e.do("GET", "/api/fortress/status?id=m1&lang=de", "")
+	if code != 200 {
+		t.Fatalf("%d %v", code, out)
+	}
+	r := out["report"].(map[string]any)
+	if r["state"] != "warning" || len(r["needsYou"].([]any)) != 1 || out["log"] == nil {
+		t.Errorf("status %v", out)
+	}
+	if got := e.f.langs[len(e.f.langs)-1]; got != "de" {
+		t.Errorf("read in %q", got)
+	}
+}
+
+func TestAStatusThatCannotBeReadIsSaidSo(t *testing.T) {
+	e := newEnv(t)
+	if code, out := e.do("GET", "/api/fortress/status?id=m1", ""); code != 409 || out["error"] != "not_joined" {
+		t.Errorf("outside a fortress: %d %v", code, out)
+	}
+	e.fort.joined = twelve
+	if code, out := e.do("GET", "/api/fortress/status?id=m9", ""); code != 404 || out["error"] != "no_member" {
+		t.Errorf("a stranger: %d %v", code, out)
+	}
+	if code, out := e.do("GET", "/api/fortress/status?id=m2", ""); code != 502 || out["error"] != "unreachable" {
+		t.Errorf("a member that does not answer: %d %v", code, out)
+	}
+	e.f.apps["m1"] = app("alpha", "Alpha", "1.0.0")
+	e.do("GET", "/api/fortress/status?id=m1&lang=../../etc", "")
+	if got := e.f.langs[len(e.f.langs)-1]; got != "" {
+		t.Errorf("lang %q reached the app", got)
 	}
 }
