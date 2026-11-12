@@ -253,17 +253,13 @@
     return fmt(L.s_member_on, { app: m.name || m.app, device: m.device });
   }
 
-  // phrasePage is the web page of an app that keeps the phrase and so can
+  // phrasePage is the web page of a member that keeps the phrase and so can
   // change it, or null. TollRoll and the other plugins keep only keys.
-  function phrasePage(map, apps) {
-    var rows = {};
-    (apps || []).forEach(function (a) { rows[a.key] = a; });
+  function phrasePage(map) {
     var members = (map && map.members) || [];
     for (var i = 0; i < members.length; i++) {
-      var m = members[i], row = rows[m.app];
-      if (m.deployment === 'plugin' || !m.online || !row) continue;
-      var href = safeLink(row.ui);
-      if (href) return { name: row.name, href: href };
+      var m = members[i], href = safeLink(m.address);
+      if (m.deployment !== 'plugin' && m.online && href) return { name: m.name || m.app, href: href };
     }
     return null;
   }

@@ -242,17 +242,11 @@ test('a member is named by its app and its device', () => {
 });
 
 test('a new phrase is made in an app that keeps the phrase, never in a plugin', () => {
-  const map = { device: 'tower', members: [
-    { id: 'p', app: 'shiplog', device: 'tower', deployment: 'plugin', online: true },
-    { id: 'k', app: 'knightloader', device: 'cellar', deployment: 'container', online: false },
-    { id: 'b', app: 'bombvault', device: 'cellar', deployment: 'container', online: true }
-  ] };
-  const apps = [
-    app({ key: 'shiplog', name: 'ShipLog', ui: 'http://tower/Settings/shiplog' }),
-    app({ key: 'knightloader', name: 'KnightLoader', ui: 'http://cellar:8080' }),
-    app({ key: 'bombvault', name: 'BombVault', ui: 'http://cellar:3000' })
-  ];
-  assert.deepEqual(core.phrasePage(map, apps), { name: 'BombVault', href: 'http://cellar:3000' });
-  assert.equal(core.phrasePage(map, apps.slice(0, 2)), null);
-  assert.equal(core.phrasePage(map, [app({ key: 'bombvault', name: 'BombVault', ui: 'javascript:alert(1)' })]), null);
+  const shiplog = { id: 'p', app: 'shiplog', name: 'ShipLog', device: 'tower', deployment: 'plugin', online: true, address: 'http://tower/Settings/shiplog' };
+  const away = { id: 'k', app: 'knightloader', name: 'KnightLoader', device: 'cellar', deployment: 'container', online: false, address: 'http://cellar:8080' };
+  const bombvault = { id: 'b', app: 'bombvault', name: 'BombVault', device: 'cellar', deployment: 'container', online: true, address: 'https://vault.lan' };
+  assert.deepEqual(core.phrasePage({ members: [shiplog, away, bombvault] }), { name: 'BombVault', href: 'https://vault.lan' });
+  assert.equal(core.phrasePage({ members: [shiplog, away] }), null);
+  assert.equal(core.phrasePage({ members: [Object.assign({}, bombvault, { address: '' })] }), null);
+  assert.equal(core.phrasePage({ members: [Object.assign({}, bombvault, { address: 'javascript:alert(1)' })] }), null);
 });

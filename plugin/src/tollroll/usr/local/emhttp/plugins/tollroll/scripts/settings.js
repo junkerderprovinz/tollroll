@@ -192,7 +192,7 @@
       note.appendChild(glyph('IconInfo'));
       var names = gone.map(function (r) { return C.memberName(L, r); }).join(', ');
       note.appendChild(el('span', '', C.fmt(L.s_removed_list, { devices: names })));
-      var page = C.phrasePage(fort, board ? board.apps : []);
+      var page = C.phrasePage(fort);
       if (page) {
         landing = phraseLink(page);
         note.appendChild(landing);
@@ -334,7 +334,7 @@
   }
 
   function offer(d, name) {
-    var page = C.phrasePage(fort, board ? board.apps : []);
+    var page = C.phrasePage(fort);
     var tools = d.step(L.s_removed_q, [el('p', '', C.fmt(L.s_removed_text, { device: name })), el('p', 'trs-hint', L.s_change_where)]);
     var later = button('IconClose', L.s_later);
     later.addEventListener('click', d.close);

@@ -108,6 +108,8 @@ type Member struct {
 	Online     bool      `json:"online"`
 	OnDemand   bool      `json:"onDemand,omitempty"`
 	LastSeen   time.Time `json:"lastSeen,omitzero"`
+	// Address is where its web interface is, as the member says.
+	Address string `json:"address,omitempty"`
 }
 
 // Removed is a member the tile took out of the fortress.
@@ -155,6 +157,7 @@ func entry(mb kit.Member) (Member, bool) {
 		ID: mb.ID, App: mb.App.ID, Name: appName(mb.App), Version: mb.App.Version,
 		Device: mb.Device, Deployment: mb.Deployment, Kind: string(mb.Kind),
 		Online: mb.Online(), OnDemand: mb.Kind == member.KindInstance && onDemand(mb.App), LastSeen: mb.LastSeen,
+		Address: mb.Address,
 	}, true
 }
 

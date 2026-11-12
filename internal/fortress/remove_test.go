@@ -9,6 +9,10 @@ import (
 	"slices"
 	"testing"
 	"time"
+
+	kit "github.com/junkerderprovinz/parleyport/kit/fortress"
+	"github.com/junkerderprovinz/parleyport/kit/group"
+	"github.com/junkerderprovinz/parleyport/kit/member"
 )
 
 // memberID waits until the map shows app and returns its member ID.
@@ -190,5 +194,13 @@ func TestFollowingANewPhraseForgetsWhoWasRemoved(t *testing.T) {
 	}
 	if m := s.Map(); m.PhraseChanged || len(m.Removed) != 0 {
 		t.Errorf("after following the new phrase the map is %+v", m)
+	}
+}
+
+func TestTheMapSaysWhereAMembersWebPageIs(t *testing.T) {
+	got, ok := entry(kit.Member{ID: "m", Kind: member.KindInstance, App: kit.App{ID: "bombvault", Name: "BombVault"},
+		State: group.StateApproved, Address: "http://cellar:3000"})
+	if !ok || got.Address != "http://cellar:3000" {
+		t.Errorf("%+v, %v", got, ok)
 	}
 }

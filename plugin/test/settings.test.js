@@ -73,14 +73,16 @@ function all(n, pred, out = []) {
 const buttons = (n, text) => all(n, (x) => (x.tagName === 'BUTTON' || x.tagName === 'A') && x.textContent === text);
 
 const members = [
-  { id: 'k1', app: 'knightloader', name: 'KnightLoader', device: 'cellar', deployment: 'container', online: true },
-  { id: 'b1', app: 'bombvault', name: 'BombVault', device: 'attic', deployment: 'container', online: true },
-  { id: 's1', app: 'shiplog', name: 'ShipLog', device: 'tower', deployment: 'plugin', online: true }
+  { id: 'k1', app: 'knightloader', name: 'KnightLoader', device: 'cellar', deployment: 'container', online: true, address: 'http://cellar:8080' },
+  { id: 'b1', app: 'bombvault', name: 'BombVault', device: 'attic', deployment: 'container', online: true, address: 'http://attic:3000' },
+  { id: 's1', app: 'shiplog', name: 'ShipLog', device: 'tower', deployment: 'plugin', online: true, address: 'http://tower/Settings/shiplog' }
 ];
+// The board says nothing about where an app's page is, the map does.
 const apps = [
-  { key: 'knightloader', name: 'KnightLoader', state: 'ok', instances: 1, ui: 'http://cellar:8080' },
-  { key: 'bombvault', name: 'BombVault', state: 'ok', instances: 1, ui: 'http://attic:3000' }
+  { key: 'knightloader', name: 'KnightLoader', state: 'ok', instances: 1 },
+  { key: 'bombvault', name: 'BombVault', state: 'ok', instances: 1 }
 ];
+const withoutPage = members.map((m) => Object.assign({}, m, { address: '' }));
 const joined = (over) => Object.assign({ joined: true, device: 'tower', members }, over);
 
 test('every other member of the fortress has its own Remove', async () => {
@@ -127,7 +129,7 @@ test('after a removal the window offers to change the phrase in an app that keep
 
 test('without an app that keeps the phrase the offer says where it is changed', async () => {
   const removed = [{ app: 'knightloader', name: 'KnightLoader', device: 'cellar' }];
-  const p = page({ fortress: joined(), board: { apps: [] }, remove: joined({ members: members.slice(1), removed }) });
+  const p = page({ fortress: joined({ members: withoutPage }), board: { apps }, remove: joined({ members: withoutPage.slice(1), removed }) });
   await settle();
   buttons(p.fort, en.s_remove)[0].click();
   buttons(p.dlg, en.s_remove)[0].click();
