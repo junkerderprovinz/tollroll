@@ -83,7 +83,7 @@
   "t_show_log": "Arată jurnalul pentru {name}",
   "t_map_hint": "Dă clic pe o aplicație ca să-i vezi jurnalul.",
   "t_alone": "Niciun alt dispozitiv nu s-a alăturat încă fortăreței.",
-  "t_join_title": "Alătură-te cu fraza fortăreței tale",
+  "t_join_title": "Alătură-te fortăreței tale cu fraza",
   "t_join_text": "Apoi fiecare aplicație din fortăreața ta apare aici, cu starea și jurnalul ei.",
   "t_removed_title": "TollRoll a fost scos din fortăreață",
   "t_removed_text": "Un alt membru a scos TollRoll. Cu fraza revii oricând.",
