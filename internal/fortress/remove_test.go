@@ -2,11 +2,13 @@ package fortress
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -197,10 +199,20 @@ func TestFollowingANewPhraseForgetsWhoWasRemoved(t *testing.T) {
 	}
 }
 
-func TestTheMapSaysWhereAMembersWebPageIs(t *testing.T) {
+func TestTheMapNeverCarriesAMembersAddress(t *testing.T) {
 	got, ok := entry(kit.Member{ID: "m", Kind: member.KindInstance, App: kit.App{ID: "bombvault", Name: "BombVault"},
-		State: group.StateApproved, Address: "http://cellar:3000"})
-	if !ok || got.Address != "http://cellar:3000" {
-		t.Errorf("%+v, %v", got, ok)
+		Device: "cellar", Deployment: "container", State: group.StateApproved, Address: "http://cellar:3000"})
+	if !ok {
+		t.Fatal("an approved member with an app is left off the map")
+	}
+	raw, err := json.Marshal(got)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s := string(raw); strings.Contains(s, "address") || strings.Contains(s, "cellar:3000") {
+		t.Errorf("the map carries the address: %s", s)
+	}
+	if got.Kind != "instance" || got.Deployment != "container" || got.Device != "cellar" {
+		t.Errorf("the map lost what names the app that keeps the phrase: %+v", got)
 	}
 }

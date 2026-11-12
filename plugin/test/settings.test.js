@@ -73,16 +73,16 @@ function all(n, pred, out = []) {
 const buttons = (n, text) => all(n, (x) => (x.tagName === 'BUTTON' || x.tagName === 'A') && x.textContent === text);
 
 const members = [
-  { id: 'k1', app: 'knightloader', name: 'KnightLoader', device: 'cellar', deployment: 'container', online: true, address: 'http://cellar:8080' },
-  { id: 'b1', app: 'bombvault', name: 'BombVault', device: 'attic', deployment: 'container', online: true, address: 'http://attic:3000' },
-  { id: 's1', app: 'shiplog', name: 'ShipLog', device: 'tower', deployment: 'plugin', online: true, address: 'http://tower/Settings/shiplog' }
+  { id: 'k1', app: 'knightloader', kind: 'instance', name: 'KnightLoader', device: 'cellar', deployment: 'container', online: true },
+  { id: 'b1', app: 'bombvault', kind: 'instance', name: 'BombVault', device: 'attic', deployment: 'container', online: true },
+  { id: 's1', app: 'shiplog', kind: 'instance', name: 'ShipLog', device: 'tower', deployment: 'plugin', online: true }
 ];
-// The board says nothing about where an app's page is, the map does.
 const apps = [
   { key: 'knightloader', name: 'KnightLoader', state: 'ok', instances: 1 },
   { key: 'bombvault', name: 'BombVault', state: 'ok', instances: 1 }
 ];
-const withoutPage = members.map((m) => Object.assign({}, m, { address: '' }));
+const onlyPlugins = members.map((m) => Object.assign({}, m, { deployment: 'plugin' }));
+const links = (n) => all(n, (x) => x.tagName === 'A');
 const joined = (over) => Object.assign({ joined: true, device: 'tower', members }, over);
 
 test('every other member of the fortress has its own Remove', async () => {
@@ -105,7 +105,7 @@ test('Remove asks first, naming the app and its device, and focuses the button t
   assert.equal(p.posts.length, 0, 'cancel removed something');
 });
 
-test('after a removal the window offers to change the phrase in an app that keeps it', async () => {
+test('after a removal the window names the app and device where the phrase is changed', async () => {
   const removed = [{ app: 'knightloader', name: 'KnightLoader', device: 'cellar' }];
   const p = page({ fortress: joined(), board: { apps }, remove: joined({ members: members.slice(1), removed }) });
   await settle();
@@ -115,11 +115,9 @@ test('after a removal the window offers to change the phrase in an app that keep
   assert.deepEqual(p.posts, [{ path: 'remove', data: { id: 'k1' } }]);
   assert.ok(p.dlg.textContent.includes(en.s_removed_q), p.dlg.textContent);
   assert.ok(p.dlg.textContent.includes('KnightLoader on cellar is out.'));
-  const change = buttons(p.dlg, en.s_change);
-  assert.equal(change.length, 1);
-  assert.equal(change[0].href, 'http://attic:3000', 'the phrase is changed in BombVault, which is still in');
-  assert.equal(change[0].target, '_blank');
-  assert.equal(p.focused(), change[0]);
+  assert.ok(p.dlg.textContent.includes('You change the phrase in BombVault on attic.'), p.dlg.textContent);
+  assert.equal(links(p.dlg).length, 0, 'the window links to no member');
+  assert.equal(p.focused().textContent, en.s_later);
 
   buttons(p.dlg, en.s_later)[0].click();
   assert.equal(p.dlg.children.length, 0);
@@ -129,13 +127,12 @@ test('after a removal the window offers to change the phrase in an app that keep
 
 test('without an app that keeps the phrase the offer says where it is changed', async () => {
   const removed = [{ app: 'knightloader', name: 'KnightLoader', device: 'cellar' }];
-  const p = page({ fortress: joined({ members: withoutPage }), board: { apps }, remove: joined({ members: withoutPage.slice(1), removed }) });
+  const p = page({ fortress: joined({ members: onlyPlugins }), board: { apps }, remove: joined({ members: onlyPlugins.slice(1), removed }) });
   await settle();
   buttons(p.fort, en.s_remove)[0].click();
   buttons(p.dlg, en.s_remove)[0].click();
   await settle();
   assert.ok(p.dlg.textContent.includes(en.s_change_where), p.dlg.textContent);
-  assert.equal(buttons(p.dlg, en.s_change).length, 0);
   assert.equal(p.focused().textContent, en.s_later);
 });
 
@@ -144,7 +141,8 @@ test('the reminder stays until the phrase changes', async () => {
   let p = page({ fortress: joined({ removed }), board: { apps } });
   await settle();
   assert.ok(p.fort.textContent.includes('Removed: KnightLoader on cellar, lantern on attic.'), p.fort.textContent);
-  assert.equal(buttons(p.fort, en.s_change)[0].href, 'http://cellar:8080');
+  assert.ok(p.fort.textContent.includes('You change the phrase in KnightLoader on cellar or BombVault on attic.'), p.fort.textContent);
+  assert.equal(links(p.fort).length, 0, 'the card links to no member');
   p = page({ fortress: joined(), board: { apps } });
   await settle();
   assert.ok(!p.fort.textContent.includes('Removed:'), p.fort.textContent);

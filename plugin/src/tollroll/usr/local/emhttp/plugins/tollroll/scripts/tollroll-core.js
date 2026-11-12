@@ -253,15 +253,18 @@
     return fmt(L.s_member_on, { app: m.name || m.app, device: m.device });
   }
 
-  // phrasePage is the web page of a member that keeps the phrase and so can
-  // change it, or null. TollRoll and the other plugins keep only keys.
-  function phrasePage(map) {
-    var members = (map && map.members) || [];
-    for (var i = 0; i < members.length; i++) {
-      var m = members[i], href = safeLink(m.address);
-      if (m.deployment !== 'plugin' && m.online && href) return { name: m.name || m.app, href: href };
-    }
-    return null;
+  // changeWhere names the apps that keep the phrase and so change it, those
+  // in reach first. TollRoll and the other plugins keep only keys. An app the
+  // fortress still knows from an earlier install is named once.
+  function changeWhere(L, map, lang) {
+    var keepers = ((map && map.members) || []).filter(function (m) { return m.kind === 'instance' && m.deployment !== 'plugin'; });
+    var names = [];
+    keepers.filter(function (m) { return m.online; }).concat(keepers.filter(function (m) { return !m.online; })).forEach(function (m) {
+      var n = memberName(L, m);
+      if (names.indexOf(n) < 0) names.push(n);
+    });
+    if (!names.length) return L.s_change_where;
+    return fmt(L.s_change_in, { apps: new Intl.ListFormat(lang, { type: 'disjunction' }).format(names) });
   }
 
   function ago(iso, lang, now) {
@@ -285,5 +288,5 @@
   return { fmt: fmt, plural: plural, rowStatus: rowStatus, filterLog: filterLog, chips: chips, validFilter: validFilter,
     safeLink: safeLink, hue: hue, mark: mark, timeLabel: timeLabel, subtitle: subtitle, needsYou: needsYou, lang: lang,
     safeIcon: safeIcon, markColors: markColors, notifyForm: notifyForm, notifyChannels: notifyChannels,
-    shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, phrasePage: phrasePage, ago: ago };
+    shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, changeWhere: changeWhere, ago: ago };
 });

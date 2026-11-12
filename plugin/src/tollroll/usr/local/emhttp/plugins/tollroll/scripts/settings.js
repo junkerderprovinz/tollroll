@@ -192,13 +192,7 @@
       note.appendChild(glyph('IconInfo'));
       var names = gone.map(function (r) { return C.memberName(L, r); }).join(', ');
       note.appendChild(el('span', '', C.fmt(L.s_removed_list, { devices: names })));
-      var page = C.phrasePage(fort);
-      if (page) {
-        landing = phraseLink(page);
-        note.appendChild(landing);
-      } else {
-        note.appendChild(el('span', 'trs-removed-where', L.s_change_where));
-      }
+      note.appendChild(el('span', 'trs-removed-where', C.changeWhere(L, fort, lang)));
       fortEl.appendChild(note);
     }
 
@@ -217,19 +211,6 @@
     tools.appendChild(again);
     tools.appendChild(leave);
     fortEl.appendChild(tools);
-  }
-
-  // The button to change the phrase opens an app that keeps it, since
-  // TollRoll has only keys.
-  function phraseLink(page, primary) {
-    var a = el('a', 'trs-btn ' + (primary ? 'trs-primary' : 'trs-quiet'));
-    a.href = page.href;
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    a.title = C.fmt(L.t_open, { name: page.name });
-    a.appendChild(glyph('IconExternalLink'));
-    a.appendChild(el('span', '', L.s_change));
-    return a;
   }
 
   // dialog opens a window over the page. Each step replaces what it shows
@@ -334,19 +315,11 @@
   }
 
   function offer(d, name) {
-    var page = C.phrasePage(fort);
-    var tools = d.step(L.s_removed_q, [el('p', '', C.fmt(L.s_removed_text, { device: name })), el('p', 'trs-hint', L.s_change_where)]);
+    var tools = d.step(L.s_removed_q, [el('p', '', C.fmt(L.s_removed_text, { device: name })), el('p', 'trs-hint', C.changeWhere(L, fort, lang))]);
     var later = button('IconClose', L.s_later);
     later.addEventListener('click', d.close);
     tools.appendChild(later);
-    if (!page) {
-      later.focus();
-      return;
-    }
-    var change = phraseLink(page, true);
-    change.addEventListener('click', d.close);
-    tools.appendChild(change);
-    change.focus();
+    later.focus();
   }
 
   function loadFort() {
