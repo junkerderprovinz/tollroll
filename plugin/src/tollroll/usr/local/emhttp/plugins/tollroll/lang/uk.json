@@ -149,5 +149,11 @@
   "t_sel_one": "{n} з {total} застосунку",
   "t_sel_few": "{n} з {total} застосунків",
   "t_sel_many": "{n} з {total} застосунків",
-  "t_sel_other": "{n} з {total} застосунку"
+  "t_sel_other": "{n} з {total} застосунку",
+  "t_win_needs": "Потрібна твоя увага",
+  "t_win_work": "Зараз виконується",
+  "t_win_next": "Далі",
+  "t_win_quiet": "Зараз нічого не потребує уваги і нічого не виконується.",
+  "t_win_where": "Його налаштування в Unraid на {devices}.",
+  "t_close": "Закрити"
 }

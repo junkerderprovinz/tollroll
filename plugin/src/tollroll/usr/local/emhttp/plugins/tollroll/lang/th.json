@@ -125,5 +125,11 @@
   "t_map_other": "แผนที่ป้อมปราการ ({n} อุปกรณ์)",
   "t_none": "ไม่มี",
   "t_sel_none": "ไม่มีแอป",
-  "t_sel_other": "{n} จาก {total} แอป"
+  "t_sel_other": "{n} จาก {total} แอป",
+  "t_win_needs": "ต้องการคุณ",
+  "t_win_work": "กำลังทำงาน",
+  "t_win_next": "ถัดไป",
+  "t_win_quiet": "ตอนนี้ไม่มีอะไรต้องการคุณและไม่มีอะไรกำลังทำงาน",
+  "t_win_where": "การตั้งค่าอยู่ใน Unraid บน {devices}",
+  "t_close": "ปิด"
 }

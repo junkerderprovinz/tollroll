@@ -125,5 +125,11 @@
   "t_map_other": "堡垒地图，{n} 台设备",
   "t_none": "无",
   "t_sel_none": "无应用",
-  "t_sel_other": "{total} 个应用中的 {n} 个"
+  "t_sel_other": "{total} 个应用中的 {n} 个",
+  "t_win_needs": "需要你处理",
+  "t_win_work": "正在运行",
+  "t_win_next": "接下来",
+  "t_win_quiet": "现在没有需要你处理的事，也没有正在运行的任务。",
+  "t_win_where": "它的设置在 {devices} 上的 Unraid 里。",
+  "t_close": "关闭"
 }

@@ -141,7 +141,7 @@ func (tr *track) next(s board.Seen, tx Texts, now time.Time) []notify.Event {
 }
 
 func event(kind string, sev notify.Severity, title, body string, s board.Seen) notify.Event {
-	return notify.Event{Kind: kind, Severity: sev, Title: title, Body: body, Link: s.Link, Fields: map[string]string{"app": s.Name}}
+	return notify.Event{Kind: kind, Severity: sev, Title: title, Body: body, Fields: map[string]string{"app": s.Name}}
 }
 
 // plain makes what an app wrote safe for every channel: one short line with

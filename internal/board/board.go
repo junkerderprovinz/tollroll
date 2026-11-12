@@ -12,7 +12,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"net/url"
 	"slices"
 	"strings"
 	"sync"
@@ -64,9 +63,11 @@ type View struct {
 }
 
 // App is one row. Key is the app's ID from its report, or "source:" and the
-// member ID while the app has never answered. UI is an http(s) link or empty.
-// Color is the app's own #rrggbb and Icon the ID of its logo in Icons, both
-// empty when the app names none.
+// member ID while the app has never answered. Color is the app's own #rrggbb
+// and Icon the ID of its logo in Icons, both empty when the app names none.
+// Need and Work are what the row shows, Needs, Tasks and Next what the status
+// window lists for every instance that answers. No address of the app is
+// ever on the board.
 type App struct {
 	Key       string `json:"key"`
 	Name      string `json:"name"`
@@ -75,7 +76,9 @@ type App struct {
 	Instances int    `json:"instances"`
 	Need      *Need  `json:"need,omitempty"`
 	Work      *Work  `json:"work,omitempty"`
-	UI        string `json:"ui,omitempty"`
+	Needs     []Need `json:"needs,omitempty"`
+	Tasks     []Work `json:"tasks,omitempty"`
+	Next      []Next `json:"next,omitempty"`
 	Color     string `json:"color,omitempty"`
 	Icon      string `json:"icon,omitempty"`
 }
@@ -91,6 +94,15 @@ type Work struct {
 	Title    string   `json:"title"`
 	Progress *float64 `json:"progress,omitempty"`
 }
+
+// Next is something an app has planned.
+type Next struct {
+	Title string    `json:"title"`
+	At    time.Time `json:"at"`
+}
+
+// listed caps each list of the status window.
+const listed = 5
 
 // Line is one line of the shared log. App is the key of its row.
 type Line struct {
@@ -317,9 +329,6 @@ func row(k string, ins []instance) App {
 		if a.Name == "" && in.rep.App.Name != "" {
 			a.Name, a.Version = in.rep.App.Name, in.rep.App.Version
 		}
-		if a.UI == "" {
-			a.UI = link(in)
-		}
 		if a.Color == "" {
 			a.Color = in.rep.App.Color
 		}
@@ -340,21 +349,39 @@ func row(k string, ins []instance) App {
 			a.Work = &Work{Title: cut(w.Title, maxText), Progress: w.Progress}
 		}
 	}
+	details(&a, ins)
 	return a
 }
 
-// link is where the tile's open button and a notification lead: the UI the
-// app names, and only ever an http(s) URL without quotes, spaces or markup.
-func link(in instance) string {
-	ui := in.rep.App.UI
-	if strings.ContainsAny(ui, "\"'<>\\ \t\r\n") {
-		return ""
+// details fills the lists of the status window from every instance that
+// answers, the most urgent need and the soonest plan first.
+func details(a *App, ins []instance) {
+	var needs []status.Need
+	for _, in := range ins {
+		if !in.known || in.state == Unreachable {
+			continue
+		}
+		needs = append(needs, in.rep.NeedsYou...)
+		for _, w := range in.rep.Work {
+			a.Tasks = append(a.Tasks, Work{Title: cut(w.Title, maxText), Progress: w.Progress})
+		}
+		for _, n := range in.rep.Next {
+			a.Next = append(a.Next, Next{Title: cut(n.Title, maxText), At: n.At})
+		}
 	}
-	u, err := url.Parse(ui)
-	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || u.User != nil {
-		return ""
+	slices.SortStableFunc(needs, func(x, y status.Need) int { return severityRank[y.Severity] - severityRank[x.Severity] })
+	for _, n := range needs {
+		a.Needs = append(a.Needs, Need{Severity: string(n.Severity), Text: cut(n.Text, maxText)})
 	}
-	return ui
+	slices.SortStableFunc(a.Next, func(x, y Next) int { return x.At.Compare(y.At) })
+	a.Needs, a.Tasks, a.Next = first(a.Needs), first(a.Tasks), first(a.Next)
+}
+
+func first[T any](l []T) []T {
+	if len(l) > listed {
+		return l[:listed]
+	}
+	return l
 }
 
 // Icons returns the logos of the apps on the board by the ID their rows carry,
@@ -387,7 +414,6 @@ type Seen struct {
 	Name   string
 	Down   bool
 	Needs  []status.Need
-	Link   string
 }
 
 // Check reads the sources as View does and returns each one in list order.
@@ -406,11 +432,21 @@ func (b *Board) Check(ctx context.Context, lang string) []Seen {
 		if rep, ok := s.reports[lang]; ok {
 			in.rep, in.known = rep, true
 		}
-		seen := Seen{Source: src.ID, Name: in.rep.App.Name, Down: s.down || !in.known, Needs: slices.Clone(in.rep.NeedsYou), Link: link(in)}
+		seen := Seen{Source: src.ID, Name: in.rep.App.Name, Down: s.down || !in.known, Needs: unlinked(in.rep.NeedsYou)}
 		if seen.Name == "" {
 			seen.Name = fallbackName(src)
 		}
 		out = append(out, seen)
+	}
+	return out
+}
+
+// unlinked copies needs without the links an app may give them, which lead
+// to its own address.
+func unlinked(needs []status.Need) []status.Need {
+	out := slices.Clone(needs)
+	for i := range out {
+		out[i].Link = ""
 	}
 	return out
 }

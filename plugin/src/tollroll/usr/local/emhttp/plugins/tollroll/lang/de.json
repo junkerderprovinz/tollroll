@@ -133,5 +133,11 @@
   "t_none": "Keine",
   "t_sel_none": "Keine App",
   "t_sel_one": "{n} von {total} App",
-  "t_sel_other": "{n} von {total} Apps"
+  "t_sel_other": "{n} von {total} Apps",
+  "t_win_needs": "Braucht dich",
+  "t_win_work": "Läuft gerade",
+  "t_win_next": "Als Nächstes",
+  "t_win_quiet": "Gerade braucht dich nichts und nichts läuft.",
+  "t_win_where": "Die Einstellungen liegen in Unraid auf {devices}.",
+  "t_close": "Schließen"
 }

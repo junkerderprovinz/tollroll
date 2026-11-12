@@ -149,5 +149,11 @@
   "t_sel_one": "{n} z {total} aplikace",
   "t_sel_few": "{n} z {total} aplikací",
   "t_sel_many": "{n} z {total} aplikace",
-  "t_sel_other": "{n} z {total} aplikací"
+  "t_sel_other": "{n} z {total} aplikací",
+  "t_win_needs": "Potřebuje tě",
+  "t_win_work": "Právě běží",
+  "t_win_next": "Na řadě",
+  "t_win_quiet": "Teď nic nepotřebuje tvou pozornost a nic neběží.",
+  "t_win_where": "Nastavení najdeš v Unraidu na {devices}.",
+  "t_close": "Zavřít"
 }

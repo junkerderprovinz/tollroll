@@ -133,5 +133,11 @@
   "t_none": "Geen",
   "t_sel_none": "Geen app",
   "t_sel_one": "{n} van {total} app",
-  "t_sel_other": "{n} van {total} apps"
+  "t_sel_other": "{n} van {total} apps",
+  "t_win_needs": "Heeft je nodig",
+  "t_win_work": "Loopt nu",
+  "t_win_next": "Hierna",
+  "t_win_quiet": "Er heeft je nu niets nodig en er loopt niets.",
+  "t_win_where": "De instellingen staan in Unraid op {devices}.",
+  "t_close": "Sluiten"
 }

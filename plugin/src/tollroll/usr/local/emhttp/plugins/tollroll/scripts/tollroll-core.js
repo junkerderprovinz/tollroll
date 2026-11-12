@@ -76,11 +76,6 @@
     return (view.apps || []).some(function (a) { return a.key === key; }) ? key : 'all';
   }
 
-  function safeLink(u) {
-    if (typeof u !== 'string') return '';
-    return /^https?:\/\/[^\s/]/i.test(u) ? u : '';
-  }
-
   function hue(key) {
     var h = 2166136261;
     for (var i = 0; i < key.length; i++) {
@@ -267,6 +262,30 @@
     return fmt(L.s_change_in, { apps: new Intl.ListFormat(lang, { type: 'disjunction' }).format(names) });
   }
 
+  /* statusWindow is what Open shows for an app. A plugin's pages need
+   * Unraid's sign-in and an app's pages open through the fortress in an app
+   * that shows pages, so the tile shows the app's state instead of leading
+   * to its address. */
+  function statusWindow(app, map, log, L, lang) {
+    var s = app.state === 'ok' ? ['ok', 't_st_ok'] : STATES[app.state] || STATES.unreachable;
+    var mine = ((map && map.members) || []).filter(function (m) { return m.app === app.key && m.kind === 'instance'; });
+    var plugins = mine.filter(function (m) { return m.deployment === 'plugin'; }).map(function (m) { return m.device; });
+    var w = {
+      title: app.name,
+      state: { tone: s[0], text: L[s[1]] },
+      devices: mine.map(function (m) { return memberName(L, m); }),
+      needs: (app.needs || []).map(function (n) { return { tone: n.severity === 'error' ? 'fail' : 'warn', text: n.text }; }),
+      tasks: (app.tasks || []).map(function (t) { return typeof t.progress === 'number' ? t.title + ', ' + percent(t.progress, lang) : t.title; }),
+      next: (app.next || []).map(function (n) { return { title: n.title, at: timeLabel(n.at, lang) }; }),
+      log: (log || []).filter(function (l) { return l.app === app.key; })
+        .sort(function (x, y) { return x.at < y.at ? 1 : x.at > y.at ? -1 : 0; }).slice(0, 10)
+        .map(function (l) { return { level: l.level, at: timeLabel(l.at, lang), text: l.text }; }),
+      where: plugins.length ? fmt(L.t_win_where, { devices: new Intl.ListFormat(lang, { type: 'conjunction' }).format(plugins) }) : ''
+    };
+    w.quiet = w.needs.length + w.tasks.length + w.next.length ? '' : L.t_win_quiet;
+    return w;
+  }
+
   function ago(iso, lang, now) {
     var s = Math.round((new Date(iso) - (now || new Date())) / 1000);
     var steps = [[60, 'second'], [3600, 'minute'], [86400, 'hour'], [Infinity, 'day']];
@@ -286,7 +305,7 @@
   }
 
   return { fmt: fmt, plural: plural, rowStatus: rowStatus, filterLog: filterLog, chips: chips, validFilter: validFilter,
-    safeLink: safeLink, hue: hue, mark: mark, timeLabel: timeLabel, subtitle: subtitle, needsYou: needsYou, lang: lang,
+    hue: hue, mark: mark, timeLabel: timeLabel, subtitle: subtitle, needsYou: needsYou, lang: lang,
     safeIcon: safeIcon, markColors: markColors, notifyForm: notifyForm, notifyChannels: notifyChannels,
-    shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, changeWhere: changeWhere, ago: ago };
+    shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, changeWhere: changeWhere, statusWindow: statusWindow, ago: ago };
 });

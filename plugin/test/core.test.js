@@ -77,13 +77,37 @@ test('a filter for an app that is gone falls back to all', () => {
   assert.equal(core.validFilter(view, null), 'all');
 });
 
-test('only web links survive', () => {
-  assert.equal(core.safeLink('https://tower.lan:3443/'), 'https://tower.lan:3443/');
-  assert.equal(core.safeLink('http://10.0.0.2'), 'http://10.0.0.2');
-  assert.equal(core.safeLink('javascript:alert(1)'), '');
-  assert.equal(core.safeLink(' JaVaScRiPt:alert(1)'), '');
-  assert.equal(core.safeLink('//evil.example'), '');
-  assert.equal(core.safeLink(undefined), '');
+test('the status window lists what the app reports and leads to no address', () => {
+  const row = app({
+    state: 'warning', ui: 'https://alpha.lan/',
+    needs: [{ severity: 'warn', text: 'The copy is old' }],
+    tasks: [{ title: 'Backing up', progress: 0.5 }],
+    next: [{ title: 'Check', at: '2026-11-12T22:00:00Z' }]
+  });
+  const fort = { members: [
+    { app: 'alpha', name: 'Alpha', device: 'Bottich', deployment: 'container', kind: 'instance', online: true },
+    { app: 'bravo', name: 'Bravo', device: 'Cellar', deployment: 'plugin', kind: 'instance', online: true }
+  ] };
+  const log = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => ({ id: String(i), app: i % 2 ? 'alpha' : 'bravo', at: '2026-11-12T10:' + String(i).padStart(2, '0') + ':00Z', level: 'info', text: 'line ' + i }));
+  const w = core.statusWindow(row, fort, log, en, 'en');
+  assert.equal(w.title, 'Alpha');
+  assert.deepEqual(w.state, { tone: 'warn', text: 'needs a look' });
+  assert.deepEqual(w.devices, ['Alpha on Bottich']);
+  assert.deepEqual(w.needs, [{ tone: 'warn', text: 'The copy is old' }]);
+  assert.deepEqual(w.tasks, ['Backing up, 50%']);
+  assert.equal(w.next.length, 1);
+  assert.equal(w.next[0].title, 'Check');
+  assert.deepEqual(w.log.map((l) => l.text), ['line 11', 'line 9', 'line 7', 'line 5', 'line 3', 'line 1']);
+  assert.equal(w.where, '');
+  assert.equal(w.quiet, '');
+  assert.ok(!JSON.stringify(w).includes('alpha.lan'));
+});
+
+test('the status window of a plugin says where its settings are', () => {
+  const fort = { members: [{ app: 'bravo', name: 'Bravo', device: 'Cellar', deployment: 'plugin', kind: 'instance', online: true }] };
+  const w = core.statusWindow(app({ key: 'bravo', name: 'Bravo' }), fort, [], en, 'en');
+  assert.equal(w.where, 'Its settings are in Unraid on Cellar.');
+  assert.equal(w.quiet, 'Nothing needs you and nothing is running right now.');
 });
 
 test('an app keeps its colour', () => {

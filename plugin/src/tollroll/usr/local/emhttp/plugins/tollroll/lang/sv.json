@@ -133,5 +133,11 @@
   "t_none": "Ingen",
   "t_sel_none": "Ingen app",
   "t_sel_one": "{n} av {total} app",
-  "t_sel_other": "{n} av {total} appar"
+  "t_sel_other": "{n} av {total} appar",
+  "t_win_needs": "Behöver dig",
+  "t_win_work": "Körs nu",
+  "t_win_next": "Härnäst",
+  "t_win_quiet": "Just nu behöver inget dig och inget körs.",
+  "t_win_where": "Inställningarna finns i Unraid på {devices}.",
+  "t_close": "Stäng"
 }

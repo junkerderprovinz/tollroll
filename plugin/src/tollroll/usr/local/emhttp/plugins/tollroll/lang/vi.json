@@ -125,5 +125,11 @@
   "t_map_other": "Bản đồ pháo đài, {n} thiết bị",
   "t_none": "Không có",
   "t_sel_none": "Không có ứng dụng",
-  "t_sel_other": "{n}/{total} ứng dụng"
+  "t_sel_other": "{n}/{total} ứng dụng",
+  "t_win_needs": "Cần bạn",
+  "t_win_work": "Đang chạy",
+  "t_win_next": "Sắp tới",
+  "t_win_quiet": "Lúc này không có gì cần bạn và không có gì đang chạy.",
+  "t_win_where": "Cài đặt nằm trong Unraid trên {devices}.",
+  "t_close": "Đóng"
 }

@@ -141,5 +141,11 @@
   "t_sel_none": "Nessuna app",
   "t_sel_one": "{n} di {total} app",
   "t_sel_many": "{n} di {total} di app",
-  "t_sel_other": "{n} di {total} app"
+  "t_sel_other": "{n} di {total} app",
+  "t_win_needs": "Ha bisogno di te",
+  "t_win_work": "In corso",
+  "t_win_next": "In arrivo",
+  "t_win_quiet": "Al momento niente ha bisogno di te e niente è in corso.",
+  "t_win_where": "Le sue impostazioni sono in Unraid su {devices}.",
+  "t_close": "Chiudi"
 }

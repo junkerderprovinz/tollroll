@@ -149,5 +149,11 @@
   "t_sel_one": "{n} из {total} приложения",
   "t_sel_few": "{n} из {total} приложений",
   "t_sel_many": "{n} из {total} приложений",
-  "t_sel_other": "{n} из {total} приложения"
+  "t_sel_other": "{n} из {total} приложения",
+  "t_win_needs": "Нужно твоё внимание",
+  "t_win_work": "Сейчас выполняется",
+  "t_win_next": "Дальше",
+  "t_win_quiet": "Сейчас ничего не требует внимания и ничего не выполняется.",
+  "t_win_where": "Его настройки в Unraid на {devices}.",
+  "t_close": "Закрыть"
 }

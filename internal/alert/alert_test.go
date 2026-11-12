@@ -24,7 +24,7 @@ var en = Texts{
 }
 
 func up(needs ...status.Need) board.Seen {
-	return board.Seen{Source: "s1", Name: "Alpha", Needs: needs, Link: "https://a.lan/"}
+	return board.Seen{Source: "s1", Name: "Alpha", Needs: needs}
 }
 
 func down() board.Seen { return board.Seen{Source: "s1", Name: "Alpha", Down: true} }
@@ -57,7 +57,7 @@ func TestANewNeedIsToldOnce(t *testing.T) {
 		t.Fatalf("sent %q", titles(got))
 	}
 	e := got[0]
-	if e.Kind != KindNeed || e.Title != "Alpha needs you" || e.Body != "The copy is 9 days old." || e.Severity != notify.SeverityWarning || e.Link != "https://a.lan/" || e.Fields["app"] != "Alpha" {
+	if e.Kind != KindNeed || e.Title != "Alpha needs you" || e.Body != "The copy is 9 days old." || e.Severity != notify.SeverityWarning || e.Link != "" || e.Fields["app"] != "Alpha" {
 		t.Errorf("event %+v", e)
 	}
 	for range 3 {

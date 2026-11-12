@@ -99,7 +99,7 @@ func TestCheckSeesEverySourceWithAllItsNeeds(t *testing.T) {
 		t.Fatalf("seen %+v", seen)
 	}
 	up, down := seen[0], seen[1]
-	if up.Source != "a" || up.Name != "Alpha" || up.Down || len(up.Needs) != 2 || up.Link != "https://a.lan/" {
+	if up.Source != "a" || up.Name != "Alpha" || up.Down || len(up.Needs) != 2 {
 		t.Errorf("up %+v", up)
 	}
 	if down.Source != "gone" || !down.Down || down.Name != "app on gone" || len(down.Needs) != 0 {

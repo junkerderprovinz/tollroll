@@ -133,5 +133,11 @@
   "t_none": "Egyik sem",
   "t_sel_none": "Nincs alkalmazás",
   "t_sel_one": "{n}/{total} alkalmazás",
-  "t_sel_other": "{n}/{total} alkalmazás"
+  "t_sel_other": "{n}/{total} alkalmazás",
+  "t_win_needs": "Rád vár",
+  "t_win_work": "Most fut",
+  "t_win_next": "Következik",
+  "t_win_quiet": "Most semmi sem vár rád, és semmi sem fut.",
+  "t_win_where": "A beállításai az Unraidben vannak, itt: {devices}.",
+  "t_close": "Bezárás"
 }

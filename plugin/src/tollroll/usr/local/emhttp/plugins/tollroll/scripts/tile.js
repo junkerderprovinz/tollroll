@@ -27,7 +27,7 @@
   var openEl = document.getElementById('trl-open');
   var hsEl = document.getElementById('trl-hs');
 
-  var view = null, fort = null, prefs = { view: 'all', hidden: [] };
+  var view = null, fort = null, prefs = { view: 'all', hidden: [] }, openApp = null;
   var filter = 'all', follow = true, timer = null, picking = null;
   // Logos by the ID a row carries. They come in a request of their own, made
   // only when a row names one not seen yet, so a poll stays small.
@@ -460,19 +460,89 @@
     emptyEl.appendChild(a);
   }
 
-  // The open button shows once the log is down to one app with a web page.
-  // It keeps its place while hidden, so the selector does not move.
+  // The open button shows once the log is down to one app. It keeps its
+  // place while hidden, so the selector does not move.
   function drawOpen(v) {
     var chosen = C.shown(view.apps, prefs.hidden);
-    var app = v === 'all' ? byKey()[filter] : v === 'log' && chosen.length === 1 ? chosen[0] : null;
-    var href = app ? C.safeLink(app.ui) : '';
-    openEl.style.visibility = href ? '' : 'hidden';
-    openEl.tabIndex = href ? 0 : -1;
-    if (href) {
-      openEl.href = href;
-      openEl.title = C.fmt(L.t_open, { name: app.name });
+    openApp = v === 'all' ? byKey()[filter] || null : v === 'log' && chosen.length === 1 ? chosen[0] : null;
+    openEl.style.visibility = openApp ? '' : 'hidden';
+    openEl.tabIndex = openApp ? 0 : -1;
+    if (openApp) {
+      openEl.title = C.fmt(L.t_open, { name: openApp.name });
       openEl.setAttribute('aria-label', openEl.title);
     }
+  }
+
+  // showStatus opens the status window of app over the dashboard. Escape and
+  // a click beside it close it, and the focus goes back to the open button.
+  function showStatus(app) {
+    var w = C.statusWindow(app, fort, view.log, L, lang);
+    var shade = el('div', 'trl-dlg-back');
+    var box = el('div', 'trl-dlg');
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.setAttribute('aria-labelledby', 'trl-dlg-h');
+    function close() {
+      shade.remove();
+      document.removeEventListener('keydown', onKey);
+      openEl.focus();
+    }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+    shade.addEventListener('click', function (e) { if (e.target === shade) close(); });
+    var h = el('h4', 'trl-dlg-title');
+    h.id = 'trl-dlg-h';
+    h.appendChild(mark(app));
+    h.appendChild(el('span', '', w.title));
+    box.appendChild(h);
+    var state = el('p', 'trl-state trl-' + w.state.tone);
+    state.appendChild(el('span', 'trl-dot'));
+    state.appendChild(el('span', '', w.state.text));
+    box.appendChild(state);
+    if (w.devices.length) box.appendChild(el('p', 'trl-dlg-sub', w.devices.join(', ')));
+    function section(title, items, fill) {
+      if (!items.length) return;
+      box.appendChild(el('h5', '', title));
+      var ul = el('ul', 'trl-dlg-list');
+      items.forEach(function (it) { var li = el('li'); fill(li, it); ul.appendChild(li); });
+      box.appendChild(ul);
+    }
+    section(L.t_win_needs, w.needs, function (li, n) {
+      li.appendChild(el('span', 'trl-dot trl-' + n.tone));
+      li.appendChild(el('span', 'trl-dlg-text', n.text));
+    });
+    section(L.t_win_work, w.tasks, function (li, t) { li.appendChild(el('span', 'trl-dlg-text', t)); });
+    section(L.t_win_next, w.next, function (li, n) {
+      li.appendChild(el('span', 'trl-t', n.at));
+      li.appendChild(el('span', 'trl-dlg-text', n.title));
+    });
+    if (w.quiet) box.appendChild(el('p', 'trl-dlg-sub', w.quiet));
+    section(L.t_log, w.log, function (li, l) {
+      li.appendChild(el('span', 'trl-t', l.at));
+      var level = ['info', 'warn', 'error'].indexOf(l.level) >= 0 ? l.level : 'info';
+      var g = el('span', 'trl-g trl-l-' + level);
+      g.innerHTML = GLYPH[level];
+      li.appendChild(g);
+      li.appendChild(el('span', 'trl-dlg-text', l.text));
+    });
+    if (w.where) box.appendChild(el('p', 'trl-dlg-sub', w.where));
+    var tools = el('div', 'trl-dlg-tools');
+    var shut = el('button', 'trl-dlg-btn');
+    shut.type = 'button';
+    shut.appendChild(glyph('IconClose'));
+    shut.appendChild(el('span', '', L.t_close));
+    shut.addEventListener('click', close);
+    tools.appendChild(shut);
+    box.appendChild(tools);
+    shade.appendChild(box);
+    document.body.appendChild(shade);
+    document.addEventListener('keydown', onKey);
+    shut.focus();
+  }
+  if (openEl) {
+    openEl.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (openApp) showStatus(openApp);
+    });
   }
 
   function show(n, on) { n.hidden = !on; }

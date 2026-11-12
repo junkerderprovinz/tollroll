@@ -141,5 +141,11 @@
   "t_sel_none": "Nicio aplicație",
   "t_sel_one": "{n} din {total} aplicație",
   "t_sel_few": "{n} din {total} aplicații",
-  "t_sel_other": "{n} din {total} de aplicații"
+  "t_sel_other": "{n} din {total} de aplicații",
+  "t_win_needs": "Are nevoie de tine",
+  "t_win_work": "Rulează acum",
+  "t_win_next": "Urmează",
+  "t_win_quiet": "Acum nimic nu are nevoie de tine și nimic nu rulează.",
+  "t_win_where": "Setările sunt în Unraid pe {devices}.",
+  "t_close": "Închide"
 }

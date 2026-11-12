@@ -125,5 +125,11 @@
   "t_map_other": "요새 지도, 기기 {n}대",
   "t_none": "없음",
   "t_sel_none": "앱 없음",
-  "t_sel_other": "앱 {total}개 중 {n}개"
+  "t_sel_other": "앱 {total}개 중 {n}개",
+  "t_win_needs": "확인 필요",
+  "t_win_work": "실행 중",
+  "t_win_next": "예정",
+  "t_win_quiet": "지금은 확인할 것도, 실행 중인 작업도 없어요.",
+  "t_win_where": "설정은 {devices}의 Unraid에 있어요.",
+  "t_close": "닫기"
 }

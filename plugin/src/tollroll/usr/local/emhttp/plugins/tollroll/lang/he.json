@@ -141,5 +141,11 @@
   "t_sel_none": "אף אפליקציה",
   "t_sel_one": "{n} מתוך {total} אפליקציה",
   "t_sel_two": "{n} מתוך {total} אפליקציות",
-  "t_sel_other": "{n} מתוך {total} אפליקציות"
+  "t_sel_other": "{n} מתוך {total} אפליקציות",
+  "t_win_needs": "צריך אותך",
+  "t_win_work": "פועל כעת",
+  "t_win_next": "בהמשך",
+  "t_win_quiet": "כרגע שום דבר לא צריך אותך ושום דבר לא פועל.",
+  "t_win_where": "ההגדרות שלו נמצאות ב-Unraid על {devices}.",
+  "t_close": "סגירה"
 }

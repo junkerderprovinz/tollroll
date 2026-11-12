@@ -1,7 +1,9 @@
 package board
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -142,7 +144,7 @@ func TestAMemberNeverReachedShowsTheNameOfItsApp(t *testing.T) {
 	w := newWorld(t)
 	w.srcs = append(w.srcs, Source{ID: "m1", Name: "Alpha"})
 	v := w.view()
-	if len(v.Apps) != 1 || v.Apps[0].Name != "Alpha" || v.Apps[0].State != "unreachable" || v.Apps[0].UI != "" {
+	if len(v.Apps) != 1 || v.Apps[0].Name != "Alpha" || v.Apps[0].State != "unreachable" {
 		t.Fatalf("rows %+v", v.Apps)
 	}
 	if seen := w.board.Check(context.Background(), "en"); len(seen) != 1 || seen[0].Name != "Alpha" || !seen[0].Down {
@@ -279,18 +281,47 @@ func TestEachLanguageHasItsOwnTexts(t *testing.T) {
 	}
 }
 
-func TestOnlyWebLinksReachTheTile(t *testing.T) {
+func TestNoAddressOfAnAppReachesTheTile(t *testing.T) {
 	w := newWorld(t)
-	bad := report("alpha", "Alpha", "1", status.StateOK)
-	bad.App.UI = "javascript:alert(1)"
-	good := report("bravo", "Bravo", "1", status.StateOK)
-	good.App.UI = "https://bravo.lan/"
-	w.add("alpha", &fakeApp{rep: bad})
-	w.add("bravo", &fakeApp{rep: good})
-	w.add("charlie", &fakeApp{rep: report("charlie", "Charlie", "1", status.StateOK)})
-	v := w.view()
-	if v.Apps[0].UI != "" || v.Apps[1].UI != "https://bravo.lan/" || v.Apps[2].UI != "" {
-		t.Fatalf("links %q %q %q", v.Apps[0].UI, v.Apps[1].UI, v.Apps[2].UI)
+	rep := report("bravo", "Bravo", "1", status.StateOK)
+	rep.App.UI = "https://bravo.lan/"
+	rep.NeedsYou = []status.Need{{ID: "n", Severity: status.SeverityWarn, Text: "look", Link: "https://bravo.lan/need"}}
+	w.add("bravo", &fakeApp{rep: rep})
+	raw, err := json.Marshal(w.view())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(raw, []byte("bravo.lan")) {
+		t.Errorf("the tile gets an address: %s", raw)
+	}
+	for _, s := range w.board.Check(context.Background(), "en") {
+		if strings.Contains(fmt.Sprintf("%+v", s), "bravo.lan") {
+			t.Errorf("a notification gets an address: %+v", s)
+		}
+	}
+}
+
+func TestARowCarriesWhatTheStatusWindowShows(t *testing.T) {
+	w := newWorld(t)
+	half := 0.5
+	at := t0.Add(time.Hour)
+	rep := report("alpha", "Alpha", "1", status.StateWarning)
+	rep.NeedsYou = []status.Need{
+		{ID: "n1", Severity: status.SeverityInfo, Text: "an update waits"},
+		{ID: "n2", Severity: status.SeverityWarn, Text: "the copy is old"},
+	}
+	rep.Work = []status.Task{{ID: "w1", Kind: status.KindBackup, Title: "Backing up", Progress: &half}}
+	rep.Next = []status.Scheduled{{Kind: status.KindCheck, Title: "Check", At: at}}
+	w.add("a", &fakeApp{rep: rep})
+	a := w.view().Apps[0]
+	if len(a.Needs) != 2 || a.Needs[0].Text != "the copy is old" || a.Needs[1].Text != "an update waits" {
+		t.Errorf("needs %+v", a.Needs)
+	}
+	if len(a.Tasks) != 1 || a.Tasks[0].Title != "Backing up" || *a.Tasks[0].Progress != half {
+		t.Errorf("tasks %+v", a.Tasks)
+	}
+	if len(a.Next) != 1 || a.Next[0].Title != "Check" || !a.Next[0].At.Equal(at) {
+		t.Errorf("next %+v", a.Next)
 	}
 }
 
@@ -394,20 +425,6 @@ func TestOnlyAFewLanguagesAreKept(t *testing.T) {
 	for _, s := range w.board.state {
 		if n := len(s.reports); n > maxLangs {
 			t.Errorf("%d reports kept", n)
-		}
-	}
-}
-
-func TestALinkWithQuotesOrMarkupIsDropped(t *testing.T) {
-	w := newWorld(t)
-	for i, ui := range []string{`http://a.lan/x"><img src=x onerror=alert(1)>`, `http://a.lan/x'y`, `http://a.lan/a b`, `http://a.lan/a\b`} {
-		rep := report(fmt.Sprint("app", i), "App", "1", status.StateOK)
-		rep.App.UI = ui
-		w.add(fmt.Sprint("app", i), &fakeApp{rep: rep})
-	}
-	for _, a := range w.view().Apps {
-		if a.UI != "" {
-			t.Errorf("%s links to %q", a.Key, a.UI)
 		}
 	}
 }

@@ -165,5 +165,11 @@
   "t_sel_two": "{n} من {total} تطبيقين",
   "t_sel_few": "{n} من {total} تطبيقات",
   "t_sel_many": "{n} من {total} تطبيقًا",
-  "t_sel_other": "{n} من {total} تطبيق"
+  "t_sel_other": "{n} من {total} تطبيق",
+  "t_win_needs": "يحتاجك",
+  "t_win_work": "قيد التشغيل الآن",
+  "t_win_next": "التالي",
+  "t_win_quiet": "لا شيء يحتاجك ولا شيء قيد التشغيل الآن.",
+  "t_win_where": "إعداداته في Unraid على {devices}.",
+  "t_close": "إغلاق"
 }

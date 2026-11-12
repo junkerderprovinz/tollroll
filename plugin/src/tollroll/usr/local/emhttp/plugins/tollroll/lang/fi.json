@@ -133,5 +133,11 @@
   "t_none": "Ei mitään",
   "t_sel_none": "Ei sovellusta",
   "t_sel_one": "{n}/{total} sovellus",
-  "t_sel_other": "{n}/{total} sovellusta"
+  "t_sel_other": "{n}/{total} sovellusta",
+  "t_win_needs": "Tarvitsee sinua",
+  "t_win_work": "Käynnissä nyt",
+  "t_win_next": "Seuraavaksi",
+  "t_win_quiet": "Juuri nyt mikään ei tarvitse sinua eikä mikään ole käynnissä.",
+  "t_win_where": "Asetukset ovat Unraidissa laitteella {devices}.",
+  "t_close": "Sulje"
 }

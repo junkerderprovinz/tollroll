@@ -133,5 +133,11 @@
   "t_none": "Hiçbiri",
   "t_sel_none": "Uygulama yok",
   "t_sel_one": "{total} uygulamadan {n}",
-  "t_sel_other": "{total} uygulamadan {n}"
+  "t_sel_other": "{total} uygulamadan {n}",
+  "t_win_needs": "Seni bekliyor",
+  "t_win_work": "Şu an çalışıyor",
+  "t_win_next": "Sırada",
+  "t_win_quiet": "Şu an seni bekleyen bir şey yok ve hiçbir şey çalışmıyor.",
+  "t_win_where": "Ayarları {devices} üzerindeki Unraid içinde.",
+  "t_close": "Kapat"
 }

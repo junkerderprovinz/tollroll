@@ -125,5 +125,11 @@
   "t_map_other": "要塞のマップ、{n} 台のデバイス",
   "t_none": "なし",
   "t_sel_none": "アプリなし",
-  "t_sel_other": "{total} 個中 {n} 個のアプリ"
+  "t_sel_other": "{total} 個中 {n} 個のアプリ",
+  "t_win_needs": "対応が必要",
+  "t_win_work": "実行中",
+  "t_win_next": "予定",
+  "t_win_quiet": "いま対応が必要なものも、実行中のものもありません。",
+  "t_win_where": "設定は {devices} の Unraid にあります。",
+  "t_close": "閉じる"
 }

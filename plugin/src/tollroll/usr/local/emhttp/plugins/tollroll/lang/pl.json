@@ -149,5 +149,11 @@
   "t_sel_one": "{n} z {total} aplikacji",
   "t_sel_few": "{n} z {total} aplikacji",
   "t_sel_many": "{n} z {total} aplikacji",
-  "t_sel_other": "{n} z {total} aplikacji"
+  "t_sel_other": "{n} z {total} aplikacji",
+  "t_win_needs": "Potrzebuje ciebie",
+  "t_win_work": "Trwa teraz",
+  "t_win_next": "Wkrótce",
+  "t_win_quiet": "Teraz nic nie potrzebuje twojej uwagi i nic nie działa.",
+  "t_win_where": "Ustawienia są w Unraidzie na {devices}.",
+  "t_close": "Zamknij"
 }
