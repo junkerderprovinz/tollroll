@@ -127,3 +127,15 @@ test('a phrase the tile could not follow opens the field for the new words', () 
   assert.ok(js.includes('L.s_changed_note'), 'settings.js never says that the phrase changed');
   assert.ok(JSON.parse(read('lang', 'en.json')).s_changed_note, 'en.json lacks s_changed_note');
 });
+
+test('a removed TollRoll points at the current phrase, since the one it knew may have changed', () => {
+  const en = JSON.parse(read('lang', 'en.json'));
+  const de = JSON.parse(read('lang', 'de.json'));
+  for (const k of ['t_removed_text', 's_removed_note']) {
+    assert.match(en[k], /current phrase/, `en.${k}`);
+    assert.match(de[k], /aktuellen Phrase/, `de.${k}`);
+  }
+  for (const k of ['t_removed_title', 't_removed_text', 's_removed_note']) {
+    assert.doesNotMatch(de[k], /entfernt/, `de.${k} says herausgenommen, as the apps do`);
+  }
+});
