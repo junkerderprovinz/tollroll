@@ -78,7 +78,7 @@ To join, open **Settings → Utilities → TollRoll**, paste the phrase into the
 
 From then on the tile shows every app in the same fortress: a row with its state and version, its lines in the log and its place on the map. You add nothing by hand: an app shows up as soon as it is in the same fortress, whether it runs on this server or on another device. TollRoll talks to the other members directly on your network, and through a [ParleyPort](https://github.com/junkerderprovinz/parleyport) relay when they sit on another network. A member that reports no status, such as a plugin that joined only to read, stays off the tile.
 
-If the phrase is changed in one of your apps, enter the new one with **Enter a new phrase**. **Leave the fortress** takes TollRoll out again, and the other members then see this server as not reachable until someone removes it there.
+When your fortress moves to a new phrase, TollRoll follows on its own and stays the same member. If it cannot, the settings page says so and takes the new words under **Enter a new phrase**. **Leave the fortress** takes TollRoll out again, and the other members then see this server as not reachable until someone removes it there.
 
 <br>
 
@@ -95,7 +95,7 @@ The plugin has three parts.
 <p><a id="5-security" href="#5-security"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/5-security-dark.svg"><img src=".github/assets/sections/5-security.svg" alt="5. Security" width="100%"></picture></a></p>
 
 - **No open port.** The service listens only on its socket, which belongs to root. The browser reaches it through the WebGUI and its login. Every write is a POST, which Unraid checks for its CSRF token.
-- **The phrase is never kept.** TollRoll turns the phrase into the keys of the fortress and its own member key and saves only those, in `/boot/config/plugins/tollroll/fortress`, readable by root alone. Neither the phrase nor any app's own key can be worked out from them. Whoever takes that folder is this one member at most, and any other member can remove it. After the phrase changes in one of your apps, enter the new one in TollRoll.
+- **The phrase is never kept.** TollRoll turns the phrase into the keys of the fortress and its own member key and saves only those, in `/boot/config/plugins/tollroll/fortress`, readable by root alone. Neither the phrase nor any app's own key can be worked out from them. Whoever takes that folder is this one member at most, and any other member can remove it. When the phrase changes, TollRoll moves to the keys of the new one by itself.
 - **Notification secrets stay on the server.** The channels are saved in `/boot/config/plugins/tollroll/notify.json`, which only root can read. The settings page gets a Matrix token back masked, and a saved token goes only to the homeserver it was saved for.
 - **A logo is a picture and nothing more.** An app's logo arrives in its status report as an SVG of at most 16 KiB. TollRoll drops one that holds a script, an event handler or a reference to anything outside it, and the tile shows a logo only as an image, where the browser runs no script anyway.
 - **App data is text.** Everything an app sends is drawn as plain text, links open only for http and https addresses, and long names and lines are cut short.
@@ -111,7 +111,7 @@ The plugin has three parts.
 https://raw.githubusercontent.com/junkerderprovinz/tollroll/main/plugin/tollroll.plg
 ```
 
-TollRoll needs Unraid 6.12 or newer.
+TollRoll needs Unraid 6.12 or newer and at least one of your apps in a fortress, since the tile shows nothing else. Apps on another network need a [ParleyPort](https://github.com/junkerderprovinz/parleyport) relay, the ones on your own network do not.
 
 <br>
 
