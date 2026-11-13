@@ -87,6 +87,8 @@
   "s_n_apprise_bad": "Dit is geen webadres. Het wordt opgeslagen zodra het met http:// of https:// begint.",
   "s_in_tile": "In de tegel",
   "s_map": "Kaart tonen",
+  "s_rejoin": "Nieuwe frase invoeren",
+  "s_rejoin_hint": "Is de frase in een van je apps veranderd, vul dan hier de nieuwe in. Tot dan kan TollRoll de apps van de vesting niet lezen.",
   "t_member_on": "{app} op {device}",
   "t_map_one": "Kaart van de vesting, {n} apparaat",
   "t_map_other": "Kaart van de vesting, {n} apparaten",

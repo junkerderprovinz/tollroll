@@ -92,6 +92,8 @@
   "s_n_apprise_bad": "Aceasta nu este o adresă web. Se salvează imediat ce începe cu http:// sau https://.",
   "s_in_tile": "În plăcuță",
   "s_map": "Arată harta",
+  "s_rejoin": "Introdu o frază nouă",
+  "s_rejoin_hint": "Dacă fraza a fost schimbată într-una dintre aplicațiile tale, introdu-o aici pe cea nouă. Până atunci TollRoll nu poate citi aplicațiile fortăreței.",
   "t_member_on": "{app} pe {device}",
   "t_map_one": "Harta fortăreței, {n} dispozitiv",
   "t_map_few": "Harta fortăreței, {n} dispozitive",

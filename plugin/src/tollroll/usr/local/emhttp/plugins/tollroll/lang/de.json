@@ -87,6 +87,8 @@
   "s_n_apprise_bad": "Das ist keine Webadresse. Gespeichert wird, sobald sie mit http:// oder https:// beginnt.",
   "s_in_tile": "In der Kachel",
   "s_map": "Karte ansehen",
+  "s_rejoin": "Neue Phrase eingeben",
+  "s_rejoin_hint": "Hat eine deiner Apps die Phrase geändert, gib hier die neue ein. Bis dahin kann TollRoll die Apps der Festung nicht lesen.",
   "t_member_on": "{app} auf {device}",
   "t_map_one": "Karte der Festung, {n} Gerät",
   "t_map_other": "Karte der Festung, {n} Geräte",

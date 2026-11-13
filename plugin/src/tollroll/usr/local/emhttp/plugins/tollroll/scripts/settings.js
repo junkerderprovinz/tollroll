@@ -74,12 +74,20 @@
     }
     return {
       joined: !!f.joined, device: f.device || '', removedHere: !!f.removedHere, phraseChanged: !!f.phraseChanged,
-      removed: f.removed || [],
+      removed: f.removed || [], hints: rejoin(f),
       members: (f.members || []).filter(function (m) { return m.kind === 'instance'; }).map(function (m) {
         return { id: m.id, app: m.app, name: m.name, device: m.device, form: m.deployment, version: m.version,
           icon: C.safeIcon(m.icon), online: !!m.online, relay: !!m.relay, lastSeen: m.lastSeen || '' };
       })
     };
+  }
+
+  // TollRoll notices a new phrase only when a member answers on the old one,
+  // so the new words can be entered before that. Once it has noticed, the
+  // card asks for them itself.
+  function rejoin(f) {
+    if (!f.joined || f.phraseChanged) return [];
+    return [{ text: L.s_rejoin_hint, tone: 'quiet', action: { label: L.s_rejoin, join: true } }];
   }
 
   function answer(codes) {

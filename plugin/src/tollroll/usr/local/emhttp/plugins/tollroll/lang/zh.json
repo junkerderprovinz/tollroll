@@ -82,6 +82,8 @@
   "s_n_apprise_bad": "这不是网址。以 http:// 或 https:// 开头后就会保存。",
   "s_in_tile": "在磁贴中",
   "s_map": "查看地图",
+  "s_rejoin": "输入新口令",
+  "s_rejoin_hint": "如果某个应用中的口令已更改，请在这里输入新口令。在此之前，TollRoll 无法读取堡垒中的应用。",
   "t_member_on": "{device} 上的 {app}",
   "t_map_other": "堡垒地图，{n} 台设备",
   "t_none": "无",

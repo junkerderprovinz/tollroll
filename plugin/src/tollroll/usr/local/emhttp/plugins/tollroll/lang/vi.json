@@ -82,6 +82,8 @@
   "s_n_apprise_bad": "Đây không phải địa chỉ web. Địa chỉ sẽ được lưu ngay khi bắt đầu bằng http:// hoặc https://.",
   "s_in_tile": "Trong ô",
   "s_map": "Xem bản đồ",
+  "s_rejoin": "Nhập cụm từ mới",
+  "s_rejoin_hint": "Nếu cụm từ đã được đổi trong một ứng dụng của bạn, hãy nhập cụm từ mới vào đây. Trước đó TollRoll không đọc được các ứng dụng của pháo đài.",
   "t_member_on": "{app} trên {device}",
   "t_map_other": "Bản đồ pháo đài, {n} thiết bị",
   "t_none": "Không có",

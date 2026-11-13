@@ -97,6 +97,8 @@
   "s_n_apprise_bad": "To nie jest adres internetowy. Zapisze się, gdy tylko zacznie się od http:// lub https://.",
   "s_in_tile": "W kafelku",
   "s_map": "Pokaż mapę",
+  "s_rejoin": "Wpisz nową frazę",
+  "s_rejoin_hint": "Jeśli fraza zmieniła się w którejś z twoich aplikacji, wpisz tu nową. Do tego czasu TollRoll nie może odczytać aplikacji twierdzy.",
   "t_member_on": "{app} na {device}",
   "t_map_one": "Mapa twierdzy, {n} urządzenie",
   "t_map_few": "Mapa twierdzy, {n} urządzenia",

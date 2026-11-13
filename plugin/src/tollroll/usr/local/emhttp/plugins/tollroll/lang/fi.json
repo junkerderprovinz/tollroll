@@ -87,6 +87,8 @@
   "s_n_apprise_bad": "Tämä ei ole verkko-osoite. Se tallentuu heti, kun se alkaa http:// tai https://.",
   "s_in_tile": "Ruudussa",
   "s_map": "Näytä kartta",
+  "s_rejoin": "Syötä uusi lause",
+  "s_rejoin_hint": "Jos lause on vaihdettu jossakin sovelluksessasi, syötä uusi tähän. Siihen asti TollRoll ei voi lukea linnoituksen sovelluksia.",
   "t_member_on": "{app} laitteella {device}",
   "t_map_one": "Linnoituksen kartta, {n} laite",
   "t_map_other": "Linnoituksen kartta, {n} laitetta",

@@ -92,6 +92,8 @@
   "s_n_apprise_bad": "Questo non è un indirizzo web. Viene salvato appena inizia con http:// o https://.",
   "s_in_tile": "Nel riquadro",
   "s_map": "Mostra la mappa",
+  "s_rejoin": "Inserisci una nuova frase",
+  "s_rejoin_hint": "Se la frase è cambiata in una delle tue app, inserisci qui quella nuova. Fino ad allora TollRoll non può leggere le app della fortezza.",
   "t_member_on": "{app} su {device}",
   "t_map_one": "Mappa della fortezza, {n} dispositivo",
   "t_map_many": "Mappa della fortezza, {n} di dispositivi",

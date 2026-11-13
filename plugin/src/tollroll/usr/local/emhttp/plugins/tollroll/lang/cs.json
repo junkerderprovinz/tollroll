@@ -97,6 +97,8 @@
   "s_n_apprise_bad": "Tohle není webová adresa. Uloží se, jakmile bude začínat na http:// nebo https://.",
   "s_in_tile": "V dlaždici",
   "s_map": "Zobrazit mapu",
+  "s_rejoin": "Zadat novou frázi",
+  "s_rejoin_hint": "Pokud se fráze v některé z vašich aplikací změnila, zadejte sem novou. Do té doby TollRoll aplikace pevnosti nepřečte.",
   "t_member_on": "{app} na {device}",
   "t_map_one": "Mapa pevnosti, {n} zařízení",
   "t_map_few": "Mapa pevnosti, {n} zařízení",

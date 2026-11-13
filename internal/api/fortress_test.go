@@ -113,6 +113,15 @@ func TestJoiningTakesThePhraseAndGivesItNeverBack(t *testing.T) {
 	}
 }
 
+func TestJoiningAgainInAFortressTakesTheNewPhrase(t *testing.T) {
+	e := newEnv(t)
+	e.fort.joined = "an earlier phrase"
+	code, out := e.do("POST", "/api/fortress/join", `{"phrase":"`+twelve+`"}`)
+	if code != 200 || out["joined"] != true || e.fort.joined != twelve {
+		t.Fatalf("%d %v, joined with %q", code, out, e.fort.joined)
+	}
+}
+
 func TestAWrongPhraseIsSaidSo(t *testing.T) {
 	e := newEnv(t)
 	if code, out := e.do("POST", "/api/fortress/join", `{"phrase":"one two"}`); code != 400 || out["error"] != "phrase_invalid" {

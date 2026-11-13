@@ -101,6 +101,20 @@ test('a phrase the tile could not follow, and a removal by another app, reach th
   assert.deepEqual([s.joined, s.removedHere], [false, true]);
 });
 
+test('in a fortress a new phrase TollRoll did not pick up can still be entered', async () => {
+  const words = 'one two three four five six seven eight nine ten eleven twelve'.split(' ');
+  const p = page({ fortress: joined(), join: joined({ device: 'tower' }) });
+  const s = await p.card.adapter.load();
+  assert.deepEqual(plain(s.hints), [{ text: en.s_rejoin_hint, tone: 'quiet', action: { label: en.s_rejoin, join: true } }]);
+  assert.equal((await p.card.adapter.join(words)).joined, true);
+  assert.deepEqual(p.posts, [{ path: 'join', data: { phrase: words.join(' ') } }]);
+});
+
+test('the line for a new phrase gives way to the card while it asks for one itself', async () => {
+  assert.deepEqual(plain((await page({ fortress: joined({ phraseChanged: true }) }).card.adapter.load()).hints), []);
+  assert.deepEqual(plain((await page({ fortress: out }).card.adapter.load()).hints), []);
+});
+
 test('the twelve words join, and words that open no fortress are said so', async () => {
   const words = 'one two three four five six seven eight nine ten eleven twelve'.split(' ');
   let p = page({ join: joined() });

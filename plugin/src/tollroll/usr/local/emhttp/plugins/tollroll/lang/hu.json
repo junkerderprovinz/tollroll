@@ -87,6 +87,8 @@
   "s_n_apprise_bad": "Ez nem webcím. Akkor mentődik, amikor http:// vagy https:// előtaggal kezdődik.",
   "s_in_tile": "A csempén",
   "s_map": "Térkép mutatása",
+  "s_rejoin": "Új jelmondat megadása",
+  "s_rejoin_hint": "Ha valamelyik alkalmazásodban megváltozott a jelmondat, itt add meg az újat. Addig a TollRoll nem tudja olvasni az erőd alkalmazásait.",
   "t_member_on": "{app} itt: {device}",
   "t_map_one": "Az erőd térképe, {n} eszköz",
   "t_map_other": "Az erőd térképe, {n} eszköz",

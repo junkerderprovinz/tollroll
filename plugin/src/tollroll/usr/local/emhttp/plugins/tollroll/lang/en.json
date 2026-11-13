@@ -87,6 +87,8 @@
   "s_n_apprise_bad": "This is not a web address. It is saved as soon as it starts with http:// or https://.",
   "s_in_tile": "In the tile",
   "s_map": "Show the map",
+  "s_rejoin": "Enter a new phrase",
+  "s_rejoin_hint": "If one of your apps changed the phrase, enter the new one here. Until you do, TollRoll can't read the apps of the fortress.",
   "t_member_on": "{app} on {device}",
   "t_map_one": "Map of the fortress, {n} device",
   "t_map_other": "Map of the fortress, {n} devices",

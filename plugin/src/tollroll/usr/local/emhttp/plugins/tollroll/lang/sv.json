@@ -87,6 +87,8 @@
   "s_n_apprise_bad": "Det här är ingen webbadress. Den sparas så fort den börjar med http:// eller https://.",
   "s_in_tile": "I rutan",
   "s_map": "Visa kartan",
+  "s_rejoin": "Ange en ny fras",
+  "s_rejoin_hint": "Om frasen har ändrats i någon av dina appar anger du den nya här. Tills dess kan TollRoll inte läsa fästningens appar.",
   "t_member_on": "{app} på {device}",
   "t_map_one": "Karta över fästningen, {n} enhet",
   "t_map_other": "Karta över fästningen, {n} enheter",

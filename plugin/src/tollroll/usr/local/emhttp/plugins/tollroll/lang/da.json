@@ -87,6 +87,8 @@
   "s_n_apprise_bad": "Det er ikke en webadresse. Den gemmes, så snart den starter med http:// eller https://.",
   "s_in_tile": "I flisen",
   "s_map": "Vis kortet",
+  "s_rejoin": "Indtast en ny sætning",
+  "s_rejoin_hint": "Hvis sætningen er blevet ændret i en af dine apps, så skriv den nye her. Indtil da kan TollRoll ikke læse fæstningens apps.",
   "t_member_on": "{app} på {device}",
   "t_map_one": "Kort over fæstningen, {n} enhed",
   "t_map_other": "Kort over fæstningen, {n} enheder",

@@ -82,6 +82,8 @@
   "s_n_apprise_bad": "웹 주소가 아닙니다. http:// 또는 https://로 시작하면 바로 저장됩니다.",
   "s_in_tile": "타일 안",
   "s_map": "지도 보기",
+  "s_rejoin": "새 문구 입력",
+  "s_rejoin_hint": "앱에서 문구가 바뀌었다면 여기에 새 문구를 입력하세요. 그 전까지 TollRoll은 요새의 앱을 읽을 수 없습니다.",
   "t_member_on": "{device}의 {app}",
   "t_map_other": "요새 지도, 기기 {n}대",
   "t_none": "없음",

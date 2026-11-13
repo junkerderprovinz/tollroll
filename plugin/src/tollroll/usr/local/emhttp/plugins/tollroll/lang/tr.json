@@ -87,6 +87,8 @@
   "s_n_apprise_bad": "Bu bir web adresi değil. http:// veya https:// ile başladığı anda kaydedilir.",
   "s_in_tile": "Kutucukta",
   "s_map": "Haritayı göster",
+  "s_rejoin": "Yeni ifade girin",
+  "s_rejoin_hint": "İfade uygulamalarınızdan birinde değiştiyse yenisini buraya girin. O zamana kadar TollRoll kalenin uygulamalarını okuyamaz.",
   "t_member_on": "{device} üzerinde {app}",
   "t_map_one": "Kalenin haritası, {n} cihaz",
   "t_map_other": "Kalenin haritası, {n} cihaz",

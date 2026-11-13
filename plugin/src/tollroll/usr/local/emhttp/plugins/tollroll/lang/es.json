@@ -92,6 +92,8 @@
   "s_n_apprise_bad": "Esto no es una dirección web. Se guarda en cuanto empiece por http:// o https://.",
   "s_in_tile": "En el mosaico",
   "s_map": "Ver el mapa",
+  "s_rejoin": "Introducir una frase nueva",
+  "s_rejoin_hint": "Si la frase cambió en alguna de tus apps, escribe aquí la nueva. Hasta entonces TollRoll no puede leer las apps de la fortaleza.",
   "t_member_on": "{app} en {device}",
   "t_map_one": "Mapa de la fortaleza, {n} dispositivo",
   "t_map_many": "Mapa de la fortaleza, {n} de dispositivos",

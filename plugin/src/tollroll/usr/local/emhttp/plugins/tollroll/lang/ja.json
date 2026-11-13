@@ -82,6 +82,8 @@
   "s_n_apprise_bad": "これは Web アドレスではありません。http:// または https:// で始まると保存されます。",
   "s_in_tile": "タイル内",
   "s_map": "マップを表示",
+  "s_rejoin": "新しいフレーズを入力",
+  "s_rejoin_hint": "どれかのアプリでフレーズが変更された場合は、ここに新しいフレーズを入力してください。それまで TollRoll は要塞のアプリを読み取れません。",
   "t_member_on": "{device} の {app}",
   "t_map_other": "要塞のマップ、{n} 台のデバイス",
   "t_none": "なし",
