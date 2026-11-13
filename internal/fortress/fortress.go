@@ -4,8 +4,8 @@
 //
 // The tile takes part as an instance of the app "tollroll" that offers no
 // action and uses none: it reads the others and reports only its own status.
-// It opens no port of its own, so it reaches the others directly on this
-// network or through the relay, which carries their calls back to it.
+// On this network it takes their calls on a port of its own, elsewhere the
+// relay carries them.
 package fortress
 
 import (
@@ -14,7 +14,11 @@ import (
 	_ "embed"
 	"encoding/json"
 	"errors"
+	"io"
 	"io/fs"
+	"log"
+	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
@@ -179,6 +183,7 @@ type Service struct {
 	mu            sync.Mutex
 	f             *kit.Fortress
 	lan           *lan.Service
+	direct        *http.Server
 	device        string
 	removedHere   bool
 	phraseChanged bool
@@ -303,7 +308,15 @@ func (s *Service) start(cfg kit.Config) error {
 		cfg.Status = j
 		j.SetInstance(status.Instance{ID: cfg.Identity.ID(), Name: cfg.Self.Name})
 	}
+	var ln net.Listener
 	if cfg.LAN != nil {
+		var err error
+		if ln, err = listenDirect(); err != nil {
+			return err
+		}
+		if ln != nil {
+			cfg.Self.DirectURL = "http://" + ln.Addr().String()
+		}
 		cfg.LAN.Start()
 	}
 	s.gen++
@@ -311,10 +324,16 @@ func (s *Service) start(cfg kit.Config) error {
 	cfg.OnRemoved = func() { s.removedBy(gen) }
 	f, err := kit.Open(cfg)
 	if err != nil {
+		if ln != nil {
+			_ = ln.Close()
+		}
 		if cfg.LAN != nil {
 			_ = cfg.LAN.Close()
 		}
 		return err
+	}
+	if ln != nil {
+		s.direct = serveDirect(ln, f)
 	}
 	s.f, s.lan, s.device = f, cfg.LAN, cfg.Self.Name
 	s.group, s.out = cfg.Keys.Group, loadRemoved(s.opt.Dir, cfg.Keys.Group)
@@ -322,15 +341,42 @@ func (s *Service) start(cfg kit.Config) error {
 	return nil
 }
 
+// listenDirect opens the port the other members call the tile on, on the
+// address it announces on this network and no other. The OS picks the port,
+// since the announce carries it. A host without an IPv4 address gets none and
+// reaches the members through the relay alone.
+func listenDirect() (net.Listener, error) {
+	ip := lan.LocalIPv4()
+	if ip == "" {
+		return nil, nil
+	}
+	return net.Listen("tcp4", net.JoinHostPort(ip, "0"))
+}
+
+// serveDirect answers the members' direct calls at ln and nothing else. Every
+// call is sealed and signed under the fortress's keys, so only a member gets
+// past the kit's handler. The server logs nothing, since its errors name the
+// caller's address.
+func serveDirect(ln net.Listener, f *kit.Fortress) *http.Server {
+	mux := http.NewServeMux()
+	mux.Handle(group.DirectPath, f.DirectHandler())
+	srv := &http.Server{Handler: mux, ReadHeaderTimeout: 10 * time.Second, ErrorLog: log.New(io.Discard, "", 0)}
+	go func() { _ = srv.Serve(ln) }()
+	return srv
+}
+
 func (s *Service) stop() error {
 	var errs []error
+	if s.direct != nil {
+		errs = append(errs, s.direct.Close())
+	}
 	if s.f != nil {
 		errs = append(errs, s.f.Close())
 	}
 	if s.lan != nil {
 		errs = append(errs, s.lan.Close())
 	}
-	s.f, s.lan, s.device = nil, nil, ""
+	s.f, s.lan, s.direct, s.device = nil, nil, nil, ""
 	s.group, s.out = "", nil
 	return errors.Join(errs...)
 }

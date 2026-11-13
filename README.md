@@ -86,7 +86,7 @@ When your fortress moves to a new phrase, TollRoll follows on its own and stays 
 
 The plugin has three parts.
 
-- **A small service** (`tollroll`, written in Go) runs on the host. It listens on the unix socket `/var/run/tollroll.sock` and opens no network port. It is a member of your fortress, one that only reads: it offers nothing to the other apps and asks them to do nothing. When the tile asks, it reads every member side by side, its status report and its log, picking up the log where the last read stopped. It keeps the result for ten seconds, so several open dashboards do not multiply the traffic. While nobody is looking it reads nothing, unless a notification channel is on: then it checks every app once a minute.
+- **A small service** (`tollroll`, written in Go) runs on the host. It listens on the unix socket `/var/run/tollroll.sock` for the WebGUI, and at home on a port that lets in fortress members and nobody else, so they reach it without the relay. It is a member of your fortress, one that only reads: it offers nothing to the other apps and asks them to do nothing. When the tile asks, it reads every member side by side, its status report and its log, picking up the log where the last read stopped. It keeps the result for ten seconds, so several open dashboards do not multiply the traffic. While nobody is looking it reads nothing, unless a notification channel is on: then it checks every app once a minute.
 - **A PHP proxy** (`server/api.php`) sits behind the Unraid login and passes a fixed list of calls to that socket. Nothing else in the plugin talks to the service.
 - **The tile and the settings page** call the proxy from the browser. The tile asks again every 15 seconds while the dashboard is visible.
 

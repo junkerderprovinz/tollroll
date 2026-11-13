@@ -49,7 +49,7 @@ Your whole fortress on one dashboard tile, with one log for every app. Joining t
 - Four views in the tile header: everything, the apps alone, the log alone and a map of every device with its apps. The tile keeps your view and your pick of apps on the server, so every browser finds it the way you left it.
 - Notifications through Unraid, Apprise or Matrix when an app stops answering, answers again or newly needs you. Each one goes out once, so a long outage does not fill your inbox.
 - Every setting is saved the moment you change it. Only the twelve words wait for the Join button.
-- TollRoll keeps only the keys made from your phrase, never the phrase itself. The browser talks to the Unraid WebGUI alone, and the service behind it opens no network port.
+- TollRoll keeps only the keys made from your phrase, never the phrase itself. The browser talks to the Unraid WebGUI alone. At home the other apps reach the service behind it directly, relay or not, on a port that lets in fortress members and nobody else.
 
 🎨 **Design**
 - Each row wears the app's own logo and colour from its status report, or its first letter when the report has none. A logo is checked and only ever drawn as an image, so nothing in it can run.
