@@ -21,7 +21,7 @@ $h = function ($k) use ($L) { return htmlspecialchars(isset($L[$k]) ? $L[$k] : $
 $trs_e = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES); };
 $trs_ver = '';
 if (preg_match('/<!ENTITY\s+version\s+"([^"]+)"/', (string)@file_get_contents('/var/log/plugins/tollroll.plg'), $trs_m)) $trs_ver = $trs_m[1];
-$trs_glimstone = '4.3.7';
+$trs_glimstone = '4.4.0';
 /* A version links to its release page. A build without a release behind it shows its name alone. */
 $trs_ver_link = function ($ver, $repo) use ($trs_e) {
   $v = preg_replace('/^v/', '', (string)$ver);
