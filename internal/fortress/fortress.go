@@ -281,11 +281,14 @@ func keepKey(dir, next string) error {
 }
 
 // Leave takes the tile out of its fortress and forgets the membership. The
-// others keep it on their lists as away until somebody removes it.
+// members in reach drop it at once, the others when they hear it from them.
 func (s *Service) Leave() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.removedHere, s.phraseChanged = false, false
+	if s.f != nil {
+		s.f.Leave()
+	}
 	if err := s.stop(); err != nil {
 		return err
 	}
