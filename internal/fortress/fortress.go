@@ -61,6 +61,14 @@ var ErrPhrase = errors.New("fortress: the phrase is not valid")
 // ErrNoMember is a removal of an ID that is no other member of the fortress.
 var ErrNoMember = errors.New("fortress: no other member has that id")
 
+// ErrShutOut is a join the members turned away, since one of them was taken
+// out and the phrase has not changed since.
+var ErrShutOut = errors.New("fortress: no new member until the phrase changes")
+
+// admitWait is how long a join waits for a member to answer the tile or turn
+// it away.
+var admitWait = 8 * time.Second
+
 // removedFile keeps the members the tile took out, with the keys of the
 // phrase they were taken out under.
 const removedFile = "removed.json"
@@ -94,7 +102,8 @@ type Map struct {
 	// again.
 	RemovedHere bool `json:"removedHere,omitempty"`
 	// Removed are the members the tile took out since the phrase last
-	// changed, which the phrase would let back in.
+	// changed, which keeps the fortress closed to new members until it
+	// changes.
 	Removed []Removed `json:"removed,omitempty"`
 	// PhraseChanged says the fortress has a new phrase the tile could not
 	// follow on its own, until the new words are entered.
@@ -220,8 +229,74 @@ func Open(o Options) (*Service, error) {
 
 // Join takes the tile into the fortress of words. A tile in another fortress
 // leaves it first. It keeps its member key, so after a phrase change it
-// could not follow, the others know it as before.
+// could not follow, the others know it as before. It fails with ErrShutOut
+// and forgets the membership when the members turn the tile away.
 func (s *Service) Join(words string) error {
+	s.mu.Lock()
+	removed := s.removedHere
+	s.mu.Unlock()
+	if err := s.join(words); err != nil {
+		return err
+	}
+	s.mu.Lock()
+	f := s.f
+	s.mu.Unlock()
+	if f == nil || !turnedAway(f, admitWait) {
+		return nil
+	}
+	return s.shutOut(f, removed)
+}
+
+// turnedAway waits up to wait for every member in reach to answer f, and
+// reports whether the members turned it away instead. A member taken out
+// still answers, so one answer alone says nothing.
+func turnedAway(f *kit.Fortress, wait time.Duration) bool {
+	for end := time.Now().Add(wait); time.Now().Before(end); time.Sleep(50 * time.Millisecond) {
+		if f.ShutOut() {
+			return true
+		}
+		if allAnswered(f) {
+			return false
+		}
+	}
+	return f.ShutOut()
+}
+
+// allAnswered reports whether f knows a member in reach and every one of them
+// told it which app it runs, which a member that turns f away never does.
+func allAnswered(f *kit.Fortress) bool {
+	n := 0
+	for _, mb := range f.Members() {
+		if mb.Kind != member.KindInstance || !mb.Online() {
+			continue
+		}
+		if mb.App.ID == "" {
+			return false
+		}
+		n++
+	}
+	return n > 0
+}
+
+// shutOut forgets the membership of f, which nobody lets in until the phrase
+// changes, so the card offers the join again. A tile that another member
+// took out still says so.
+func (s *Service) shutOut(f *kit.Fortress, removed bool) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.f != f {
+		return ErrShutOut
+	}
+	err := errors.Join(s.stop(), os.RemoveAll(s.opt.Dir))
+	if removed {
+		s.removedHere = true
+		err = errors.Join(err, os.MkdirAll(s.opt.Dir, 0o700))
+		err = errors.Join(err, os.WriteFile(filepath.Join(s.opt.Dir, removedHereFile), nil, 0o600))
+	}
+	return errors.Join(ErrShutOut, err)
+}
+
+func (s *Service) join(words string) error {
 	secret, err := phrase.Decode(words)
 	if err != nil {
 		return ErrPhrase

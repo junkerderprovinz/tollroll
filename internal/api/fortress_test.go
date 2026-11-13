@@ -136,6 +136,14 @@ func TestAWrongPhraseIsSaidSo(t *testing.T) {
 	}
 }
 
+func TestAJoinTheMembersTurnAwaySaysTheFortressWaitsForANewPhrase(t *testing.T) {
+	e := newEnv(t)
+	e.fort.fail = fortress.ErrShutOut
+	if code, out := e.do("POST", "/api/fortress/join", `{"phrase":"`+twelve+`"}`); code != 403 || out["error"] != "closedUntilNewPhrase" {
+		t.Errorf("%d %v", code, out)
+	}
+}
+
 func TestLeavingIsServed(t *testing.T) {
 	e := newEnv(t)
 	e.fort.joined = twelve

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/junkerderprovinz/parleyport/kit/group"
 	"github.com/junkerderprovinz/parleyport/kit/notify"
 
 	"github.com/junkerderprovinz/tollroll/internal/alert"
@@ -86,6 +87,7 @@ func (h *handler) fortressMap(w http.ResponseWriter, _ *http.Request) {
 
 // join takes the tile into the fortress of the phrase it is given. The
 // phrase goes no further than the membership, which keeps only the keys.
+// While the members take nobody new it answers closedUntilNewPhrase.
 func (h *handler) join(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Phrase string `json:"phrase"`
@@ -97,6 +99,8 @@ func (h *handler) join(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case errors.Is(err, fortress.ErrPhrase):
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "phrase_invalid"})
+	case errors.Is(err, fortress.ErrShutOut):
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": group.ClosedUntilNewPhrase})
 	case err != nil:
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "join_failed"})
 	default:

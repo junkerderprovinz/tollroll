@@ -432,7 +432,8 @@ func TestLeavingForgetsTheFortress(t *testing.T) {
 func TestRemovedByAnotherMemberTheTileLeaves(t *testing.T) {
 	url := relayServer(t)
 	secret, words := newPhrase(t)
-	a := openApp(t, url, secret, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
+	in := newInstance(t)
+	a := in.open(t, url, secret, nil, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
 	dir := filepath.Join(t.TempDir(), "fortress")
 	s := openService(t, dir, url)
 	if err := s.Join(words); err != nil {
@@ -455,18 +456,56 @@ func TestRemovedByAnotherMemberTheTileLeaves(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(dir, "fortress.json")); !errors.Is(err, os.ErrNotExist) {
 		t.Errorf("a removed tile kept its membership: %v", err)
 	}
-	if err := s.Join(words); err != nil {
+	if err := s.Join(words); !errors.Is(err, ErrShutOut) {
+		t.Fatalf("joining again on the old phrase = %v, want ErrShutOut", err)
+	}
+	if m := s.Map(); m.Joined || !m.RemovedHere {
+		t.Errorf("turned away on the old phrase: %+v", m)
+	}
+	if err := a.Close(); err != nil {
+		t.Fatal(err)
+	}
+	fresh, freshWords := newPhrase(t)
+	in.open(t, url, fresh, secret, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
+	if err := s.Join(freshWords); err != nil {
 		t.Fatal(err)
 	}
 	if m := s.Map(); !m.Joined || m.RemovedHere {
-		t.Errorf("joining again after removal: %+v", m)
+		t.Errorf("joining again on the new phrase: %+v", m)
+	}
+}
+
+func TestAfterARemovalTheOldPhraseLetsNoNewTileIn(t *testing.T) {
+	url := relayServer(t)
+	secret, words := newPhrase(t)
+	openApp(t, url, secret, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
+	openApp(t, url, secret, "bravo", "Bravo", "attic", app{id: "bravo", name: "Bravo"})
+	s := openService(t, filepath.Join(t.TempDir(), "fortress"), url)
+	if err := s.Join(words); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Remove(memberID(t, s, "bravo")); err != nil {
+		t.Fatal(err)
+	}
+
+	dir := filepath.Join(t.TempDir(), "fortress")
+	late := openService(t, dir, url)
+	if err := late.Join(words); !errors.Is(err, ErrShutOut) {
+		t.Fatalf("join on the old phrase = %v, want ErrShutOut", err)
+	}
+	if m := late.Map(); m.Joined {
+		t.Errorf("the tile counts itself in after the members turned it away: %+v", m)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "fortress.json")); !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("the membership the members turned away is kept: %v", err)
 	}
 }
 
 func TestTheTileStillSaysItWasRemovedAfterARestart(t *testing.T) {
 	url := relayServer(t)
 	secret, words := newPhrase(t)
-	a := openApp(t, url, secret, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
+	in := newInstance(t)
+	a := in.open(t, url, secret, nil, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
 	dir := filepath.Join(t.TempDir(), "fortress")
 	s := openService(t, dir, url)
 	if err := s.Join(words); err != nil {
@@ -494,10 +533,25 @@ func TestTheTileStillSaysItWasRemovedAfterARestart(t *testing.T) {
 	if m := again.Map(); m.Joined || !m.RemovedHere {
 		t.Fatalf("after a restart the map is %+v", m)
 	}
-	if err := again.Join(words); err != nil {
-		t.Fatal(err)
+	if err := again.Join(words); !errors.Is(err, ErrShutOut) {
+		t.Fatalf("joining again on the old phrase = %v, want ErrShutOut", err)
 	}
 	if err := again.Close(); err != nil {
+		t.Fatal(err)
+	}
+	later := openService(t, dir, url)
+	if m := later.Map(); m.Joined || !m.RemovedHere {
+		t.Fatalf("a restart after the refusal: %+v", m)
+	}
+	if err := a.Close(); err != nil {
+		t.Fatal(err)
+	}
+	fresh, freshWords := newPhrase(t)
+	in.open(t, url, fresh, secret, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
+	if err := later.Join(freshWords); err != nil {
+		t.Fatal(err)
+	}
+	if err := later.Close(); err != nil {
 		t.Fatal(err)
 	}
 	if m := openService(t, dir, url).Map(); m.RemovedHere {

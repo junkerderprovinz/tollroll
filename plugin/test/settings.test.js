@@ -149,6 +149,18 @@ test('the twelve words join, and words that open no fortress are said so', async
   await assert.rejects(p.card.adapter.join(words), (e) => e.code === 'join_failed');
 });
 
+test('a join the fortress turns away until the phrase changes shows joinLocked', async () => {
+  const words = 'one two three four five six seven eight nine ten eleven twelve'.split(' ');
+  const ctx = {};
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(PLUGIN, 'scripts', 'fortress-card.js'), 'utf8'), ctx);
+  const card = ctx.GlimFortressCard, t = card.text('en');
+  const p = page({ join: { error: 'closedUntilNewPhrase' } });
+  const e = await p.card.adapter.join(words).then(() => null, (err) => err);
+  assert.ok(e && t.joinLocked);
+  assert.equal(card.joinRefusal(t, e.code), t.joinLocked);
+});
+
 test('leaving and removing answer with the new state, a member already gone closes quietly', async () => {
   let p = page({ leave: out });
   assert.equal((await p.card.adapter.leave()).joined, false);
