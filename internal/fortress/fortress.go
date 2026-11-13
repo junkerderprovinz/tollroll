@@ -14,9 +14,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"errors"
-	"io"
 	"io/fs"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -333,7 +331,7 @@ func (s *Service) start(cfg kit.Config) error {
 		return err
 	}
 	if ln != nil {
-		s.direct = serveDirect(ln, f)
+		s.direct = group.ServeDirect(ln, f.DirectHandler())
 	}
 	s.f, s.lan, s.device = f, cfg.LAN, cfg.Self.Name
 	s.group, s.out = cfg.Keys.Group, loadRemoved(s.opt.Dir, cfg.Keys.Group)
@@ -351,18 +349,6 @@ func listenDirect() (net.Listener, error) {
 		return nil, nil
 	}
 	return net.Listen("tcp4", net.JoinHostPort(ip, "0"))
-}
-
-// serveDirect answers the members' direct calls at ln and nothing else. Every
-// call is sealed and signed under the fortress's keys, so only a member gets
-// past the kit's handler. The server logs nothing, since its errors name the
-// caller's address.
-func serveDirect(ln net.Listener, f *kit.Fortress) *http.Server {
-	mux := http.NewServeMux()
-	mux.Handle(group.DirectPath, f.DirectHandler())
-	srv := &http.Server{Handler: mux, ReadHeaderTimeout: 10 * time.Second, ErrorLog: log.New(io.Discard, "", 0)}
-	go func() { _ = srv.Serve(ln) }()
-	return srv
 }
 
 func (s *Service) stop() error {
