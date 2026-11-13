@@ -3,10 +3,11 @@ Title="TollRoll"
 Icon="tollroll.png"
 ---
 <?php
-/* Settings page. The fortress membership and the notification channels live
-   with the service, which this page reads and writes through server/api.php.
-   Every change is saved at once. The phrase and tokens go in and never come
-   back.
+/* Settings page, in tabs as on ShipLog's: General with what the tile shows,
+   the notifications, the fortress and Info. The fortress membership and the
+   notification channels live with the service, which this page reads and
+   writes through server/api.php. Every change is saved at once. The phrase
+   and tokens go in and never come back.
    No functions here: Unraid may include a .page more than once. */
 $trl_locale = (string)(isset($_SESSION['locale']) ? $_SESSION['locale'] : '');
 $trl_lang   = strtolower(substr($trl_locale, 0, 2));
@@ -17,11 +18,29 @@ if (preg_match('/^[a-z]{2}$/', $trl_lang) && $trl_lang !== 'en' && is_file("$trl
   if (is_array($trl_tr)) $L = array_merge($L, $trl_tr);
 }
 $h = function ($k) use ($L) { return htmlspecialchars(isset($L[$k]) ? $L[$k] : $k, ENT_QUOTES); };
+$trs_e = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES); };
+$trs_ver = '';
+if (preg_match('/<!ENTITY\s+version\s+"([^"]+)"/', (string)@file_get_contents('/var/log/plugins/tollroll.plg'), $trs_m)) $trs_ver = $trs_m[1];
+$trs_glimstone = '4.3.7';
+/* A version links to its release page. A build without a release behind it shows its name alone. */
+$trs_ver_link = function ($ver, $repo) use ($trs_e) {
+  $v = preg_replace('/^v/', '', (string)$ver);
+  if (!preg_match('/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/', $v)) return '<span class="trs-ver">'.$trs_e($v !== '' ? $v : '?').'</span>';
+  return '<a class="trs-ver" href="'.$trs_e($repo.'/releases/tag/v'.$v).'" target="_blank" rel="noopener noreferrer">'.$trs_e($v).'</a>';
+};
+$trs_marks = include '/usr/local/emhttp/plugins/tollroll/include/marks.php';
+/* A button in the shape of the README's buttons, as on ShipLog's Info tab. */
+$trs_rbtn = function ($brand, $name, $href) use ($trs_marks, $trs_e) {
+  $inner = $brand === 'coffee'
+    ? '<span class="trs-rbtn-art">'.$trs_marks['coffee'].'</span>'
+    : '<span class="trs-rbtn-mark trs-'.$brand.'-mark">'.$trs_marks[$brand].'</span><span class="trs-rbtn-text"><span class="trs-rbtn-name">'.$trs_e($name).'</span></span>';
+  return '<span class="trs-rbtn-unit trs-tile-'.$brand.'"><a class="trs-rbtn" href="'.$trs_e($href).'" target="_blank" rel="noopener noreferrer" aria-label="'.$trs_e($name).'">'.$inner.'</a><span class="trs-rbtn-sheen"></span></span>';
+};
 ?>
 <link rel="stylesheet" href="<?autov('/plugins/tollroll/styles/settings.css')?>">
 <link rel="stylesheet" href="<?autov('/plugins/tollroll/styles/fortress-card.css')?>">
 
-<div class="trs-page">
+<div id="trs-cfg" class="trs-page">
   <div class="trs-hero">
     <span class="trs-hero-mark" aria-hidden="true"></span>
     <img class="trs-hero-logo" src="<?autov('/plugins/tollroll/images/tollroll-unraid.svg')?>" alt="">
@@ -31,42 +50,113 @@ $h = function ($k) use ($L) { return htmlspecialchars(isset($L[$k]) ? $L[$k] : $
     </div>
   </div>
 
-  <div class="trs">
-    <div id="trs-fort"></div>
+  <div class="trs-body">
+    <div class="trs-tabs" role="tablist" aria-orientation="vertical" aria-label="TollRoll">
+      <button type="button" class="trs-tab" role="tab" id="trs-tab-general" aria-controls="trs-pane-general" aria-selected="true" data-trs-tab="general"><span class="trs-tabico" data-glyph="IconTabGeneral"></span><span class="trs-tablbl"><?=$h('s_tab_general')?></span></button>
+      <button type="button" class="trs-tab" role="tab" id="trs-tab-notify" aria-controls="trs-pane-notify" aria-selected="false" tabindex="-1" data-trs-tab="notify"><span class="trs-tabico" data-glyph="IconNotifications"></span><span class="trs-tablbl"><?=$h('s_tab_notify')?></span></button>
+      <button type="button" class="trs-tab" role="tab" id="trs-tab-fortress" aria-controls="trs-pane-fortress" aria-selected="false" tabindex="-1" data-trs-tab="fortress"><span class="trs-tabico" data-glyph="IconShieldOn"></span><span class="trs-tablbl"><?=$h('s_tab_fortress')?></span></button>
+      <button type="button" class="trs-tab" role="tab" id="trs-tab-info" aria-controls="trs-pane-info" aria-selected="false" tabindex="-1" data-trs-tab="info"><span class="trs-tabico" data-glyph="IconInfo"></span><span class="trs-tablbl"><?=$h('s_tab_info')?></span></button>
+    </div>
 
-    <section class="trs-card" aria-labelledby="trs-notify-h">
-      <h3 id="trs-notify-h"><?=$h('s_notify')?> <small><?=$h('s_notify_sub')?></small><span id="trs-n-saved" class="trs-saved" role="status"></span></h3>
-      <p class="trs-hint"><?=$h('s_notify_hint')?> <?=$h('s_live')?></p>
-      <div class="trs-grid">
-        <div class="trs-switch-row">
-          <label for="trs-n-unraid"><?=$h('s_n_unraid')?></label>
-          <input type="checkbox" role="switch" class="trs-switch" id="trs-n-unraid">
-        </div>
-        <label for="trs-n-apprise"><?=$h('s_n_apprise')?></label>
-        <div>
-          <input type="text" class="trs-in" id="trs-n-apprise" placeholder="http://192.168.1.10:8000/notify/tollroll" spellcheck="false" autocomplete="off" aria-describedby="trs-n-apprise-err">
-          <p class="trs-field-err" id="trs-n-apprise-err" role="alert"></p>
-          <p class="trs-hint"><?=$h('s_n_apprise_hint')?></p>
-        </div>
-        <label for="trs-n-hs"><?=$h('s_n_matrix')?></label>
-        <div class="trs-matrix">
-          <input type="text" class="trs-in" id="trs-n-hs" placeholder="https://matrix.org" aria-label="<?=$h('s_n_hs')?>" spellcheck="false" autocomplete="off">
-          <input type="text" class="trs-in" id="trs-n-room" placeholder="!room:matrix.org" aria-label="<?=$h('s_n_room')?>" spellcheck="false" autocomplete="off">
-          <input type="password" class="trs-in" id="trs-n-token" aria-label="<?=$h('s_n_token')?>" autocomplete="new-password">
-        </div>
-        <label for="trs-n-on"><?=$h('s_n_on')?></label>
-        <div>
-          <select id="trs-n-on" class="trs-in trs-select">
-            <option value="always"><?=$h('s_n_on_always')?></option>
-            <option value="failure"><?=$h('s_n_on_failure')?></option>
-          </select>
-        </div>
+    <div class="trs-main">
+      <div class="trs-pane" role="tabpanel" id="trs-pane-general" aria-labelledby="trs-tab-general">
+        <section class="trs-card" aria-labelledby="trs-h-general">
+          <h3 class="trs-h"><span id="trs-h-general"><?=$h('s_tab_general')?></span></h3>
+          <div class="trs-row">
+            <div class="trs-lbl"><span class="trs-name"><?=$h('s_in_tile')?></span><span class="trs-sub" id="trs-tile-line"></span></div>
+            <div class="trs-ctl"><button type="button" id="trs-map" class="trs-btn"><span class="trs-gl" data-glyph="IconFleet"></span><span><?=$h('s_map')?></span></button></div>
+          </div>
+        </section>
       </div>
-      <div class="trs-tools">
-        <button type="button" id="trs-n-test" class="trs-btn"><span class="trs-gl" data-glyph="IconSendTest"></span><span><?=$h('s_n_test')?></span></button>
-        <span id="trs-n-res" class="trs-res" role="status"></span>
+
+      <div class="trs-pane" role="tabpanel" id="trs-pane-notify" aria-labelledby="trs-tab-notify" hidden>
+        <section class="trs-card" aria-labelledby="trs-h-notify">
+          <h3 class="trs-h"><span id="trs-h-notify"><?=$h('s_notify')?></span></h3>
+          <p class="trs-hint"><?=$h('s_notify_hint')?> <?=$h('s_live')?></p>
+          <div class="trs-grid">
+            <div class="trs-switch-row">
+              <label for="trs-n-unraid"><?=$h('s_n_unraid')?></label>
+              <input type="checkbox" role="switch" class="trs-switch" id="trs-n-unraid">
+            </div>
+            <label for="trs-n-apprise"><?=$h('s_n_apprise')?></label>
+            <div>
+              <input type="text" class="trs-in" id="trs-n-apprise" placeholder="http://192.168.1.10:8000/notify/tollroll" spellcheck="false" autocomplete="off" aria-describedby="trs-n-apprise-err">
+              <p class="trs-field-err" id="trs-n-apprise-err" role="alert"></p>
+              <p class="trs-hint"><?=$h('s_n_apprise_hint')?></p>
+            </div>
+            <label for="trs-n-hs"><?=$h('s_n_matrix')?></label>
+            <div class="trs-matrix">
+              <input type="text" class="trs-in" id="trs-n-hs" placeholder="https://matrix.org" aria-label="<?=$h('s_n_hs')?>" spellcheck="false" autocomplete="off">
+              <input type="text" class="trs-in" id="trs-n-room" placeholder="!room:matrix.org" aria-label="<?=$h('s_n_room')?>" spellcheck="false" autocomplete="off">
+              <input type="password" class="trs-in" id="trs-n-token" aria-label="<?=$h('s_n_token')?>" autocomplete="new-password">
+            </div>
+            <label for="trs-n-on"><?=$h('s_n_on')?></label>
+            <div>
+              <select id="trs-n-on" class="trs-in trs-select">
+                <option value="always"><?=$h('s_n_on_always')?></option>
+                <option value="failure"><?=$h('s_n_on_failure')?></option>
+              </select>
+            </div>
+          </div>
+          <div class="trs-tools">
+            <button type="button" id="trs-n-test" class="trs-btn"><span class="trs-gl" data-glyph="IconSendTest"></span><span><?=$h('s_n_test')?></span></button>
+            <span id="trs-n-res" class="trs-res" role="status"></span>
+          </div>
+        </section>
+        <div class="trs-foot"><span id="trs-n-saved" class="trs-saved" role="status"></span></div>
       </div>
-    </section>
+
+      <div class="trs-pane" role="tabpanel" id="trs-pane-fortress" aria-labelledby="trs-tab-fortress" hidden>
+        <div id="trs-fort"></div>
+      </div>
+
+      <div class="trs-pane" role="tabpanel" id="trs-pane-info" aria-labelledby="trs-tab-info" hidden>
+        <section class="trs-card" aria-labelledby="trs-h-version">
+          <h3 class="trs-h"><span id="trs-h-version"><?=$h('s_version')?></span></h3>
+          <div class="trs-row">
+            <div class="trs-lbl"><span class="trs-name">TollRoll</span></div>
+            <div class="trs-ctl"><?=$trs_ver_link($trs_ver, 'https://github.com/junkerderprovinz/tollroll')?></div>
+          </div>
+          <div class="trs-row">
+            <div class="trs-lbl"><span class="trs-name">GlimStone</span></div>
+            <div class="trs-ctl"><?=$trs_ver_link($trs_glimstone, 'https://github.com/junkerderprovinz/glimstone')?></div>
+          </div>
+        </section>
+
+        <section class="trs-card" aria-labelledby="trs-h-help">
+          <h3 class="trs-h"><span id="trs-h-help"><?=$h('s_help')?></span></h3>
+          <p class="trs-prose"><?=$h('s_help_body')?></p>
+          <div class="trs-rbtn-rows">
+            <?=$trs_rbtn('github', 'GitHub', 'https://github.com/junkerderprovinz/tollroll/issues')?>
+          </div>
+        </section>
+
+        <section class="trs-card" aria-labelledby="trs-h-about">
+          <h3 class="trs-h"><span id="trs-h-about"><?=$h('s_about')?></span></h3>
+          <p class="trs-prose"><?=$h('s_about_body')?></p>
+          <p class="trs-prose"><?=$h('s_about_coin')?></p>
+          <div class="trs-rbtn-rows trs-give">
+            <?=$trs_rbtn('coffee', 'Buy me a coffee', 'https://buymeacoffee.com/junkerderprovinz')?>
+            <?=$trs_rbtn('paypal', 'PayPal', 'https://www.paypal.com/donate/?hosted_button_id=76FVV52TKXTUS')?>
+            <?=$trs_rbtn('bitcoin', $L['s_crypto'], 'https://junkerderprovinz.github.io/junkerderprovinz/')?>
+          </div>
+        </section>
+      </div>
+      <script>
+      /* The tab chosen last opens before the first paint, so the page does not jump to it. */
+      (function () {
+        var t = null;
+        try { t = localStorage.getItem('tollroll.settings.tab'); } catch (e) {}
+        if (!t || t === 'general' || !document.getElementById('trs-pane-' + t)) return;
+        document.querySelectorAll('#trs-cfg .trs-tab').forEach(function (b) {
+          var on = b.getAttribute('data-trs-tab') === t;
+          b.setAttribute('aria-selected', on ? 'true' : 'false');
+          b.tabIndex = on ? 0 : -1;
+        });
+        document.querySelectorAll('#trs-cfg .trs-pane').forEach(function (p) { p.hidden = p.id !== 'trs-pane-' + t; });
+      })();
+      </script>
+    </div>
   </div>
 </div>
 

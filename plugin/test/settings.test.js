@@ -9,22 +9,43 @@ const PLUGIN = path.join(__dirname, '..', 'src', 'tollroll', 'usr', 'local', 'em
 const core = require(path.join(PLUGIN, 'scripts', 'tollroll-core.js'));
 const en = JSON.parse(fs.readFileSync(path.join(PLUGIN, 'lang', 'en.json'), 'utf8'));
 
-// Runs settings.js with just enough of a page for the notification card,
-// and a fortress card that only keeps what it was given.
-function page(answers) {
+const TABS = ['general', 'notify', 'fortress', 'info'];
+
+// Runs settings.js with just enough of a page for the tabs, the General and
+// notification cards, and a fortress card that only keeps what it was given.
+function page(answers, stored) {
+  const doc = { activeElement: null };
   class Node {
-    constructor() { this.listeners = {}; this.value = ''; this.className = ''; }
+    constructor() { this.listeners = {}; this.attrs = {}; this.value = ''; this.className = ''; this.text = ''; this.hidden = false; }
     addEventListener(type, fn) { (this.listeners[type] = this.listeners[type] || []).push(fn); }
+    fire(type, e) { for (const fn of this.listeners[type] || []) fn(Object.assign({ preventDefault() {} }, e)); }
     appendChild(c) { return c; }
-    set textContent(v) {}
+    get textContent() { return this.text; }
+    set textContent(v) { this.text = String(v); }
+    setAttribute(k, v) { this.attrs[k] = String(v); }
+    getAttribute(k) { return k in this.attrs ? this.attrs[k] : null; }
+    removeAttribute(k) { delete this.attrs[k]; }
+    querySelector() { return this.label; }
+    focus() { doc.activeElement = this; }
   }
   const byId = {};
+  const node = (id) => byId[id] || (byId[id] = new Node());
+  const tabs = TABS.map((name, i) => {
+    const t = node('trs-tab-' + name);
+    Object.assign(t.attrs, { 'data-trs-tab': name, 'aria-controls': 'trs-pane-' + name, 'aria-selected': String(i === 0) });
+    t.label = new Node();
+    t.label.text = name;
+    node('trs-pane-' + name).hidden = i > 0;
+    return t;
+  });
   const document = {
-    getElementById: (id) => byId[id] || (byId[id] = new Node()),
+    getElementById: node,
     createElement: () => new Node(),
     createTextNode: () => new Node(),
-    querySelectorAll: () => []
+    querySelectorAll: (sel) => (sel.includes('trs-tab') ? tabs : [])
   };
+  const store = Object.assign({}, stored);
+  const localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } };
   const gets = [];
   const posts = [];
   const reply = (body) => Promise.resolve({ json: () => Promise.resolve(body) });
@@ -37,18 +58,19 @@ function page(answers) {
     gets.push(url);
     return reply(answers[/path=(\w+)/.exec(url)[1]] || {});
   }
-  const mounted = { refreshed: 0 };
+  const mounted = {};
   const GlimFortressCard = {
     mount(el, adapter, opts) {
       Object.assign(mounted, { el, adapter, opts });
-      return { refresh() { mounted.refreshed++; }, destroy() {} };
+      return { refresh() {}, destroy() {} };
     }
   };
   const location = {};
-  const window = { TollRollCore: core, TRS_T: en, TRL_LANG: 'en', TollRollGlyphs: {}, csrf_token: 't', fetch, GlimFortressCard };
-  const ctx = vm.createContext({ window, document, fetch, URLSearchParams, location, setTimeout, clearTimeout });
+  const matchMedia = () => ({ matches: false, addEventListener() {} });
+  const window = { TollRollCore: core, TRS_T: en, TRL_LANG: 'en', TollRollGlyphs: {}, csrf_token: 't', fetch, GlimFortressCard, matchMedia };
+  const ctx = vm.createContext({ window, document, fetch, URLSearchParams, location, localStorage, setTimeout, clearTimeout });
   vm.runInContext(fs.readFileSync(path.join(PLUGIN, 'scripts', 'settings.js'), 'utf8'), ctx);
-  return { card: mounted, fortEl: byId['trs-fort'], gets, posts, location };
+  return { card: mounted, fortEl: byId['trs-fort'], byId, tabs, store, gets, posts, location, focused: () => doc.activeElement };
 }
 
 // The script builds its objects in its own realm.
@@ -153,24 +175,46 @@ test("a member's status comes with its times written for the reader", async () =
   await assert.rejects(page({ status: { error: 'unreachable' } }).card.adapter.status('s1'));
 });
 
-test('in a fortress the card has the line on what the tile shows and the way to its map', async () => {
+test('General says what the tile shows and leads to its map', async () => {
   const p = page({ fortress: joined(), board: { apps }, tile: { view: 'rows', hidden: ['shiplog'] } });
   await p.card.adapter.load();
-  const rows = p.card.opts.rows;
-  assert.equal(rows.length, 1);
-  assert.equal(rows[0].label, en.s_in_tile);
-  assert.equal(rows[0].button.label, en.s_map);
   await settle();
-  assert.equal(rows[0].value, core.subtitle({ apps }, en, 'en', core.mapDevices(joined(), apps).length), 'the line says what the tile says');
-  assert.equal(p.card.refreshed, 1, 'the card was not drawn again with the line');
-  await rows[0].run();
+  assert.equal(p.byId['trs-tile-line'].textContent, core.subtitle({ apps }, en, 'en', core.mapDevices(joined(), apps).length), 'the line says what the tile says');
+  p.byId['trs-map'].fire('click');
+  await settle();
   assert.deepEqual(p.posts, [{ path: 'tile', data: { view: 'map', hidden: ['shiplog'] } }]);
   assert.equal(p.location.href, '/Dashboard');
 });
 
-test('outside a fortress the card has no row of TollRoll', async () => {
-  const p = page({ fortress: out });
+test('outside a fortress General says the tile asks for the phrase, and the card has no row of TollRoll', async () => {
+  const p = page({ fortress: out, board: { apps: [] } });
   await p.card.adapter.load();
-  assert.equal(p.card.opts.rows.length, 0);
-  assert.ok(!p.gets.some((u) => u.includes('path=board')), 'the board was read outside a fortress');
+  await settle();
+  assert.equal(p.byId['trs-tile-line'].textContent, en.t_join_title);
+  assert.ok(!(p.card.opts.rows || []).length);
+});
+
+const shown = (p) => TABS.filter((t) => !p.byId['trs-pane-' + t].hidden);
+const selected = (p) => p.tabs.filter((t) => t.getAttribute('aria-selected') === 'true').map((t) => t.getAttribute('data-trs-tab'));
+
+test('a tab opens its panel and is kept for the next visit', () => {
+  const p = page({});
+  p.tabs[2].fire('click');
+  assert.deepEqual(shown(p), ['fortress']);
+  assert.deepEqual(selected(p), ['fortress']);
+  assert.deepEqual(p.tabs.map((t) => t.tabIndex), [-1, -1, 0, -1]);
+  assert.equal(p.store['tollroll.settings.tab'], 'fortress');
+});
+
+test('the arrow keys move between the tabs and wrap around', () => {
+  const p = page({});
+  p.tabs[0].fire('keydown', { key: 'ArrowUp' });
+  assert.deepEqual(selected(p), ['info']);
+  assert.equal(p.focused(), p.tabs[3]);
+  p.tabs[3].fire('keydown', { key: 'ArrowDown' });
+  assert.deepEqual(selected(p), ['general']);
+  p.tabs[0].fire('keydown', { key: 'End' });
+  assert.deepEqual(shown(p), ['info']);
+  p.tabs[3].fire('keydown', { key: 'Home' });
+  assert.deepEqual(shown(p), ['general']);
 });

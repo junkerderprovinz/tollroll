@@ -1,8 +1,9 @@
-/* The settings page: the fortress and the notification channels. The
- * fortress is GlimStone's card, the same in every plugin. Every channel
- * change is saved the moment it is made, with a tick when it worked and a
- * plain line when it did not. A token field stays empty: typing in it
- * replaces the saved token, leaving it empty keeps that one. */
+/* The settings page in its tabs: General with what the tile shows, the
+ * notification channels, the fortress and Info. The fortress is GlimStone's
+ * card, the same in every plugin. Every channel change is saved the moment it
+ * is made, with a tick when it worked and a plain line when it did not. A
+ * token field stays empty: typing in it replaces the saved token, leaving it
+ * empty keeps that one. */
 (function () {
   'use strict';
   var C = window.TollRollCore, L = window.TRS_T || {}, lang = window.TRL_LANG || 'en';
@@ -41,37 +42,78 @@
       .then(function (r) { return r.json().catch(function () { return { error: 'engine' }; }); });
   }
 
-  /* The card gets the fortress from the service and the steps go back to it.
-   * While the tile is in a fortress, TollRoll's own row says what the tile
-   * shows and leads to its map. The board fills it in once it answers. */
+  /* The tabs: a vertical tab list, the arrows move between the tabs, and the
+   * choice is kept for the next visit. */
+  var TAB_KEY = 'tollroll.settings.tab';
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('#trs-cfg .trs-tab'));
+
+  function openTab(tab, focus) {
+    tabs.forEach(function (t) {
+      var on = t === tab;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    try { localStorage.setItem(TAB_KEY, tab.getAttribute('data-trs-tab')); } catch (e) { /* kept until the page reloads */ }
+    if (focus) tab.focus();
+  }
+
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () { openTab(t, false); });
+    t.addEventListener('keydown', function (e) {
+      var n = { ArrowDown: i + 1, ArrowRight: i + 1, ArrowUp: i - 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+      if (n === undefined) return;
+      e.preventDefault();
+      openTab(tabs[(n + tabs.length) % tabs.length], true);
+    });
+  });
+
+  // Below 1024px the tabs show their glyphs only, and the name moves into the title.
+  var narrow = window.matchMedia('(max-width: 1023px)');
+  function tabTitles() {
+    tabs.forEach(function (t) {
+      if (narrow.matches) t.setAttribute('title', t.querySelector('.trs-tablbl').textContent);
+      else t.removeAttribute('title');
+    });
+  }
+  narrow.addEventListener('change', tabTitles);
+  tabTitles();
+
+  /* General: what the tile shows, from the board once it answers, and the way
+   * to the tile's map. */
+  var tileLine = document.getElementById('trs-tile-line');
+  var mapBtn = document.getElementById('trs-map');
+  var fort = null, reading = false;
+
+  mapBtn.addEventListener('click', function () {
+    mapBtn.disabled = true;
+    get('tile').then(function (p) {
+      return post('tile', { view: 'map', hidden: (p && p.hidden) || [] });
+    }).then(function (r) {
+      if (r.error) throw r;
+      location.href = '/Dashboard';
+    }).catch(function () { mapBtn.disabled = false; });
+  });
+
+  function readBoard() {
+    if (reading) return;
+    reading = true;
+    get('board&lang=' + encodeURIComponent(lang)).then(function (r) {
+      reading = false;
+      if (r.apps && fort && fort.joined) tileLine.textContent = C.subtitle({ apps: r.apps }, L, lang, C.mapDevices(fort, r.apps).length);
+    }, function () { reading = false; });
+  }
+
+  /* The card gets the fortress from the service and the steps go back to it. */
   var JOIN = { phrase_invalid: 'phrase', bad_request: 'phrase' };
   var REMOVE = { no_member: 'noMember', not_joined: 'noMember' };
-  var fort = null, card = null, tileLine = '', reading = false, rows = [];
-  var tileRow = {
-    label: L.s_in_tile,
-    get value() { return tileLine; },
-    button: { label: L.s_map, glyph: 'IconExternalLink' },
-    run: function () {
-      return get('tile').then(function (p) {
-        return post('tile', { view: 'map', hidden: (p && p.hidden) || [] });
-      }).then(function (r) {
-        if (r.error) throw r;
-        location.href = '/Dashboard';
-      });
-    }
-  };
 
-  // cardState keeps the map for the tile's row and gives the card the
+  // cardState keeps the map for General's line and gives the card the
   // instances of other apps, as it draws them.
   function cardState(f) {
     fort = f;
-    rows.length = 0;
-    if (f.joined) {
-      rows.push(tileRow);
-      readBoard();
-    } else {
-      tileLine = '';
-    }
+    if (f.joined) readBoard();
+    else tileLine.textContent = L.t_join_title;
     return {
       joined: !!f.joined, device: f.device || '', removedHere: !!f.removedHere, phraseChanged: !!f.phraseChanged,
       removed: f.removed || [], hints: rejoin(f),
@@ -95,20 +137,6 @@
       if (r.error) throw { code: codes[r.error] || r.error };
       return cardState(r);
     };
-  }
-
-  function readBoard() {
-    if (reading) return;
-    reading = true;
-    get('board&lang=' + encodeURIComponent(lang)).then(function (r) {
-      reading = false;
-      if (!r.apps || !fort || !fort.joined) return;
-      var line = C.subtitle({ apps: r.apps }, L, lang, C.mapDevices(fort, r.apps).length);
-      if (line !== tileLine) {
-        tileLine = line;
-        card.refresh();
-      }
-    }, function () { reading = false; });
   }
 
   function report(r) {
@@ -140,9 +168,7 @@
     }
   };
 
-  card = window.GlimFortressCard.mount(document.getElementById('trs-fort'), adapter, {
-    lang: lang, app: { id: 'tollroll', name: 'TollRoll' }, rows: rows
-  });
+  window.GlimFortressCard.mount(document.getElementById('trs-fort'), adapter, { lang: lang, app: { id: 'tollroll', name: 'TollRoll' } });
 
   /* The notification channels. Switches and choices save at once, text a
    * moment after the last key, so a half typed address is not sent. */

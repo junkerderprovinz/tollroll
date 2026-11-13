@@ -130,3 +130,36 @@ test('a removed TollRoll points at the current phrase, since the one it knew may
     assert.doesNotMatch(de[k], /entfernt/, `de.${k} says herausgenommen, as the apps do`);
   }
 });
+
+test('the settings tabs run General, Notifications, Fortress and Info, each over its panel', () => {
+  const page = read('tollroll.page');
+  const attr = (tag, a) => (new RegExp(` ${a}="([^"]*)"`).exec(tag) || [])[1];
+  const tabs = page.match(/<button [^>]*class="trs-tab"[^>]*>/g);
+  assert.deepEqual(tabs.map((t) => attr(t, 'data-trs-tab')), ['general', 'notify', 'fortress', 'info'], 'the Fortress sits just above Info');
+  tabs.forEach((t, i) => {
+    assert.equal(attr(t, 'aria-selected'), String(i === 0));
+    assert.equal(attr(t, 'tabindex'), i ? '-1' : undefined);
+    const pane = page.match(new RegExp(`<div class="trs-pane" role="tabpanel" id="${attr(t, 'aria-controls')}"[^>]*>`));
+    assert.ok(pane, attr(t, 'aria-controls'));
+    assert.equal(attr(pane[0], 'aria-labelledby'), attr(t, 'id'));
+    assert.equal(/ hidden>$/.test(pane[0]), i > 0);
+  });
+  const at = (s) => page.indexOf(s);
+  assert.ok(at('id="trs-pane-general"') < at('id="trs-tile-line"') && at('id="trs-tile-line"') < at('id="trs-pane-notify"'), 'General holds the tile line');
+  assert.ok(at('id="trs-pane-fortress"') < at('id="trs-fort"') && at('id="trs-fort"') < at('id="trs-pane-info"'), 'the Fortress panel holds the card');
+});
+
+test('the tab chosen last opens before the first paint', () => {
+  const page = read('tollroll.page');
+  assert.match(page, /localStorage\.getItem\('tollroll\.settings\.tab'\)/);
+  assert.ok(page.indexOf("getItem('tollroll.settings.tab')") > page.indexOf('id="trs-pane-info"'), 'the panels exist before the script picks one');
+  assert.match(read('scripts', 'settings.js'), /localStorage\.setItem\(TAB_KEY/);
+});
+
+test('Info names the GlimStone version the plugin is built on and links each version to its release', () => {
+  const page = read('tollroll.page');
+  const { targets } = JSON.parse(fs.readFileSync(path.join(ROOT, '..', 'glimstone.json'), 'utf8'));
+  assert.ok(page.includes(`$trs_glimstone = '${targets[0].version}';`), `Info does not name GlimStone ${targets[0].version}`);
+  assert.match(page, /\/releases\/tag\/v/);
+  assert.doesNotMatch(page, /class="button[^"]*trs-ver/, 'a version is a plain link');
+});

@@ -1,92 +1,267 @@
-/* The page sits on Unraid's own surface and takes its text colour, so it
-   reads on every theme. Cards, fields and buttons are tints of that colour. */
-.trs-page{max-width:860px;margin:6px auto 0;font:14px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif}
-.trs-page{--trs-tint:color-mix(in srgb,currentColor 5%,transparent);--trs-line:color-mix(in srgb,currentColor 16%,transparent);
-  --trs-field:color-mix(in srgb,currentColor 4%,transparent);--trs-btn:color-mix(in srgb,currentColor 10%,transparent);
-  --trs-btn-hover:color-mix(in srgb,currentColor 17%,transparent);
-  --trs-ok:#2f9e5b;--trs-err:#d64545}
-:is(.Theme--white,.Theme--azure) .trs-page{--trs-ok:#1f7a43;--trs-err:#b8322f}
-.trs-page *{box-sizing:border-box}
+/* TollRoll's settings page, laid out as ShipLog's: the banner, then the tab
+   column beside the cards.
 
-/* The banner over the page, drawn like FireSquire's and ShipLog's: logo, name
-   and claim on a card, and the logo again at the end as a faint silhouette
-   cut by the edge, which takes Unraid's red under the pointer. */
-.trs-hero{--trs-hero-tint:#e22828;--trs-hero-dim:var(--alt-text-color,#8d8d8d);--trs-hero-sil:16%;
-  position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:center;gap:24px;
-  height:136px;margin:0 0 24px;padding:0 32px;border-radius:4px;background:var(--mild-background-color,rgba(128,128,128,.08))}
-:is(.Theme--white,.Theme--azure) .trs-hero{--trs-hero-sil:30%}
-.trs-hero-mark{position:absolute;z-index:-1;inset-inline-end:-44px;top:50%;translate:0 -50%;width:264px;height:264px;pointer-events:none;
-  background-color:color-mix(in srgb,var(--trs-hero-dim) var(--trs-hero-sil),transparent);
-  -webkit-mask:url(/plugins/tollroll/images/tollroll-unraid.svg) center / contain no-repeat;
-  mask:url(/plugins/tollroll/images/tollroll-unraid.svg) center / contain no-repeat}
-.trs-hero:is(:hover,:focus-within) .trs-hero-mark{background-color:color-mix(in srgb,var(--trs-hero-tint) var(--trs-hero-sil),transparent)}
-@media (prefers-reduced-motion:no-preference){.trs-hero-mark{transition:background-color 150ms}}
-.trs-hero-logo{flex:none;display:block;width:88px;height:88px;object-fit:contain}
-.trs-hero-text{min-width:0;max-width:calc(100% - 332px)}
-.trs-hero .trs-hero-name{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:inherit;font-size:32px;font-weight:700;
-  line-height:1.15;letter-spacing:normal;text-transform:none;color:inherit}
-.trs-hero .trs-hero-claim{margin:4px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px;line-height:1.45;color:var(--trs-hero-dim)}
-@media (max-width:1023px){
-  .trs-hero{gap:16px;height:104px;padding:0 20px}
-  .trs-hero-mark{inset-inline-end:-36px;width:208px;height:208px}
-  .trs-hero-logo{width:64px;height:64px}
-  .trs-hero-text{max-width:calc(100% - 200px)}
-  .trs-hero .trs-hero-name{font-size:26px}
+   One markup, two looks. Without TowerTorch the page follows Unraid: its theme
+   colours and its blue switch. With TowerTorch, the rules under
+   html.tt-popups-on, which TowerTorch sets on every page while its theming is
+   on, give the cards, the headings and the tabs the look of its tokens. The
+   geometry is the same in both, so the page does not move when TowerTorch's
+   script arrives after the first paint. */
+
+.trs-page {
+  --trs-card: var(--mild-background-color, rgba(128, 128, 128, .08));
+  --trs-tile: var(--mild-background-color, rgba(128, 128, 128, .08));
+  --trs-tile-ink: var(--text-color, inherit);
+  --trs-tile-hover: var(--hover-table-row-background-color, rgba(128, 128, 128, .14));
+  --trs-head: var(--hover-button-background, #e22828);
+  --trs-head-ink: var(--hover-button-text-color, #fff);
+  --trs-dim: var(--alt-text-color, #8d8d8d);
+  --trs-track: var(--checkbox-color, #8d8d8d);
+  --trs-on: var(--link-text-color, #486dba);
+  --trs-focus: var(--link-text-color, #486dba);
+  --trs-line: color-mix(in srgb, currentColor 16%, transparent);
+  --trs-field: color-mix(in srgb, currentColor 4%, transparent);
+  --trs-btn: color-mix(in srgb, currentColor 10%, transparent);
+  --trs-btn-hover: color-mix(in srgb, currentColor 17%, transparent);
+  --trs-ok: #3fae6a;
+  --trs-err: #e05252;
+  --trs-r-card: 4px;
+  --trs-r-ctl: 4px;
+  --trs-r-pill: 4px;
+  --trs-shadow: none;
+  font-size: 14px;
+  line-height: 1.45;
+  padding-bottom: 24px;
 }
-/* The banner names the page, so Unraid's title strip would say it twice. */
-.content:has(.trs-hero) > div.title{display:none}
+html:is(.Theme--white, .Theme--azure) .trs-page { --trs-ok: #0e6027; --trs-err: #da1e28; }
+.trs-page *, .trs-page *::before, .trs-page *::after { box-sizing: border-box; }
+.trs-page [hidden] { display: none !important; }
 
-#trs-fort{margin-bottom:16px}
-.trs-card{background:var(--trs-tint);border-radius:12px;padding:6px 18px 16px;margin-bottom:16px}
-.trs-card > h3{display:flex;align-items:baseline;gap:10px;margin:14px 2px;padding-bottom:10px;border-bottom:1px solid var(--trs-line);
-  font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:1px}
-.trs-card > h3 small{text-transform:none;letter-spacing:0;font-weight:400;opacity:.7;font-size:12px}
-.trs-hint{margin:4px 2px 8px;max-width:680px;font-size:12.5px;opacity:.78}
+/* The banner, drawn as on ShipLog's and FireSquire's pages: logo, name and
+   claim on a card, and the logo again at the end as a faint silhouette cut by
+   the edge, which takes Unraid's red under the pointer. It is as wide as the
+   tab column and the cards together. */
+.trs-hero {
+  --trs-hero-tint: #e22828;
+  --trs-hero-sil: 16%;
+  position: relative; isolation: isolate; overflow: hidden;
+  display: flex; align-items: center; gap: 24px;
+  max-width: 1148px; height: 136px; margin: 4px 0 32px; padding: 0 32px;
+  border-radius: var(--trs-r-card);
+  background: var(--trs-card);
+}
+html:is(.Theme--white, .Theme--azure) .trs-hero { --trs-hero-sil: 30%; }
+.trs-hero-mark {
+  position: absolute; z-index: -1; inset-inline-end: -44px; top: 50%; translate: 0 -50%;
+  width: 264px; height: 264px; pointer-events: none;
+  background-color: color-mix(in srgb, var(--trs-dim) var(--trs-hero-sil), transparent);
+  -webkit-mask: url(/plugins/tollroll/images/tollroll-unraid.svg) center / contain no-repeat;
+  mask: url(/plugins/tollroll/images/tollroll-unraid.svg) center / contain no-repeat;
+}
+.trs-hero:is(:hover, :focus-within) .trs-hero-mark { background-color: color-mix(in srgb, var(--trs-hero-tint) var(--trs-hero-sil), transparent); }
+@media (prefers-reduced-motion: no-preference) {
+  .trs-hero-mark { transition: background-color var(--tt-motion-control-dur, 150ms); }
+}
+.trs-hero-logo { flex: none; display: block; width: 88px; height: 88px; object-fit: contain; }
+.trs-hero-text { min-width: 0; max-width: calc(100% - 332px); }
+.trs-page .trs-hero-name {
+  margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-family: inherit; font-size: 32px; font-weight: 700; line-height: 1.15; letter-spacing: normal; text-transform: none; color: inherit;
+}
+.trs-page .trs-hero-claim {
+  margin: 4px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: var(--tt-text-title, 16px); line-height: 1.45; text-align: start; color: var(--trs-dim);
+}
+@media (max-width: 1023px) {
+  .trs-hero { gap: 16px; height: 104px; padding: 0 20px; }
+  .trs-hero-mark { inset-inline-end: -36px; width: 208px; height: 208px; }
+  .trs-hero-logo { width: 64px; height: 64px; }
+  .trs-hero-text { max-width: calc(100% - 260px); }
+  .trs-page .trs-hero-name { font-size: 26px; }
+}
+@media (max-width: 599px) {
+  .trs-hero-text { max-width: none; }
+}
 
-.trs-in{width:100%;min-width:0;margin:0 !important;padding:7px 10px;border:1px solid var(--trs-line) !important;border-radius:7px;
-  background:var(--trs-field) !important;color:inherit !important;font:13px/1.2 Consolas,'Cascadia Mono',Menlo,monospace;outline:none}
-.trs-in:focus{border-color:#f4c63d !important}
-.trs-in:disabled{opacity:.55}
+/* The tab column beside the cards. */
+.trs-body { display: flex; align-items: flex-start; gap: 24px; margin-top: 12px; }
+.trs-tabs { position: sticky; top: 12px; flex: none; width: 204px; display: flex; flex-direction: column; gap: 4px; }
+.trs-page .trs-tab {
+  display: flex; align-items: center; gap: 12px; width: 100%; height: 66px; min-width: 0; margin: 0; padding: 0 12px;
+  border: none; border-radius: var(--trs-r-ctl); box-shadow: none;
+  background: var(--trs-tile); color: var(--trs-tile-ink);
+  font-family: inherit; font-size: 14px; font-weight: 500; line-height: 20px;
+  letter-spacing: normal; text-transform: none; text-align: start; cursor: pointer;
+}
+.trs-page .trs-tab:hover { background: var(--trs-tile); color: var(--trs-tile-ink); box-shadow: inset 0 0 0 100vmax var(--trs-tile-hover); }
+.trs-page .trs-tab[aria-selected="true"],
+.trs-page .trs-tab[aria-selected="true"]:hover { background: var(--trs-head); color: var(--trs-head-ink); box-shadow: none; }
+.trs-tabico { flex: none; display: inline-flex; width: 20px; height: 20px; }
+.trs-tabico svg { width: 20px; height: 20px; display: block; }
+.trs-tablbl { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+@media (max-width: 1023px) {
+  .trs-tabs { width: 52px; }
+  .trs-page .trs-tab { justify-content: center; padding: 0; }
+  /* hidden from view, still the tab's accessible name */
+  .trs-tablbl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+
+.trs-main { flex: 1 1 auto; min-width: 0; max-width: 920px; }
+/* The top padding is the room the first card's heading takes above it. */
+.trs-pane { display: flex; flex-direction: column; gap: 40px; padding-top: 11px; }
+/* The fortress card keeps its own room above its heading. */
+#trs-pane-fortress { padding-top: 0; }
+
+/* A card, and its heading as a badge across the card's top edge. */
+.trs-card { position: relative; padding: 22px 18px 12px; border-radius: var(--trs-r-card); background: var(--trs-card); box-shadow: var(--trs-shadow); }
+.trs-page .trs-h {
+  position: absolute; top: 0; transform: translateY(-50%); z-index: 1;
+  display: inline-flex; align-items: center; gap: 6px; max-width: calc(100% - 36px); min-height: 22px; margin: 0; padding: 0 12px;
+  border-radius: var(--trs-r-pill); background: var(--trs-head); color: var(--trs-head-ink);
+  font-size: 12px; font-weight: 500; line-height: 1.2; letter-spacing: 1.2px; text-transform: uppercase;
+}
+
+/* A row: the name and the line under it at the start, the control at the end. */
+.trs-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; min-height: 44px; padding: 6px 0; }
+.trs-lbl { display: flex; flex-direction: column; flex: 1 1 160px; min-width: 0; }
+.trs-sub { color: var(--trs-dim); font-size: 13px; }
+.trs-sub:empty { display: none; }
+.trs-ctl { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 12px; min-width: 0; max-width: 100%; margin-inline-start: auto; }
+.trs-hint { margin: 4px 0 8px; max-width: 680px; font-size: 13px; color: var(--trs-dim); }
+
+.trs-in {
+  width: 100%; min-width: 0; margin: 0 !important; padding: 7px 10px; border: 1px solid var(--trs-line) !important; border-radius: var(--trs-r-ctl);
+  background: var(--trs-field) !important; color: inherit !important; font: 13px/1.2 Consolas, 'Cascadia Mono', Menlo, monospace; outline: none;
+}
+.trs-in:focus { border-color: var(--trs-focus) !important; }
+.trs-in:disabled { opacity: .55; }
 
 /* Fixed colours with !important: themes and scripts on the box restyle
    generic buttons. */
-.trs-btn{display:inline-flex;align-items:center;gap:7px;margin:0 !important;min-width:0 !important;padding:8px 15px 8px 12px;border:none !important;border-radius:7px;
-  background:var(--trs-btn) !important;color:inherit !important;font:13px/1.2 inherit;cursor:pointer;white-space:nowrap}
-.trs-btn:hover{background:var(--trs-btn-hover) !important}
-.trs-btn:focus-visible{outline:2px solid #f4c63d;outline-offset:1px}
-.trs-btn:disabled{opacity:.6;cursor:default}
-.trs-gl{display:inline-grid;place-items:center;flex:none}
-.trs-gl svg{display:block;width:16px;height:16px}
+.trs-btn {
+  display: inline-flex; align-items: center; gap: 7px; margin: 0 !important; min-width: 0 !important; padding: 8px 15px 8px 12px; border: none !important;
+  border-radius: var(--trs-r-ctl); background: var(--trs-btn) !important; color: inherit !important; font: 13px/1.2 inherit; cursor: pointer; white-space: nowrap;
+}
+.trs-btn:hover { background: var(--trs-btn-hover) !important; }
+.trs-btn:disabled { opacity: .6; cursor: default; }
+.trs-gl { display: inline-grid; place-items: center; flex: none; }
+.trs-gl svg { display: block; width: 16px; height: 16px; }
 
-.trs-res{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12.5px}
-.trs-page .ok{color:var(--trs-ok)}
-.trs-page .err{color:var(--trs-err)}
-.trs-page .run{opacity:.75}
-.trs-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 2px 4px}
+.trs-res { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+.trs-page .ok { color: var(--trs-ok); }
+.trs-page .err { color: var(--trs-err); }
+.trs-page .run { color: var(--trs-dim); }
+.trs-tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 10px 0 4px; }
 
-.trs-grid{display:grid;grid-template-columns:200px minmax(0,1fr);gap:12px 16px;align-items:center;margin:14px 2px 6px}
-.trs-grid > label,.trs-switch-row label{font-size:13px;font-weight:600}
-.trs-grid .trs-hint{margin:6px 0 0}
-.trs-matrix{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.trs-select{width:auto;font-family:inherit}
-@media (max-width:760px){.trs-grid,.trs-matrix{grid-template-columns:1fr}}
+.trs-grid { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 12px 16px; align-items: center; margin: 14px 0 6px; }
+.trs-grid > label, .trs-switch-row label { margin: 0; font-size: 14px; font-weight: 400; }
+.trs-grid .trs-hint { margin: 6px 0 0; }
+.trs-matrix { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.trs-select { width: auto; font-family: inherit; }
+@media (max-width: 760px) { .trs-grid, .trs-matrix { grid-template-columns: 1fr; } }
 
-/* A switch stands at the far end of its row, its label before it. */
-.trs-switch-row{grid-column:1 / -1;display:flex;align-items:center;justify-content:space-between;gap:16px}
-.trs-switch{appearance:none;-webkit-appearance:none;position:relative;flex:none;width:38px;height:22px;margin:0 !important;border-radius:999px;cursor:pointer;
-  background:color-mix(in srgb,currentColor 22%,transparent);transition:background-color .15s}
-.trs-switch::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:translate .15s}
-.trs-switch:checked{background:#f4c63d}
-.trs-switch:checked::after{translate:16px 0}
-.trs-switch:focus-visible{outline:2px solid #f4c63d;outline-offset:2px}
-@media (prefers-reduced-motion:reduce){.trs-switch,.trs-switch::after{transition:none}}
+/* The switch, drawn on the checkbox itself as on ShipLog's page. TowerTorch
+   draws its own on the same checkbox with the same box, so nothing moves. */
+.trs-switch-row { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.trs-page input.trs-switch {
+  -webkit-appearance: none; appearance: none; position: relative; flex: none;
+  width: 44px; height: 24px; margin: 0; padding: 0; border: none; border-radius: var(--trs-r-pill);
+  background: var(--trs-track); cursor: pointer; transition: background-color .12s;
+}
+.trs-page input.trs-switch::before {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
+  border-radius: var(--trs-r-pill); background: #fff; transition: left .15s;
+}
+.trs-page input.trs-switch:checked { background: var(--trs-on); }
+.trs-page input.trs-switch:checked::before { left: 23px; }
+@media (prefers-reduced-motion: reduce) { .trs-page input.trs-switch, .trs-page input.trs-switch::before { transition: none; } }
 
-/* A change saved shows a tick in the card's heading for a moment; one that
-   could not be saved says so there and under its field. */
-.trs-saved{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;text-transform:none;letter-spacing:0;opacity:0;transition:opacity .2s}
-.trs-saved svg{width:13px;height:13px}
-.trs-saved-ok{opacity:1;color:var(--trs-ok)}
-.trs-saved-err{opacity:1;color:var(--trs-err)}
-@media (prefers-reduced-motion:reduce){.trs-saved{transition:none}}
-.trs-field-err{margin:6px 0 0;font-size:12.5px;color:var(--trs-err)}
-.trs-field-err:empty{display:none}
+/* The save state under the notifications card: a tick for a moment when a
+   change is saved, a plain line when it could not be. */
+.trs-foot { display: flex; justify-content: flex-end; min-height: 20px; margin-top: -28px; }
+.trs-saved { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; opacity: 0; transition: opacity .2s; }
+.trs-saved svg { width: 13px; height: 13px; }
+.trs-saved-ok { opacity: 1; color: var(--trs-ok); }
+.trs-saved-err { opacity: 1; color: var(--trs-err); }
+@media (prefers-reduced-motion: reduce) { .trs-saved { transition: none; } }
+.trs-field-err { margin: 6px 0 0; font-size: 13px; color: var(--trs-err); }
+.trs-field-err:empty { display: none; }
+
+/* The Info tab's cards: the versions, the way to ask for help and the way to
+   give, as on ShipLog's. A version is a plain link to its release. */
+.trs-prose { margin: 4px 0 8px; text-align: start; }
+.trs-ver { font-variant-numeric: tabular-nums lining-nums; }
+.trs-page a.trs-ver { color: var(--trs-focus); }
+
+/* The give buttons, TowerTorch's README buttons unchanged: the mark and the
+   name on a dark tile that takes the brand's colour under the pointer. */
+#trs-cfg .trs-rbtn-rows { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 12px; }
+#trs-cfg .trs-rbtn-rows.trs-give { margin-top: 21px; }
+#trs-cfg .trs-rbtn-unit { position: relative; display: inline-flex; border-radius: var(--tt-radius-pill, 9999px); overflow: hidden; isolation: isolate; --trs-brand-coffee: #ffdd00; --trs-brand-paypal: #4fb5f0; --trs-brand-bitcoin: #f7931a; }
+#trs-cfg .trs-rbtn { position: relative; display: block; flex: none; box-sizing: border-box; width: 160px; height: 46.6px; padding: 0; background: var(--tt-surface-3, #2e2e2e); color: #e6e6e6; text-decoration: none; cursor: pointer; }
+#trs-cfg .trs-rbtn:hover { text-decoration: none; }
+#trs-cfg .trs-rbtn:focus-visible { outline: none !important; box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--tt-accent, #FCC419) 45%, transparent) !important; }
+#trs-cfg .trs-rbtn-mark { position: absolute; top: 50%; left: 14px; width: 32px; height: 25px; translate: 0 -50%; display: flex; }
+#trs-cfg :is(.trs-rbtn-mark, .trs-rbtn-art) svg { display: block; width: 100%; height: 100%; }
+#trs-cfg .trs-rbtn-art { position: absolute; inset: 0; }
+#trs-cfg .trs-rbtn-text { position: absolute; top: 0; bottom: 0; left: 53px; right: 10px; display: flex; flex-direction: column; justify-content: center; line-height: 1.15; }
+#trs-cfg .trs-rbtn-name { max-width: 100%; overflow: hidden; white-space: nowrap; font-size: var(--tt-text-body, 14px); font-weight: 700; }
+#trs-cfg .trs-paypal-mark { color: var(--trs-brand-paypal); }
+#trs-cfg .trs-bitcoin-mark { color: var(--trs-brand-bitcoin); }
+#trs-cfg .trs-github-mark { color: #fff; }
+#trs-cfg .trs-tile-github { --trs-give: #181717; --trs-give-ink: #fff; }
+#trs-cfg .trs-tile-paypal { --trs-give: #003087; --trs-give-ink: #fff; }
+#trs-cfg .trs-tile-bitcoin { --trs-give: #f7931a; --trs-give-ink: #161616; }
+#trs-cfg .trs-tile-coffee { --trs-give: #ffdd00; --trs-give-ink: #0d0c22; }
+@media (hover: hover) {
+  #trs-cfg .trs-rbtn-unit:hover .trs-rbtn { background: var(--trs-give); color: var(--trs-give-ink); --trs-mark-ink: var(--trs-give-ink); }
+  #trs-cfg .trs-rbtn-unit:hover .trs-rbtn-mark { color: var(--trs-give-ink); }
+}
+#trs-cfg .trs-rbtn-sheen { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+#trs-cfg .trs-rbtn-sheen::after { content: ""; position: absolute; top: -12px; bottom: -12px; left: -64px; width: 33px; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .28) 45%, rgba(255, 255, 255, .28) 55%, transparent); transform: skewX(-16deg); }
+@keyframes trs-rbtn-sheen { to { left: calc(100% + 32px); } }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  html:not([data-tt-motion="off"]) #trs-cfg .trs-rbtn-unit:hover .trs-rbtn-sheen::after { animation: trs-rbtn-sheen .7s linear; }
+}
+
+/* With TowerTorch: GlimStone's look from its tokens. */
+html.tt-popups-on .trs-page {
+  --trs-card: var(--tt-fm-card, #222);
+  --trs-tile: var(--tt-fm-btn, #353535);
+  --trs-tile-ink: var(--tt-text-chip, #cfcfcf);
+  --trs-tile-hover: var(--tt-hover-wash, rgba(230, 230, 230, .15));
+  --trs-head: var(--tt-accent, #FCC419);
+  --trs-head-ink: var(--tt-accent-text, #161616);
+  --trs-dim: var(--tt-text-dim, #8a8a8a);
+  --trs-focus: var(--tt-accent-ink, #FCC419);
+  --trs-ok: var(--tt-ok-ink, #6fdc8c);
+  --trs-err: var(--tt-err-ink, #ff8389);
+  --trs-r-card: var(--tt-radius-card, 20px);
+  --trs-r-ctl: var(--tt-radius-control, 12px);
+  --trs-r-pill: var(--tt-radius-pill, 9999px);
+  --trs-shadow: var(--tt-elev-1, 0 1px 4px rgba(0, 0, 0, .35));
+  color: var(--tt-text, #e6e6e6);
+}
+html.tt-popups-on .trs-hero { --trs-hero-tint: var(--tt-accent, #FCC419); }
+html.tt-popups-on .trs-page .trs-h { font-size: var(--tt-sec-fs, 12px); font-weight: var(--tt-sec-fw, 500); letter-spacing: var(--tt-sec-ls, 1.2px); min-height: var(--tt-sec-h, 22px); }
+/* An idle tab's glyph wears the accent, the open tab wears it as its fill. */
+html.tt-popups-on .trs-tab .trs-tabico { color: var(--tt-accent, #FCC419); }
+html.tt-popups-on .trs-tab[aria-selected="true"] .trs-tabico { color: inherit; }
+
+/* TowerTorch's sheets reach every button, switch and focus ring on a settings
+   page with !important. An important declaration in a cascade layer outranks
+   every unlayered one, so the few things this page needs to keep sit here:
+   the switch's place in its row, the give buttons' ink against the accent
+   TowerTorch gives every link, a visible focus ring, and the title strip the
+   banner replaces. */
+@layer tollroll-settings {
+  #trs-cfg input.trs-switch { margin: 0 !important; }
+  #trs-cfg a.trs-rbtn { color: var(--tt-text, #e6e6e6) !important; filter: none !important; }
+  @media (hover: hover) {
+    #trs-cfg .trs-rbtn-unit:hover a.trs-rbtn { color: var(--trs-give-ink) !important; }
+  }
+  .content:has(#trs-cfg) > div.title { display: none !important; }
+  #trs-cfg :is(.trs-tab, .trs-btn, .trs-switch):focus-visible {
+    outline: 2px solid var(--trs-focus) !important; outline-offset: 2px !important; filter: none !important;
+  }
+}
