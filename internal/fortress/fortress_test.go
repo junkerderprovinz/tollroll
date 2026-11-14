@@ -694,10 +694,16 @@ func TestAChangedPhraseIsFollowedAndTheReadTriedAgain(t *testing.T) {
 		t.Fatal(err)
 	}
 	again := openService(t, dir, url)
-	waitFor(t, "alpha after a restart", func() bool { return len(again.Sources()) == 1 })
-	if _, err := again.Reader().Report(context.Background(), again.Sources()[0], ""); err != nil {
-		t.Errorf("after a restart the tile reads alpha: %v", err)
-	}
+	// The tile knows alpha from before the restart, so it lists alpha
+	// before alpha is in reach again.
+	waitFor(t, "the tile to read alpha after a restart", func() bool {
+		srcs := again.Sources()
+		if len(srcs) != 1 {
+			return false
+		}
+		_, err := again.Reader().Report(context.Background(), srcs[0], "")
+		return err == nil
+	})
 }
 
 func TestAPhraseTheTileCannotFollowAsksForTheNewWords(t *testing.T) {
