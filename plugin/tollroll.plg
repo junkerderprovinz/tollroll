@@ -80,7 +80,7 @@ find &plgPath; -maxdepth 1 -name '*.txz' ! -name '&txz;' -delete 2>/dev/null || 
      dropped. -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>0000000000000000000000000000000000000000000000000000000000000000</SHA256>
+  <SHA256>4275d14a08cd58b9cb039c4d1bc5416d4d871ab17b7fe59448b71cedb6b333af</SHA256>
 </FILE>
 
 <!-- Post-install: start the service. It runs on every boot as well, since
