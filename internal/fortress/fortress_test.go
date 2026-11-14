@@ -892,8 +892,13 @@ func TestTheTileHearsThePhraseChangedFromAMemberThatCannotHandItOver(t *testing.
 	}
 
 	tower := openService(t, dir, url)
-	watching(t, tower)
-	waitFor(t, "tower to hear the phrase changed", func() bool { return tower.Map().PhraseChanged })
+	waitFor(t, "tower to hear the phrase changed", func() bool {
+		// Watch does the same now and then.
+		if f := tower.current(); f != nil {
+			tower.follow(context.Background(), f, false)
+		}
+		return tower.Map().PhraseChanged
+	})
 	if !tower.Map().Joined {
 		t.Errorf("the map is %+v, want still joined", tower.Map())
 	}
