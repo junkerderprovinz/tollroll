@@ -80,6 +80,7 @@ func run(ctx context.Context, cfg config) error {
 		return err
 	}
 	defer func() { _ = fort.Close() }()
+	go fort.Watch(ctx)
 	b := board.New(fort.Sources, fort.Reader())
 	texts := func() (string, alert.Texts) {
 		lang := alert.Language(cfg.Dynamix)

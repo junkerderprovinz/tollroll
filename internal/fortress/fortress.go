@@ -55,6 +55,13 @@ var (
 	followFor = 10 * time.Second
 )
 
+// watchFirst and watchEvery are when Watch first asks for a new phrase and
+// how often after.
+var (
+	watchFirst = time.Minute
+	watchEvery = 15 * time.Minute
+)
+
 // ErrPhrase is a phrase that is not twelve words of the list.
 var ErrPhrase = errors.New("fortress: the phrase is not valid")
 
@@ -637,17 +644,37 @@ func (s *Service) followed(ctx context.Context, f *kit.Fortress, id string, err 
 	if !errors.As(err, &no) || no.Code != "phrase_changed" {
 		return nil
 	}
-	moved := s.follow(context.WithoutCancel(ctx), f)
+	moved := s.follow(context.WithoutCancel(ctx), f, true)
 	if moved != nil {
 		reach(ctx, moved, id)
 	}
 	return moved
 }
 
+// Watch follows a phrase change now and then, so that a tile nobody opens
+// still comes along while the old phrase answers. It returns when ctx ends.
+func (s *Service) Watch(ctx context.Context) {
+	t := time.NewTimer(watchFirst)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+		}
+		if f := s.current(); f != nil {
+			s.follow(ctx, f, false)
+		}
+		t.Reset(watchEvery)
+	}
+}
+
 // follow takes the membership in Dir to the fortress's new keys and opens it
 // again, returning the fortress under them, or nil where none came. f is the
-// fortress that ran into the old phrase.
-func (s *Service) follow(ctx context.Context, f *kit.Fortress) *kit.Fortress {
+// fortress that ran into the old phrase, and signalled says a member answered
+// so. The kit asks that member what it is only after its answer, so the keys
+// may take a moment to be on offer.
+func (s *Service) follow(ctx context.Context, f *kit.Fortress, signalled bool) *kit.Fortress {
 	s.following.Lock()
 	defer s.following.Unlock()
 	if cur := s.current(); cur != f {
@@ -655,22 +682,30 @@ func (s *Service) follow(ctx context.Context, f *kit.Fortress) *kit.Fortress {
 	}
 	deadline := time.Now().Add(followFor)
 	moved, err := followKit(ctx, s.opt.Dir, f)
-	for !moved && err == nil && time.Now().Before(deadline) {
-		time.Sleep(200 * time.Millisecond)
-		moved, err = followKit(ctx, s.opt.Dir, f)
+	for signalled && !moved && err == nil && time.Now().Before(deadline) {
+		select {
+		case <-ctx.Done():
+			err = ctx.Err()
+		case <-time.After(200 * time.Millisecond):
+			moved, err = followKit(ctx, s.opt.Dir, f)
+		}
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.f != f {
 		return s.f
 	}
-	if moved {
-		_ = s.stop()
-		cfg, err := kit.Load(s.opt.Dir)
-		if err == nil && s.start(cfg) == nil {
-			s.phraseChanged = false
-			return s.f
+	if !moved {
+		if signalled || err != nil {
+			s.phraseChanged = true
 		}
+		return nil
+	}
+	_ = s.stop()
+	cfg, err := kit.Load(s.opt.Dir)
+	if err == nil && s.start(cfg) == nil {
+		s.phraseChanged = false
+		return s.f
 	}
 	s.phraseChanged = true
 	return nil

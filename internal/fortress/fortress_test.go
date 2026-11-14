@@ -785,3 +785,80 @@ func TestTheOtherMembersReadTheTilesOwnStatus(t *testing.T) {
 		t.Errorf("the tile reports %+v", rep)
 	}
 }
+
+// watching runs s.Watch at a quick cadence until the test ends.
+func watching(t *testing.T, s *Service) {
+	t.Helper()
+	first, every := watchFirst, watchEvery
+	watchFirst, watchEvery = 50*time.Millisecond, 100*time.Millisecond
+	t.Cleanup(func() { watchFirst, watchEvery = first, every })
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	go func() {
+		s.Watch(ctx)
+		close(done)
+	}()
+	t.Cleanup(func() {
+		cancel()
+		<-done
+	})
+}
+
+func TestTheTileFollowsAPhraseChangeWithoutARead(t *testing.T) {
+	url := relayServer(t)
+	old, oldWords := newPhrase(t)
+	in := newInstance(t)
+	alpha := in.open(t, url, old, nil, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
+	dir := filepath.Join(t.TempDir(), "fortress")
+	s := openService(t, dir, url)
+	if err := s.Join(oldWords); err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, "alpha to know the tile", func() bool { return len(tilesOf(alpha)) == 1 })
+	tile := tilesOf(alpha)[0].ID
+	// The tile is away while the phrase changes.
+	if err := s.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := alpha.Close(); err != nil {
+		t.Fatal(err)
+	}
+	secret, _ := newPhrase(t)
+	alpha = in.open(t, url, secret, old, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
+
+	again := openService(t, dir, url)
+	watching(t, again)
+	want := kit.Domain.Keys(secret).Group
+	waitFor(t, "the tile to follow on its own", func() bool {
+		cfg, err := kit.Load(dir)
+		return err == nil && cfg.Keys.Group == want && again.Map().Joined
+	})
+	if m := again.Map(); m.PhraseChanged {
+		t.Errorf("after following the map is %+v", m)
+	}
+	waitFor(t, "alpha to reach the tile under the new phrase", func() bool {
+		for _, m := range tilesOf(alpha) {
+			if m.ID == tile && m.Online() {
+				return true
+			}
+		}
+		return false
+	})
+}
+
+func TestWatchingAFortressThatKeptItsPhraseChangesNothing(t *testing.T) {
+	url := relayServer(t)
+	secret, words := newPhrase(t)
+	openApp(t, url, secret, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
+	dir := filepath.Join(t.TempDir(), "fortress")
+	s := openService(t, dir, url)
+	if err := s.Join(words); err != nil {
+		t.Fatal(err)
+	}
+	memberID(t, s, "alpha")
+	watching(t, s)
+	time.Sleep(time.Second)
+	if m := s.Map(); !m.Joined || m.PhraseChanged || !hasApp(m, "alpha") {
+		t.Errorf("after a few rounds the map is %+v", m)
+	}
+}
