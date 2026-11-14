@@ -846,6 +846,59 @@ func TestTheTileFollowsAPhraseChangeWithoutARead(t *testing.T) {
 	})
 }
 
+func TestTheTileHearsThePhraseChangedFromAMemberThatCannotHandItOver(t *testing.T) {
+	url := relayServer(t)
+	old, oldWords := newPhrase(t)
+	in := newInstance(t)
+	alpha := in.open(t, url, old, nil, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
+	dir := filepath.Join(t.TempDir(), "fortress")
+	atticDir := filepath.Join(t.TempDir(), "fortress")
+	s := openService(t, dir, url)
+	attic, err := Open(Options{Dir: atticDir, Device: "attic", Version: "0.2.0", Relay: url})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = attic.Close() })
+	for _, tile := range []*Service{s, attic} {
+		if err := tile.Join(oldWords); err != nil {
+			t.Fatal(err)
+		}
+	}
+	waitFor(t, "alpha to know both tiles", func() bool { return len(tilesOf(alpha)) == 2 })
+	// Both tiles are away while the phrase changes. The attic tile follows
+	// while alpha still answers on the old phrase, and tower comes back
+	// only once alpha is gone, so the attic tile, which holds no phrase, is
+	// left to tell it.
+	for _, tile := range []*Service{s, attic} {
+		if err := tile.Close(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := alpha.Close(); err != nil {
+		t.Fatal(err)
+	}
+	secret, _ := newPhrase(t)
+	alpha = in.open(t, url, secret, old, "alpha", "Alpha", "cellar", app{id: "alpha", name: "Alpha"})
+
+	attic = openService(t, atticDir, url)
+	watching(t, attic)
+	want := kit.Domain.Keys(secret).Group
+	waitFor(t, "the attic tile to follow", func() bool {
+		cfg, err := kit.Load(atticDir)
+		return err == nil && cfg.Keys.Group == want && attic.Map().Joined
+	})
+	if err := alpha.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	tower := openService(t, dir, url)
+	watching(t, tower)
+	waitFor(t, "tower to hear the phrase changed", func() bool { return tower.Map().PhraseChanged })
+	if !tower.Map().Joined {
+		t.Errorf("the map is %+v, want still joined", tower.Map())
+	}
+}
+
 func TestWatchingAFortressThatKeptItsPhraseChangesNothing(t *testing.T) {
 	url := relayServer(t)
 	secret, words := newPhrase(t)
