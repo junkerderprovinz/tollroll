@@ -21,7 +21,7 @@ $h = function ($k) use ($L) { return htmlspecialchars(isset($L[$k]) ? $L[$k] : $
 $trs_e = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES); };
 $trs_ver = '';
 if (preg_match('/<!ENTITY\s+version\s+"([^"]+)"/', (string)@file_get_contents('/var/log/plugins/tollroll.plg'), $trs_m)) $trs_ver = $trs_m[1];
-$trs_glimstone = '4.4.1';
+$trs_glimstone = '4.5.2';
 /* A version links to its release page. A build without a release behind it shows its name alone. */
 $trs_ver_link = function ($ver, $repo) use ($trs_e) {
   $v = preg_replace('/^v/', '', (string)$ver);
@@ -119,7 +119,8 @@ $trs_rbtn = function ($brand, $name, $href) use ($trs_marks, $trs_e) {
           </div>
           <div class="trs-row">
             <div class="trs-lbl"><span class="trs-name">GlimStone</span></div>
-            <div class="trs-ctl"><?=$trs_ver_link($trs_glimstone, 'https://github.com/junkerderprovinz/glimstone')?></div>
+            <?php /* GlimStone folds its patch tags into the next minor, so its number opens the newest release. */ ?>
+            <div class="trs-ctl"><a class="trs-ver" href="https://github.com/junkerderprovinz/glimstone/releases/latest" target="_blank" rel="noopener noreferrer"><?=$trs_e($trs_glimstone)?></a></div>
           </div>
         </section>
 

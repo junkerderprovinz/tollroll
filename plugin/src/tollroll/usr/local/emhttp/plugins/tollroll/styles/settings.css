@@ -200,7 +200,7 @@ html:is(.Theme--white, .Theme--azure) .trs-hero { --trs-hero-sil: 30%; }
 #trs-cfg .trs-rbtn-unit { position: relative; display: inline-flex; border-radius: var(--tt-radius-pill, 9999px); overflow: hidden; isolation: isolate; --trs-brand-coffee: #ffdd00; --trs-brand-paypal: #4fb5f0; --trs-brand-bitcoin: #f7931a; --trs-brand-discord: #949cf7; }
 #trs-cfg .trs-rbtn { position: relative; display: block; flex: none; box-sizing: border-box; width: 160px; height: 46.6px; padding: 0; background: var(--tt-surface-3, #2e2e2e); color: #e6e6e6; text-decoration: none; cursor: pointer; }
 #trs-cfg .trs-rbtn:hover { text-decoration: none; }
-#trs-cfg .trs-rbtn:focus-visible { outline: none !important; box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--tt-accent, #FCC419) 45%, transparent) !important; }
+#trs-cfg .trs-rbtn:focus-visible { outline: none !important; box-shadow: inset 0 0 0 3px var(--tt-accent-ink, #FCC419) !important; }
 #trs-cfg .trs-rbtn-mark { position: absolute; top: 50%; left: 14px; width: 32px; height: 25px; translate: 0 -50%; display: flex; }
 #trs-cfg :is(.trs-rbtn-mark, .trs-rbtn-art) svg { display: block; width: 100%; height: 100%; }
 #trs-cfg .trs-rbtn-art { position: absolute; inset: 0; }

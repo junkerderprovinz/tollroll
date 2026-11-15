@@ -178,6 +178,20 @@ test("the Help sentence is GlimStone's own", () => {
   assert.equal(JSON.parse(read('lang', 'de.json')).s_help_body, 'Probleme, Wünsche oder Verbesserungsvorschläge? Mach gern ein Issue auf GitHub auf, oder schau auf Discord vorbei.');
 });
 
+test('the GlimStone version opens the newest release, since its patch tags fold away', () => {
+  const page = read('tollroll.page');
+  const row = page.slice(page.indexOf('>GlimStone<'), page.indexOf('id="trs-h-help"'));
+  assert.match(row, /href="https:\/\/github\.com\/junkerderprovinz\/glimstone\/releases\/latest"/);
+  assert.match(row, /\$trs_glimstone\b/);
+});
+
+test("a README button's focus ring is the opaque accent ink, as GlimStone draws it", () => {
+  const rule = /#trs-cfg \.trs-rbtn:focus-visible \{([^}]*)\}/.exec(read('styles', 'settings.css'));
+  assert.ok(rule, 'no focus rule for the README buttons');
+  assert.match(rule[1], /var\(--tt-accent-ink, #FCC419\)/);
+  assert.doesNotMatch(rule[1], /color-mix|transparent/);
+});
+
 test('Info names the GlimStone version the plugin is built on and links each version to its release', () => {
   const page = read('tollroll.page');
   const { targets } = JSON.parse(fs.readFileSync(path.join(ROOT, '..', 'glimstone.json'), 'utf8'));
