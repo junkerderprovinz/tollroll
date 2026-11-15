@@ -40,7 +40,9 @@ test('every language has every string of the English file', () => {
 test('no string carries a dash or a semicolon', () => {
   for (const l of LANGS) {
     for (const [k, v] of Object.entries(JSON.parse(read('lang', l + '.json')))) {
-      assert.doesNotMatch(v, /[\u2013\u2014;]/, `${l}.${k}`);
+      // Greek writes its question mark as a semicolon.
+      const text = l === 'el' ? v.replace(/;(\s|$)/g, '?$1') : v;
+      assert.doesNotMatch(text, /[\u2013\u2014;]/, `${l}.${k}`);
     }
   }
 });
@@ -169,6 +171,11 @@ test('the Help card offers Discord right after GitHub, and every language names 
   for (const l of LANGS) {
     assert.match(JSON.parse(read('lang', l + '.json')).s_help_body, /Discord/, l);
   }
+});
+
+test("the Help sentence is GlimStone's own", () => {
+  assert.equal(JSON.parse(read('lang', 'en.json')).s_help_body, "Problems, wishes or suggestions? You're welcome to open an issue on GitHub, or come say hi on Discord.");
+  assert.equal(JSON.parse(read('lang', 'de.json')).s_help_body, 'Probleme, Wünsche oder Verbesserungsvorschläge? Mach gern ein Issue auf GitHub auf, oder schau auf Discord vorbei.');
 });
 
 test('Info names the GlimStone version the plugin is built on and links each version to its release', () => {
