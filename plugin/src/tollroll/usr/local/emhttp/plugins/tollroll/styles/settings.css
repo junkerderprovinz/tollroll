@@ -197,7 +197,7 @@ html:is(.Theme--white, .Theme--azure) .trs-hero { --trs-hero-sil: 30%; }
    name on a dark tile that takes the brand's colour under the pointer. */
 #trs-cfg .trs-rbtn-rows { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 12px; }
 #trs-cfg .trs-rbtn-rows.trs-give { margin-top: 21px; }
-#trs-cfg .trs-rbtn-unit { position: relative; display: inline-flex; border-radius: var(--tt-radius-pill, 9999px); overflow: hidden; isolation: isolate; --trs-brand-coffee: #ffdd00; --trs-brand-paypal: #4fb5f0; --trs-brand-bitcoin: #f7931a; }
+#trs-cfg .trs-rbtn-unit { position: relative; display: inline-flex; border-radius: var(--tt-radius-pill, 9999px); overflow: hidden; isolation: isolate; --trs-brand-coffee: #ffdd00; --trs-brand-paypal: #4fb5f0; --trs-brand-bitcoin: #f7931a; --trs-brand-discord: #949cf7; }
 #trs-cfg .trs-rbtn { position: relative; display: block; flex: none; box-sizing: border-box; width: 160px; height: 46.6px; padding: 0; background: var(--tt-surface-3, #2e2e2e); color: #e6e6e6; text-decoration: none; cursor: pointer; }
 #trs-cfg .trs-rbtn:hover { text-decoration: none; }
 #trs-cfg .trs-rbtn:focus-visible { outline: none !important; box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--tt-accent, #FCC419) 45%, transparent) !important; }
@@ -209,7 +209,9 @@ html:is(.Theme--white, .Theme--azure) .trs-hero { --trs-hero-sil: 30%; }
 #trs-cfg .trs-paypal-mark { color: var(--trs-brand-paypal); }
 #trs-cfg .trs-bitcoin-mark { color: var(--trs-brand-bitcoin); }
 #trs-cfg .trs-github-mark { color: #fff; }
+#trs-cfg .trs-discord-mark { color: var(--trs-brand-discord); }
 #trs-cfg .trs-tile-github { --trs-give: #181717; --trs-give-ink: #fff; }
+#trs-cfg .trs-tile-discord { --trs-give: #5865f2; --trs-give-ink: #fff; }
 #trs-cfg .trs-tile-paypal { --trs-give: #003087; --trs-give-ink: #fff; }
 #trs-cfg .trs-tile-bitcoin { --trs-give: #f7931a; --trs-give-ink: #161616; }
 #trs-cfg .trs-tile-coffee { --trs-give: #ffdd00; --trs-give-ink: #0d0c22; }

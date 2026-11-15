@@ -128,6 +128,7 @@ $trs_rbtn = function ($brand, $name, $href) use ($trs_marks, $trs_e) {
           <p class="trs-prose"><?=$h('s_help_body')?></p>
           <div class="trs-rbtn-rows">
             <?=$trs_rbtn('github', 'GitHub', 'https://github.com/junkerderprovinz/tollroll/issues')?>
+            <?=$trs_rbtn('discord', 'Discord', 'https://discord.gg/aRu2WjkR59')?>
           </div>
         </section>
 

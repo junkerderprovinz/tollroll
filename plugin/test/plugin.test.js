@@ -156,6 +156,21 @@ test('the tab chosen last opens before the first paint', () => {
   assert.match(read('scripts', 'settings.js'), /localStorage\.setItem\(TAB_KEY/);
 });
 
+test('the Help card offers Discord right after GitHub, and every language names it', () => {
+  const page = read('tollroll.page');
+  const help = page.slice(page.indexOf('id="trs-h-help"'), page.indexOf('id="trs-h-about"'));
+  const buttons = [...help.matchAll(/\$trs_rbtn\('(\w+)', '[^']*', '([^']+)'\)/g)].map((m) => [m[1], m[2]]);
+  assert.deepEqual(buttons, [
+    ['github', 'https://github.com/junkerderprovinz/tollroll/issues'],
+    ['discord', 'https://discord.gg/aRu2WjkR59'],
+  ]);
+  assert.match(read('include', 'marks.php'), /'discord' => '<svg /);
+  assert.match(read('styles', 'settings.css'), /\.trs-tile-discord \{ --trs-give: #5865f2;/);
+  for (const l of LANGS) {
+    assert.match(JSON.parse(read('lang', l + '.json')).s_help_body, /Discord/, l);
+  }
+});
+
 test('Info names the GlimStone version the plugin is built on and links each version to its release', () => {
   const page = read('tollroll.page');
   const { targets } = JSON.parse(fs.readFileSync(path.join(ROOT, '..', 'glimstone.json'), 'utf8'));
