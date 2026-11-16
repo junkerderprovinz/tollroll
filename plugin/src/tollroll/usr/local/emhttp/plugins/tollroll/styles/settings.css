@@ -231,7 +231,6 @@ html.tt-popups-on .trs-page {
   --trs-card: var(--tt-fm-card, #222);
   --trs-tile: var(--tt-fm-btn, #353535);
   --trs-tile-ink: var(--tt-text-chip, #cfcfcf);
-  --trs-tile-hover: var(--tt-hover-wash, rgba(230, 230, 230, .15));
   --trs-head: var(--tt-accent, #FCC419);
   --trs-head-ink: var(--tt-accent-text, #161616);
   --trs-dim: var(--tt-text-dim, #8a8a8a);
@@ -249,6 +248,8 @@ html.tt-popups-on .trs-page .trs-h { font-size: var(--tt-sec-fs, 12px); font-wei
 /* An idle tab's glyph wears the accent, the open tab wears it as its fill. */
 html.tt-popups-on .trs-tab .trs-tabico { color: var(--tt-accent, #FCC419); }
 html.tt-popups-on .trs-tab[aria-selected="true"] .trs-tabico { color: inherit; }
+/* An idle tab lights in TowerTorch's hover, as its own settings tabs do. */
+html.tt-popups-on .trs-page .trs-tab:not([aria-selected="true"]):hover { background: var(--tt-hover, var(--trs-tile)); box-shadow: none; }
 
 /* TowerTorch's sheets reach every button, switch and focus ring on a settings
    page with !important. An important declaration in a cascade layer outranks

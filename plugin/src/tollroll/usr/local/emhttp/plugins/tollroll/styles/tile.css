@@ -210,4 +210,13 @@
 .trl-dlg-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:6px;border:1px solid color-mix(in srgb,currentColor 25%,transparent);
   background:transparent;color:inherit;font:inherit;cursor:pointer}
 .trl-dlg-btn:hover{background:color-mix(in srgb,currentColor 8%,transparent)}
+
+/* With TowerTorch a row, a chip, a control, a view and an option light in its
+   hover, the one colour its own rows and buttons take. The list of apps stays
+   dark on every theme, so it takes the dark one. */
+html.tt-popups-on .trl{--trl-hover:var(--tt-hover,color-mix(in srgb,currentColor 7%,transparent));--trl-chip-hover:var(--tt-hover,color-mix(in srgb,currentColor 15%,transparent))}
+html.tt-popups-on :is(.trl-control,.trl-dlg-btn):hover{background:var(--tt-hover,color-mix(in srgb,currentColor 9%,transparent))}
+html.tt-popups-on .trl-hs button:not([aria-checked="true"]):hover{background:var(--tt-hover,color-mix(in srgb,currentColor 9%,transparent)) !important}
+html.tt-popups-on :is(.trl-pick,.trl-pick-top button):hover{background:var(--tt-hover-dark,#333) !important}
+html.tt-popups-on .trl-pick-item:hover{background:var(--tt-hover-dark,#353535)}
 .trl-dlg-btn .trl-gl svg{width:13px;height:13px}

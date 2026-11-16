@@ -199,3 +199,15 @@ test('Info names the GlimStone version the plugin is built on and links each ver
   assert.match(page, /\/releases\/tag\/v/);
   assert.doesNotMatch(page, /class="button[^"]*trs-ver/, 'a version is a plain link');
 });
+
+test("with TowerTorch every row, chip, view, option and tab lights in its hover", () => {
+  const tile = read('styles', 'tile.css');
+  assert.match(tile, /html\.tt-popups-on \.trl\{--trl-hover:var\(--tt-hover,[^;]+;--trl-chip-hover:var\(--tt-hover,/);
+  assert.match(tile, /html\.tt-popups-on :is\(\.trl-control,\.trl-dlg-btn\):hover\{background:var\(--tt-hover,/);
+  assert.match(tile, /html\.tt-popups-on \.trl-hs button:not\(\[aria-checked="true"\]\):hover\{background:var\(--tt-hover,/);
+  // The list of apps is dark on every theme.
+  assert.match(tile, /html\.tt-popups-on \.trl-pick-item:hover\{background:var\(--tt-hover-dark,/);
+  const settings = read('styles', 'settings.css');
+  assert.match(settings, /html\.tt-popups-on \.trs-page \.trs-tab:not\(\[aria-selected="true"\]\):hover \{ background: var\(--tt-hover, var\(--trs-tile\)\); box-shadow: none; \}/);
+  assert.doesNotMatch(settings, /--tt-hover-wash/);
+});
