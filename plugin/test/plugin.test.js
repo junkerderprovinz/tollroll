@@ -203,7 +203,8 @@ test('Info names the GlimStone version the plugin is built on and links each ver
 test("with TowerTorch every row, chip, view, option and tab lights in its hover", () => {
   const tile = read('styles', 'tile.css');
   assert.match(tile, /html\.tt-popups-on \.trl\{--trl-hover:var\(--tt-hover,[^;]+;--trl-chip-hover:var\(--tt-hover,/);
-  assert.match(tile, /html\.tt-popups-on :is\(\.trl-control,\.trl-dlg-btn\):hover\{background:var\(--tt-hover,/);
+  // A control TowerTorch made a badge keeps the badge's own hover.
+  assert.match(tile, /html\.tt-popups-on :is\(\.trl-control:not\(\.tt-dash-btn\),\.trl-dlg-btn\):hover\{background:var\(--tt-hover,/);
   assert.match(tile, /html\.tt-popups-on \.trl-hs button:not\(\[aria-checked="true"\]\):hover\{background:var\(--tt-hover,/);
   // The list of apps is dark on every theme.
   assert.match(tile, /html\.tt-popups-on \.trl-pick-item:hover\{background:var\(--tt-hover-dark,/);
