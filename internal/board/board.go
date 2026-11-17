@@ -440,6 +440,7 @@ func iconID(icon string) string {
 // from a new one.
 type Seen struct {
 	Source string
+	App    string
 	Name   string
 	Down   bool
 	Needs  []status.Need
@@ -461,7 +462,7 @@ func (b *Board) Check(ctx context.Context, lang string) []Seen {
 		if rep, ok := s.reports[lang]; ok {
 			in.rep, in.known = rep, true
 		}
-		seen := Seen{Source: src.ID, Name: in.rep.App.Name, Down: s.down || !in.known, Needs: unlinked(in.rep.NeedsYou)}
+		seen := Seen{Source: src.ID, App: in.rep.App.ID, Name: in.rep.App.Name, Down: s.down || !in.known, Needs: unlinked(in.rep.NeedsYou)}
 		if seen.Name == "" {
 			seen.Name = fallbackName(src)
 		}
@@ -514,4 +515,16 @@ func evict[V any](m map[string]V, lang string) {
 		delete(m, l)
 		return
 	}
+}
+
+// OpenLines lists what needs you in v, one line per need with its app's
+// name, the worst first within each app.
+func OpenLines(v View) []string {
+	var out []string
+	for _, a := range v.Apps {
+		for _, n := range a.Needs {
+			out = append(out, a.Name+": "+n.Text)
+		}
+	}
+	return out
 }

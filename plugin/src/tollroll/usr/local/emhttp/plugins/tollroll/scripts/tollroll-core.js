@@ -337,6 +337,30 @@
     return r.senders.map(function (s) { return fmt(L.s_router_sender, { name: s.name, when: s.lastAt ? ago(s.lastAt, lang) : '?' }); });
   }
 
+  var CLOCK = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+  /* hubSettings is the hub's settings with the form's values. A time left
+   * empty keeps the saved one. */
+  function hubSettings(saved, f) {
+    function time(v, old) { return CLOCK.test(v) ? v : old; }
+    return {
+      quiet: { on: !!f.quiet, from: time(f.from, saved.quiet.from), to: time(f.to, saved.quiet.to) },
+      digest: { on: !!f.digest, at: time(f.at, saved.digest.at) },
+      apps: Object.assign({}, saved.apps),
+      takeOver: !!f.take
+    };
+  }
+
+  // levelApps lists the apps a level can be set for: every app of the
+  // fortress on the board, and any that has a level but is away now.
+  function levelApps(apps, levels) {
+    var out = (apps || []).filter(function (a) { return !a.local; }).map(function (a) { return { key: a.key, name: a.name }; });
+    Object.keys(levels || {}).forEach(function (k) {
+      if (!out.some(function (a) { return a.key === k; })) out.push({ key: k, name: k });
+    });
+    return out.sort(function (a, b) { return a.name.localeCompare(b.name); });
+  }
+
   function lang(locale) {
     var m = /^([a-z]{2,3})(?:[_-]|$)/i.exec(String(locale || ''));
     return m ? m[1].toLowerCase() : 'en';
@@ -345,5 +369,5 @@
   return { fmt: fmt, plural: plural, rowStatus: rowStatus, foldQuiet: foldQuiet, filterLog: filterLog, chips: chips, validFilter: validFilter,
     hue: hue, mark: mark, timeLabel: timeLabel, subtitle: subtitle, needsYou: needsYou, lang: lang,
     safeIcon: safeIcon, markColors: markColors, notifyForm: notifyForm, notifyChannels: notifyChannels,
-    layout: layout, shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, statusWindow: statusWindow, ago: ago, routerStatus: routerStatus };
+    layout: layout, shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, statusWindow: statusWindow, ago: ago, routerStatus: routerStatus, hubSettings: hubSettings, levelApps: levelApps };
 });

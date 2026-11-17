@@ -11,12 +11,14 @@
  *   GET  api.php?path=status&id=<id>&lang=<tag> -> GET /api/fortress/status
  *   GET  api.php?path=tile                   -> GET  /api/tile
  *   GET  api.php?path=router                 -> GET  /api/router
+ *   GET  api.php?path=hub                    -> GET  /api/hub
  *   POST api.php  path=notify      data=JSON  -> PUT  /api/notify
  *   POST api.php  path=notify_test data=JSON  -> POST /api/notify/test
  *   POST api.php  path=join        data=JSON  -> POST /api/fortress/join
  *   POST api.php  path=leave                  -> POST /api/fortress/leave
  *   POST api.php  path=remove      data=JSON  -> POST /api/fortress/remove
  *   POST api.php  path=tile        data=JSON  -> PUT  /api/tile
+ *   POST api.php  path=hub         data=JSON  -> PUT  /api/hub
  *
  * Notification secrets and the phrase go in through a POST and never come
  * back out: the service answers with channels whose tokens, passwords and
@@ -25,11 +27,11 @@
 
 $sock   = '/var/run/tollroll.sock';
 $reads  = ['board' => '/api/board', 'icons' => '/api/icons', 'notify' => '/api/notify', 'fortress' => '/api/fortress',
-           'status' => '/api/fortress/status', 'tile' => '/api/tile', 'router' => '/api/router'];
+           'status' => '/api/fortress/status', 'tile' => '/api/tile', 'router' => '/api/router', 'hub' => '/api/hub'];
 $writes = ['notify' => ['PUT', '/api/notify'], 'notify_test' => ['POST', '/api/notify/test'],
            'join' => ['POST', '/api/fortress/join'], 'leave' => ['POST', '/api/fortress/leave'],
            'remove' => ['POST', '/api/fortress/remove'],
-           'tile' => ['PUT', '/api/tile']];
+           'tile' => ['PUT', '/api/tile'], 'hub' => ['PUT', '/api/hub']];
 
 $fail = function ($code, $error) {
     http_response_code($code);

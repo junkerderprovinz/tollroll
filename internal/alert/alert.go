@@ -55,6 +55,13 @@ const (
 type Tracker struct {
 	sources map[string]*track
 	now     func() time.Time
+	gone    []Gone
+}
+
+// Gone is a need that was told and is over, by the app and the key its
+// event carried.
+type Gone struct {
+	App, Key string
 }
 
 type track struct {
@@ -63,6 +70,7 @@ type track struct {
 	quiet        time.Time
 	learned      bool
 	told         map[string]time.Time
+	open         map[string]bool
 	sent         []time.Time
 }
 
@@ -77,6 +85,7 @@ func (t *Tracker) Next(seen []board.Seen, tx Texts) []notify.Event {
 		now = t.now()
 	}
 	var out []notify.Event
+	t.gone = nil
 	keep := map[string]bool{}
 	for _, s := range seen {
 		keep[s.Source] = true
@@ -86,6 +95,18 @@ func (t *Tracker) Next(seen []board.Seen, tx Texts) []notify.Event {
 			t.sources[s.Source] = tr
 		}
 		out = append(out, tr.next(s, tx, now)...)
+		if !s.Down {
+			open := map[string]bool{}
+			for _, n := range s.Needs {
+				open[n.ID] = true
+			}
+			for id := range tr.open {
+				if !open[id] {
+					t.gone = append(t.gone, Gone{App: s.App, Key: "need:" + id})
+				}
+			}
+			tr.open = open
+		}
 	}
 	for id := range t.sources {
 		if !keep[id] {
@@ -96,13 +117,13 @@ func (t *Tracker) Next(seen []board.Seen, tx Texts) []notify.Event {
 }
 
 func (tr *track) next(s board.Seen, tx Texts, now time.Time) []notify.Event {
-	s.Name = plain(s.Name)
+	s.Name = Plain(s.Name)
 	if s.Down {
 		tr.hits = 0
 		tr.misses++
 		if tr.misses >= downChecks && !tr.down && !now.Before(tr.quiet) {
 			tr.down = true
-			return []notify.Event{event(KindDown, notify.SeverityWarning, tx.Get("n_down_title", s.Name), tx.Get("n_down_body", s.Name), s)}
+			return []notify.Event{event(KindDown, notify.SeverityWarning, tx.Get("n_down_title", s.Name), tx.Get("n_down_body", s.Name), s, "reach")}
 		}
 		return nil
 	}
@@ -113,7 +134,7 @@ func (tr *track) next(s board.Seen, tx Texts, now time.Time) []notify.Event {
 			return nil
 		}
 		tr.down, tr.hits, tr.quiet = false, 0, now.Add(quietAfterBack)
-		out = append(out, event(KindBack, notify.SeveritySuccess, tx.Get("n_back_title", s.Name), tx.Get("n_back_body", s.Name), s))
+		out = append(out, event(KindBack, notify.SeveritySuccess, tx.Get("n_back_title", s.Name), tx.Get("n_back_body", s.Name), s, "reach"))
 	}
 	for id, at := range tr.told {
 		if now.Sub(at) >= needMemory {
@@ -134,21 +155,26 @@ func (tr *track) next(s board.Seen, tx Texts, now time.Time) []notify.Event {
 		}
 		tr.told[n.ID] = now
 		tr.sent = append(tr.sent, now)
-		out = append(out, event(KindNeed, severity(n.Severity), tx.Get("n_need_title", s.Name), plain(n.Text), s))
+		out = append(out, event(KindNeed, severity(n.Severity), tx.Get("n_need_title", s.Name), Plain(n.Text), s, "need:"+n.ID))
 	}
 	tr.learned = true
 	return out
 }
 
-func event(kind string, sev notify.Severity, title, body string, s board.Seen) notify.Event {
-	return notify.Event{Kind: kind, Severity: sev, Title: title, Body: body, Fields: map[string]string{"app": s.Name}}
+// Gone returns the needs the last Next saw end.
+func (t *Tracker) Gone() []Gone { return t.gone }
+
+// event names the app, its ID and what the event is about, which the hub
+// tells once until it is over.
+func event(kind string, sev notify.Severity, title, body string, s board.Seen, key string) notify.Event {
+	return notify.Event{Kind: kind, Severity: sev, Title: title, Body: body, Fields: map[string]string{"app": s.Name, "appId": s.App, "key": key}}
 }
 
-// plain makes what an app wrote safe for every channel: one short line with
+// Plain makes what an app wrote safe for every channel: one short line with
 // no markup. Unraid shows it in the WebGUI and hands it to agents that run it
 // through echo -e and paste it into JSON, hence no backslash and no double
 // quote either.
-func plain(s string) string {
+func Plain(s string) string {
 	s = strings.Map(func(r rune) rune {
 		switch {
 		case r == '<' || r == '>' || r == '\\':
@@ -230,6 +256,11 @@ type Sender interface {
 	Send(ctx context.Context, e notify.Event) []notify.Result
 }
 
+// resolver hears that what a key was about is over, as the hub does.
+type resolver interface {
+	Resolve(app, key string)
+}
+
 // Journal hears what a Watcher does, for TollRoll's own status.
 type Journal interface {
 	Checked(at time.Time)
@@ -277,6 +308,11 @@ func (w *Watcher) step(ctx context.Context) {
 	events := w.tracker.Next(w.Check(ctx, lang), tx)
 	if w.Journal != nil {
 		w.Journal.Checked(time.Now())
+	}
+	if r, ok := w.Channels.(resolver); ok {
+		for _, g := range w.tracker.Gone() {
+			r.Resolve(g.App, g.Key)
+		}
 	}
 	for _, e := range events {
 		sctx, cancel := context.WithTimeout(ctx, sendFor)

@@ -109,6 +109,46 @@ $trs_rbtn = function ($brand, $name, $href) use ($trs_marks, $trs_e) {
             <span id="trs-n-res" class="trs-res" role="status"></span>
           </div>
         </section>
+
+        <section class="trs-card" aria-labelledby="trs-h-hub">
+          <h3 class="trs-h"><span id="trs-h-hub"><?=$h('s_hub')?></span></h3>
+          <div class="trs-grid">
+            <div class="trs-switch-row">
+              <label for="trs-q-on"><?=$h('s_quiet')?></label>
+              <input type="checkbox" role="switch" class="trs-switch" id="trs-q-on">
+            </div>
+            <label for="trs-q-from"><?=$h('s_quiet_from')?></label>
+            <div>
+              <span class="trs-times">
+                <input type="time" class="trs-in trs-time" id="trs-q-from">
+                <label for="trs-q-to"><?=$h('s_quiet_to')?></label>
+                <input type="time" class="trs-in trs-time" id="trs-q-to">
+              </span>
+              <p class="trs-hint"><?=$h('s_quiet_hint')?></p>
+            </div>
+            <div class="trs-switch-row">
+              <label for="trs-d-on"><?=$h('s_digest')?></label>
+              <input type="checkbox" role="switch" class="trs-switch" id="trs-d-on">
+            </div>
+            <label for="trs-d-at"><?=$h('s_digest_at')?></label>
+            <div>
+              <input type="time" class="trs-in trs-time" id="trs-d-at">
+              <p class="trs-hint"><?=$h('s_digest_hint')?></p>
+            </div>
+            <div class="trs-switch-row">
+              <label for="trs-take"><?=$h('s_takeover')?></label>
+              <input type="checkbox" role="switch" class="trs-switch" id="trs-take">
+            </div>
+            <p class="trs-hint trs-wide"><?=$h('s_takeover_hint')?></p>
+          </div>
+          <p class="trs-hint"><?=$h('s_flood')?></p>
+        </section>
+
+        <section class="trs-card" aria-labelledby="trs-h-levels">
+          <h3 class="trs-h"><span id="trs-h-levels"><?=$h('s_levels')?></span></h3>
+          <p class="trs-hint"><?=$h('s_levels_hint')?></p>
+          <div class="trs-grid" id="trs-levels"></div>
+        </section>
         <div class="trs-foot"><span id="trs-n-saved" class="trs-saved" role="status"></span></div>
       </div>
 

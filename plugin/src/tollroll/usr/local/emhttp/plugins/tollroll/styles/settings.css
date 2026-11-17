@@ -158,6 +158,10 @@ html:is(.Theme--white, .Theme--azure) .trs-hero { --trs-hero-sil: 30%; }
 .trs-grid .trs-hint { margin: 6px 0 0; }
 .trs-matrix { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .trs-select { width: auto; font-family: inherit; }
+.trs-time { width: auto; font-family: inherit; }
+.trs-times { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.trs-times label { margin: 0; font-size: 14px; font-weight: 400; }
+.trs-grid > .trs-wide { grid-column: 1 / -1; margin: 0; }
 @media (max-width: 760px) { .trs-grid, .trs-matrix { grid-template-columns: 1fr; } }
 
 /* The switch, drawn on the checkbox itself as on ShipLog's page. TowerTorch

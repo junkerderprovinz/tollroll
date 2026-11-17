@@ -17,6 +17,7 @@ import (
 	"github.com/junkerderprovinz/tollroll/internal/channels"
 	"github.com/junkerderprovinz/tollroll/internal/fortress"
 	"github.com/junkerderprovinz/tollroll/internal/host"
+	"github.com/junkerderprovinz/tollroll/internal/hub"
 	"github.com/junkerderprovinz/tollroll/internal/prefs"
 )
 
@@ -33,6 +34,7 @@ type Deps struct {
 	Fortress Fortress
 	Prefs    *prefs.Store
 	Router   func() host.RouterLog
+	Hub      *hub.Store
 }
 
 type handler struct {
@@ -42,6 +44,7 @@ type handler struct {
 	fortress Fortress
 	prefs    *prefs.Store
 	router   func() host.RouterLog
+	hub      *hub.Store
 }
 
 // Fortress is the tile's membership in a fortress.
@@ -55,7 +58,7 @@ type Fortress interface {
 
 // New returns the handler.
 func New(d Deps) http.Handler {
-	h := &handler{board: d.Board, channels: d.Channels, texts: d.Texts, fortress: d.Fortress, prefs: d.Prefs, router: d.Router}
+	h := &handler{board: d.Board, channels: d.Channels, texts: d.Texts, fortress: d.Fortress, prefs: d.Prefs, router: d.Router, hub: d.Hub}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/board", h.view)
 	mux.HandleFunc("GET /api/icons", h.icons)
@@ -70,7 +73,29 @@ func New(d Deps) http.Handler {
 	mux.HandleFunc("GET /api/tile", h.tile)
 	mux.HandleFunc("PUT /api/tile", h.setTile)
 	mux.HandleFunc("GET /api/router", h.routerLog)
+	mux.HandleFunc("GET /api/hub", h.hubSettings)
+	mux.HandleFunc("PUT /api/hub", h.setHub)
 	return mux
+}
+
+func (h *handler) hubSettings(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, h.hub.Get())
+}
+
+func (h *handler) setHub(w http.ResponseWriter, r *http.Request) {
+	var body hub.Settings
+	if !readJSON(w, r, &body) {
+		return
+	}
+	err := h.hub.Set(body)
+	switch {
+	case errors.Is(err, hub.ErrSettings):
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid"})
+	case err != nil:
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "save_failed"})
+	default:
+		writeJSON(w, http.StatusOK, h.hub.Get())
+	}
 }
 
 func (h *handler) routerLog(w http.ResponseWriter, _ *http.Request) {

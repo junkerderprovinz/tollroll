@@ -375,3 +375,22 @@ func TestAnAppCanRaiseOnlyAFewNeedsAnHour(t *testing.T) {
 		t.Errorf("an hour later: %d events, want %d", len(got), needsPerHour)
 	}
 }
+
+func TestANeedThatEndsIsReportedGoneByItsKey(t *testing.T) {
+	tr := &Tracker{}
+	s := func(needs ...status.Need) board.Seen {
+		return board.Seen{Source: "s1", App: "alpha", Name: "Alpha", Needs: needs}
+	}
+	tr.Next([]board.Seen{s()}, en)
+	got := tr.Next([]board.Seen{s(need("n1", status.SeverityWarn, "x"))}, en)
+	if len(got) != 1 || got[0].Fields["appId"] != "alpha" || got[0].Fields["key"] != "need:n1" {
+		t.Fatalf("%+v", got)
+	}
+	if g := tr.Gone(); len(g) != 0 {
+		t.Errorf("gone while it lasts: %+v", g)
+	}
+	tr.Next([]board.Seen{s()}, en)
+	if g := tr.Gone(); len(g) != 1 || g[0] != (Gone{App: "alpha", Key: "need:n1"}) {
+		t.Errorf("%+v", g)
+	}
+}

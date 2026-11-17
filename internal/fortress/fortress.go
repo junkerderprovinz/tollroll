@@ -2,8 +2,9 @@
 // phrase, the tile reads the status and log of every member with its own
 // member key. The phrase itself is never kept.
 //
-// The tile takes part as an instance of the app "tollroll" that offers no
-// action and uses none: it reads the others and reports only its own status.
+// The tile takes part as an instance of the app "tollroll" that uses no
+// action of the others: it reads them, reports its own status and offers
+// only what Options.Actions gives it, such as taking their notifications.
 // On this network it takes their calls on a port of its own, elsewhere the
 // relay carries them.
 package fortress
@@ -98,6 +99,8 @@ type Options struct {
 	// Journal is what the other members read about the tile, nil for no
 	// status.
 	Journal *journal.Journal
+	// Actions are what the tile does for the other members.
+	Actions []kit.Action
 }
 
 // Map is the fortress as the tile sees it: this server and every other
@@ -167,10 +170,16 @@ func appName(a kit.App) string {
 	if a.Name != "" && a.Name != a.ID {
 		return a.Name
 	}
-	if n, ok := names[a.ID]; ok {
+	return AppName(a.ID)
+}
+
+// AppName is how the app of id writes its name, or id for an app the house
+// does not know.
+func AppName(id string) string {
+	if n, ok := names[id]; ok {
 		return n
 	}
-	return a.ID
+	return id
 }
 
 // entry is mb as the map shows it, false while it has not said which app it
@@ -387,6 +396,7 @@ func (s *Service) Close() error {
 func (s *Service) start(cfg kit.Config) error {
 	cfg.App = kit.App{ID: AppID, Name: "TollRoll", Version: s.opt.Version, Icon: Icon}
 	cfg.Host = s.opt.Device
+	cfg.Actions = s.opt.Actions
 	if j := s.opt.Journal; j != nil {
 		cfg.Status = j
 		j.SetInstance(status.Instance{ID: cfg.Identity.ID(), Name: cfg.Self.Name})

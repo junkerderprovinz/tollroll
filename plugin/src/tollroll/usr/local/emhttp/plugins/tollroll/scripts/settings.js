@@ -293,6 +293,72 @@
     });
   }
 
+  /* The hub: quiet hours, the daily summary, taking over the apps'
+   * notifications and the level of each app, all saved at once. */
+  var H = {
+    quiet: document.getElementById('trs-q-on'), from: document.getElementById('trs-q-from'), to: document.getElementById('trs-q-to'),
+    digest: document.getElementById('trs-d-on'), at: document.getElementById('trs-d-at'), take: document.getElementById('trs-take')
+  };
+  var levelsEl = document.getElementById('trs-levels');
+  var hub = null;
+
+  function hubForm() {
+    H.quiet.checked = hub.quiet.on;
+    H.from.value = hub.quiet.from;
+    H.to.value = hub.quiet.to;
+    H.digest.checked = hub.digest.on;
+    H.at.value = hub.digest.at;
+    H.take.checked = hub.takeOver;
+  }
+
+  function saveHub() {
+    if (!hub) return;
+    var next = C.hubSettings(hub, {
+      quiet: H.quiet.checked, from: H.from.value, to: H.to.value, digest: H.digest.checked, at: H.at.value, take: H.take.checked
+    });
+    post('hub', next).then(function (r) {
+      if (!r.quiet) { saved(false, L.s_not_saved + ': ' + errorText(r.error)); return; }
+      hub = r;
+      hub.apps = hub.apps || {};
+      saved(true, L.s_saved);
+    }, function () { saved(false, L.s_not_saved + ': ' + errorText('engine')); });
+  }
+
+  function drawLevels(apps) {
+    levelsEl.textContent = '';
+    var list = C.levelApps(apps, hub.apps);
+    if (!list.length) { levelsEl.appendChild(el('p', 'trs-hint trs-wide', L.s_levels_none)); return; }
+    list.forEach(function (a) {
+      var lbl = el('label', '', a.name);
+      lbl.htmlFor = 'trs-level-' + a.key.replace(/[^a-z0-9_-]/gi, '_');
+      var sel = el('select', 'trs-in trs-select');
+      sel.id = lbl.htmlFor;
+      ['info', 'warning', 'failure', 'critical'].forEach(function (lv) {
+        var o = el('option', '', L['s_level_' + lv]);
+        o.value = lv;
+        sel.appendChild(o);
+      });
+      sel.value = hub.apps[a.key] || 'info';
+      sel.addEventListener('change', function () {
+        if (sel.value === 'info') delete hub.apps[a.key]; else hub.apps[a.key] = sel.value;
+        saveHub();
+      });
+      var box = el('div');
+      box.appendChild(sel);
+      levelsEl.appendChild(lbl);
+      levelsEl.appendChild(box);
+    });
+  }
+
+  [H.quiet, H.digest, H.take, H.from, H.to, H.at].forEach(function (n) { n.addEventListener('change', saveHub); });
+  get('hub').then(function (r) {
+    if (!r.quiet) return;
+    hub = r;
+    hub.apps = hub.apps || {};
+    hubForm();
+    get('board&lang=' + encodeURIComponent(lang)).then(function (b) { drawLevels(b.apps || []); });
+  });
+
   document.querySelectorAll('[data-glyph]').forEach(function (n) { n.innerHTML = GLYPH[n.dataset.glyph] || ''; });
   document.getElementById('trs-n-test').addEventListener('click', testNotify);
   loadNotify();

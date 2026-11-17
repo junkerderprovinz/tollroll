@@ -76,6 +76,8 @@ The tile and the settings page speak the language you picked in Unraid, in all 2
 
 TollRoll can also tell you when something changes. Switch on Unraid's notifications, an Apprise URL or a Matrix room in the settings, and it sends a message when an app has not answered for a few minutes, when it answers again and when it shows something new that needs you. Each of these goes out once, not on every check. Pick **Only problems** to leave out the good news and the plain hints.
 
+The same settings tab keeps the noise down. During the quiet hours you pick, only alerts go out, and everything else arrives as one message once they end. A daily summary at a time you choose says what each app told you and what is still open. The same message goes out once until it is resolved or 20 hours have passed. Each app sends at most 6 messages an hour and all of them together 20, and anything past that waits for the next free slot. Per app you pick the level from which it may notify you. Switch on **Take over the notifications of your apps** and the apps of your fortress that know TollRoll hand their messages to it, so all of this holds for them as well. With the switch off, or while TollRoll is away, every app keeps notifying on its own.
+
 <br>
 
 <p><a id="3-the-fortress" href="#3-the-fortress"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/3-the-fortress-dark.svg"><img src=".github/assets/sections/3-the-fortress.svg" alt="3. The fortress" width="100%"></picture></a></p>
@@ -102,7 +104,7 @@ The plugin has three parts.
 
 <p><a id="5-security" href="#5-security"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/5-security-dark.svg"><img src=".github/assets/sections/5-security.svg" alt="5. Security" width="100%"></picture></a></p>
 
-- **No open port.** The service listens only on its socket, which belongs to root. The browser reaches it through the WebGUI and its login. Every write is a POST, which Unraid checks for its CSRF token.
+- **No open port.** The service listens only on its socket, which belongs to root, and at home on the port only fortress members get through. The one thing it does for them is take a notification while you let it. The browser reaches it through the WebGUI and its login. Every write is a POST, which Unraid checks for its CSRF token.
 - **The phrase is never kept.** TollRoll turns the phrase into the keys of the fortress and its own member key and saves only those, in `/boot/config/plugins/tollroll/fortress`, readable by root alone. Neither the phrase nor any app's own key can be worked out from them. Whoever takes that folder is this one member at most, and any other member can remove it. When the phrase changes, TollRoll moves to the keys of the new one by itself.
 - **Notification secrets stay on the server.** The channels are saved in `/boot/config/plugins/tollroll/notify.json`, which only root can read. The settings page gets a Matrix token back masked, and a saved token goes only to the homeserver it was saved for.
 - **A logo is a picture and nothing more.** An app's logo arrives in its status report as an SVG of at most 16 KiB. TollRoll drops one that holds a script, an event handler or a reference to anything outside it, and the tile shows a logo only as an image, where the browser runs no script anyway.
@@ -142,6 +144,23 @@ bash plugin/pkg_build.sh 1.0.0      # builds plugin/out/tollroll-1.0.0-x86_64-1.
 ```
 
 The plugin files live under [`plugin/src/tollroll/`](plugin/src/tollroll/) in the layout they have on the server. CI builds every release from a `v*` tag: it builds the package, publishes it and only then writes the new version and checksum into `plugin/tollroll.plg`.
+
+### Handing notifications to TollRoll
+
+An app of the fortress can let TollRoll send its notifications. It works like this:
+
+1. Look for an online member whose app is `tollroll` and that offers the action `notify.deliver`. List `notify.deliver` in your app's `fortress.Config.Uses`, or the call is refused.
+2. While TollRoll takes over, its status report lists the capability `notify.hub`, so your settings page can say where the messages go.
+3. For each notification, call `Act(ctx, id, "notify.deliver", body)` with a short timeout, about ten seconds, and a body like this:
+
+   ```json
+   {"kind": "backup.failed", "severity": "failure", "title": "The backup of photos failed", "body": "The target disk is full.", "link": "https://tower.local/jobs/7", "key": "job-7"}
+   ```
+
+   `kind` has the form of a kit event kind and `title` is required. `severity` is one of kit/notify's: `info`, `success`, `warning`, `failure` or `critical`, and `critical` is an alert. A `link` stays only when it is http or https. Write the texts in your app's language. TollRoll puts your app's name in front of the title.
+4. `key` names what the message is about. TollRoll sends a key once until a `success` with the same key, or `{"key": "job-7", "resolved": true}`, says it is over, or until 20 hours pass. Without a key, the words of the message are its key.
+5. `{"taken": true}` means TollRoll has it and sends it, now or once the quiet hours end. Anything else means your app sends the message itself: `hub_off` while the switch is off or no channel is on, `bad_event`, a permission someone switched off, a member that is away or a timeout. With several TollRolls, try them one after the other first.
+6. Healthchecks pings stay with your app.
 
 <br>
 

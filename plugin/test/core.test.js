@@ -340,3 +340,16 @@ test('the settings say whether the router log arrives and from whom', () => {
   const lines = core.routerStatus({ server: true, senders: [{ name: 'gw', lastAt: new Date(Date.now() - 120000).toISOString() }] }, en, 'en');
   assert.deepEqual(lines, ['gw, last line 2 minutes ago']);
 });
+
+test('the hub form keeps a saved time for a field left empty and every app level', () => {
+  const saved = { quiet: { on: false, from: '22:00', to: '07:00' }, digest: { on: false, at: '08:00' }, apps: { shiplog: 'failure' }, takeOver: false };
+  const next = core.hubSettings(saved, { quiet: true, from: '23:30', to: '', digest: true, at: '7:5', take: true });
+  assert.deepEqual(next, { quiet: { on: true, from: '23:30', to: '07:00' }, digest: { on: true, at: '08:00' }, apps: { shiplog: 'failure' }, takeOver: true });
+  next.apps.bombvault = 'warning';
+  assert.deepEqual(saved.apps, { shiplog: 'failure' });
+});
+
+test('a level can be set for every app of the fortress and for one that is away', () => {
+  const apps = [app({ key: 'shiplog', name: 'ShipLog' }), app({ key: 'unraid', name: 'Unraid', local: true }), app({ key: 'bombvault', name: 'BombVault' })];
+  assert.deepEqual(core.levelApps(apps, { knightloader: 'critical' }).map((a) => a.key), ['bombvault', 'knightloader', 'shiplog']);
+});

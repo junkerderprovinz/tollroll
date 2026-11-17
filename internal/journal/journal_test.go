@@ -145,3 +145,16 @@ func TestTheLogKeepsItsNewestLines(t *testing.T) {
 		t.Errorf("%d lines kept, want %d", all, maxLog)
 	}
 }
+
+func TestTheReportSaysWhileTollRollTakesTheAppsNotifications(t *testing.T) {
+	j, _ := newJournal()
+	takes := false
+	j.Hub = func() bool { return takes }
+	if rep, _ := j.Report(context.Background(), "en"); len(rep.Capabilities) != 0 {
+		t.Errorf("off: %v", rep.Capabilities)
+	}
+	takes = true
+	if rep, _ := j.Report(context.Background(), "en"); len(rep.Capabilities) != 1 || rep.Capabilities[0] != "notify.hub" {
+		t.Errorf("on: %v", rep.Capabilities)
+	}
+}

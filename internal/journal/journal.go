@@ -13,6 +13,8 @@ import (
 
 	"github.com/junkerderprovinz/parleyport/kit/notify"
 	"github.com/junkerderprovinz/parleyport/kit/status"
+
+	"github.com/junkerderprovinz/tollroll/internal/hub"
 )
 
 // maxLog is how many lines the journal keeps. It lives in memory and starts
@@ -29,6 +31,9 @@ type Journal struct {
 	// lacks one.
 	Texts func(lang string) map[string]string
 	Now   func() time.Time
+	// Hub reports whether TollRoll takes the notifications of the other apps,
+	// which the report lists as a capability so they can tell.
+	Hub func() bool
 
 	mu       sync.Mutex
 	instance status.Instance
@@ -129,6 +134,9 @@ func (j *Journal) Report(_ context.Context, lang string) (status.Report, error) 
 	j.mu.Lock()
 	defer j.mu.Unlock()
 	r := status.Report{App: j.App, Instance: j.instance, State: status.StateOK}
+	if j.Hub != nil && j.Hub() {
+		r.Capabilities = []string{hub.Capability}
+	}
 	for channel, kind := range j.failing {
 		r.NeedsYou = append(r.NeedsYou, status.Need{ID: "send-" + channel, Severity: status.SeverityWarn, Code: "send_failed",
 			Text: say(tx, "r_send_failed", map[string]string{"channel": kind})})

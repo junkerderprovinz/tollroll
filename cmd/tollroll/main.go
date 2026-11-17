@@ -16,6 +16,7 @@ import (
 	"syscall"
 	"time"
 
+	kit "github.com/junkerderprovinz/parleyport/kit/fortress"
 	"github.com/junkerderprovinz/parleyport/kit/notify"
 	"github.com/junkerderprovinz/parleyport/kit/status"
 
@@ -25,6 +26,7 @@ import (
 	"github.com/junkerderprovinz/tollroll/internal/channels"
 	"github.com/junkerderprovinz/tollroll/internal/fortress"
 	"github.com/junkerderprovinz/tollroll/internal/host"
+	"github.com/junkerderprovinz/tollroll/internal/hub"
 	"github.com/junkerderprovinz/tollroll/internal/journal"
 	"github.com/junkerderprovinz/tollroll/internal/prefs"
 )
@@ -37,6 +39,8 @@ type config struct {
 	Fortress string
 	Tile     string
 	Watch    string
+	Hub      string
+	HubState string
 }
 
 // version is set at build time.
@@ -51,6 +55,8 @@ func configFromEnv() config {
 		Fortress: cmp.Or(os.Getenv("FORTRESS"), "/boot/config/plugins/tollroll/fortress"),
 		Tile:     cmp.Or(os.Getenv("TILE"), "/boot/config/plugins/tollroll/tile.json"),
 		Watch:    cmp.Or(os.Getenv("WATCH"), "/boot/config/plugins/tollroll/watch.json"),
+		Hub:      cmp.Or(os.Getenv("HUB"), "/boot/config/plugins/tollroll/hub.json"),
+		HubState: cmp.Or(os.Getenv("HUB_STATE"), "/boot/config/plugins/tollroll/hub-state.json"),
 	}
 }
 
@@ -73,18 +79,27 @@ func run(ctx context.Context, cfg config) error {
 		return err
 	}
 	device, _ := os.Hostname()
+	texts := func() (string, map[string]string) {
+		lang := alert.Language(cfg.Dynamix)
+		return lang, alert.LoadTexts(cfg.LangDir, lang)
+	}
 	j := &journal.Journal{
 		App:   status.App{ID: fortress.AppID, Name: "TollRoll", Version: version, Icon: fortress.Icon},
 		Every: checkEvery,
 		Texts: func(lang string) map[string]string { return alert.LoadTexts(cfg.LangDir, lang) },
 	}
-	fort, err := fortress.Open(fortress.Options{Dir: cfg.Fortress, Device: device, Version: version, LAN: true, Journal: j})
+	var b *board.Board
+	hb := hub.New(hub.Options{Channels: ch, Settings: hub.OpenStore(cfg.Hub), Texts: texts, Journal: j, State: cfg.HubState,
+		Open: func(lang string) []string { return board.OpenLines(b.View(ctx, lang)) }})
+	j.Hub = hb.TakesOver
+	fort, err := fortress.Open(fortress.Options{Dir: cfg.Fortress, Device: device, Version: version, LAN: true, Journal: j,
+		Actions: []kit.Action{hb.Action(fortress.AppName)}})
 	if err != nil {
 		return err
 	}
 	defer func() { _ = fort.Close() }()
 	go fort.Watch(ctx)
-	b := board.New(fort.Sources, fort.Reader())
+	b = board.New(fort.Sources, fort.Reader())
 	unraid := host.New(host.Options{
 		State: cfg.Watch,
 		Texts: func(lang string) map[string]string { return alert.LoadTexts(cfg.LangDir, lang) },
@@ -104,23 +119,29 @@ func run(ctx context.Context, cfg config) error {
 		defer close(hostDone)
 		unraid.Run(hostCtx)
 	}()
+	hubDone := make(chan struct{})
+	go func() {
+		defer close(hubDone)
+		hb.Run(hostCtx)
+	}()
 	defer func() {
 		stopHost()
 		<-hostDone
+		<-hubDone
 	}()
-	texts := func() (string, alert.Texts) {
-		lang := alert.Language(cfg.Dynamix)
-		return lang, alert.LoadTexts(cfg.LangDir, lang)
+	alertTexts := func() (string, alert.Texts) {
+		lang, tx := texts()
+		return lang, tx
 	}
 	ln, err := listen(cfg.Socket)
 	if err != nil {
 		return err
 	}
 	srv := &http.Server{
-		Handler:           api.New(api.Deps{Board: b, Channels: ch, Texts: texts, Fortress: fort, Prefs: prefs.Open(cfg.Tile), Router: unraid.RouterLog}),
+		Handler:           api.New(api.Deps{Board: b, Channels: ch, Texts: alertTexts, Fortress: fort, Prefs: prefs.Open(cfg.Tile), Router: unraid.RouterLog, Hub: hb.Settings()}),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
-	w := &alert.Watcher{Every: checkEvery, Check: b.Check, Channels: ch, Texts: texts, Journal: j}
+	w := &alert.Watcher{Every: checkEvery, Check: b.Check, Channels: hb, Texts: alertTexts, Journal: j}
 	go w.Run(ctx)
 	go func() {
 		<-ctx.Done()
