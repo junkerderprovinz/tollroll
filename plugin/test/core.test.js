@@ -271,3 +271,36 @@ test('a member is named by its app and its device', () => {
   assert.equal(core.memberName(de, { app: 'bombvault', name: 'BombVault', device: 'cellar' }), 'BombVault auf cellar');
   assert.equal(core.memberName(en, { app: 'lantern', device: 'attic' }), 'lantern on attic');
 });
+
+test('routine lines fold into one line that counts them', () => {
+  const l = (id, quiet) => ({ id, app: 'unraid', level: 'info', text: id, quiet });
+  const log = [l('a'), l('q1', true), l('q2', true), l('b'), l('q3', true)];
+  assert.deepEqual(core.foldQuiet(log, false).map((x) => x.fold ? 'fold' + x.count : x.id), ['a', 'fold2', 'b', 'fold1']);
+  assert.deepEqual(core.foldQuiet(log, true).map((x) => x.fold ? 'fold' + x.count : x.id), ['a', 'fold2', 'q1', 'q2', 'b', 'fold1', 'q3']);
+  assert.deepEqual(core.foldQuiet([l('a'), l('b')], false).map((x) => x.id), ['a', 'b']);
+});
+
+test('the rows of the server count as no app in the subtitle, but their needs do', () => {
+  const view = { apps: [app(), app({ key: 'unraid', name: 'Unraid', local: true, state: 'warning', need: { severity: 'error', text: 'Disk 2 had a read error.' } }),
+    app({ key: 'disks', name: 'Disks', local: true })] };
+  assert.equal(core.subtitle(view, en, 'en'), '1 app, 1 needs you');
+});
+
+test('a quiet row of the server says what it has to say', () => {
+  assert.deepEqual(core.rowStatus(app({ key: 'disks', local: true, note: 'Wake-ups today: 3' }), en, 'en'), { tone: 'ok', text: 'Wake-ups today: 3' });
+  assert.deepEqual(core.rowStatus(app({ note: 'x', need: { severity: 'warn', text: 'look' } }), en, 'en'), { tone: 'warn', text: 'look' });
+});
+
+test('the status window of the disks lists each disk with its wake-ups', () => {
+  const disks = app({ key: 'disks', name: 'Disks', local: true, disks: [
+    { name: 'Disk 1', today: 2, week: 9, lastAt: new Date().toISOString(), last: 'the container Plex' },
+    { name: 'Parity', today: 0, week: 0 }
+  ] });
+  const w = core.statusWindow(disks, { members: [] }, [], en, 'en');
+  assert.equal(w.disks.length, 2);
+  assert.equal(w.disks[0].name, 'Disk 1');
+  assert.equal(w.disks[0].text, '2 today, 9 in 7 days');
+  assert.match(w.disks[0].last, /^last \d{1,2}:\d\d(\s?[AP]M)?: the container Plex$/);
+  assert.equal(w.disks[1].last, '');
+  assert.equal(w.quiet, '');
+});

@@ -51,10 +51,30 @@
         return { tone: 'ok', text: t };
       }
       if (app.instances > 1) return { tone: 'ok', text: plural(L, 't_inst', app.instances, lang) };
+      if (app.note) return { tone: 'ok', text: app.note };
       return { tone: 'ok', text: L.t_st_ok };
     }
     var s = STATES[app.state] || STATES.unreachable;
     return { tone: s[0], text: L[s[1]] };
+  }
+
+  /* foldQuiet puts one line in front of every run of routine lines that
+   * counts them, and leaves the run out unless open. */
+  function foldQuiet(lines, open) {
+    var out = [], run = [];
+    function flush() {
+      if (!run.length) return;
+      out.push({ fold: true, count: run.length, id: 'fold:' + run[0].id });
+      if (open) out = out.concat(run);
+      run = [];
+    }
+    lines.forEach(function (l) {
+      if (l.quiet) { run.push(l); return; }
+      flush();
+      out.push(l);
+    });
+    flush();
+    return out;
   }
 
   function filterLog(log, key) {
@@ -194,9 +214,11 @@
     return app.state === 'unreachable' || !!app.need || ['failed', 'overdue', 'warning'].indexOf(app.state) >= 0;
   }
 
+  // The rows of the server itself are no app of the fortress, but what they
+  // need counts.
   function subtitle(view, L, lang, devices) {
     var apps = view.apps || [];
-    var s = plural(L, 't_apps', apps.length, lang);
+    var s = plural(L, 't_apps', apps.filter(function (a) { return !a.local; }).length, lang);
     if (devices) s = fmt(L.t_sub_in, { apps: s, devices: plural(L, 't_dev', devices, lang) });
     var n = apps.filter(needsYou).length;
     return n ? s + ', ' + plural(L, 't_attn', n, lang) : s;
@@ -266,9 +288,13 @@
       log: (log || []).filter(function (l) { return l.app === app.key; })
         .sort(function (x, y) { return x.at < y.at ? 1 : x.at > y.at ? -1 : 0; }).slice(0, 10)
         .map(function (l) { return { level: l.level, at: timeLabel(l.at, lang), text: l.text }; }),
-      where: plugins.length ? fmt(L.t_win_where, { devices: new Intl.ListFormat(lang, { type: 'conjunction' }).format(plugins) }) : ''
+      where: plugins.length ? fmt(L.t_win_where, { devices: new Intl.ListFormat(lang, { type: 'conjunction' }).format(plugins) }) : '',
+      disks: (app.disks || []).map(function (d) {
+        return { name: d.name, text: fmt(L.t_disk_line, { today: d.today, week: d.week }),
+          last: d.last ? fmt(L.t_disk_last, { when: timeLabel(d.lastAt, lang), cause: d.last }) : '' };
+      })
     };
-    w.quiet = w.needs.length + w.tasks.length + w.next.length ? '' : L.t_win_quiet;
+    w.quiet = w.needs.length + w.tasks.length + w.next.length + w.disks.length ? '' : L.t_win_quiet;
     return w;
   }
 
@@ -290,7 +316,7 @@
     return m ? m[1].toLowerCase() : 'en';
   }
 
-  return { fmt: fmt, plural: plural, rowStatus: rowStatus, filterLog: filterLog, chips: chips, validFilter: validFilter,
+  return { fmt: fmt, plural: plural, rowStatus: rowStatus, foldQuiet: foldQuiet, filterLog: filterLog, chips: chips, validFilter: validFilter,
     hue: hue, mark: mark, timeLabel: timeLabel, subtitle: subtitle, needsYou: needsYou, lang: lang,
     safeIcon: safeIcon, markColors: markColors, notifyForm: notifyForm, notifyChannels: notifyChannels,
     shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, statusWindow: statusWindow, ago: ago };

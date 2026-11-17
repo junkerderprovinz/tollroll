@@ -20,7 +20,7 @@
     caret: '<svg class="trl-caret" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
   });
   var VIEWS = [['all', 't_v_all', 'IconDashboard'], ['apps', 't_v_apps', 'IconTabApps'], ['log', 't_v_log', 'IconLog'], ['map', 't_v_map', 'IconFleet']];
-  var STORE = 'tollroll.filter';
+  var STORE = 'tollroll.filter', QUIET = 'tollroll.quiet';
 
   var tile = root.closest('tbody') || document.body;
   var subEl = document.getElementById('trl-sub');
@@ -28,11 +28,14 @@
   var hsEl = document.getElementById('trl-hs');
 
   var view = null, fort = null, prefs = { view: 'all', hidden: [] }, openApp = null;
-  var filter = 'all', follow = true, timer = null, picking = null;
+  var filter = 'all', follow = true, timer = null, picking = null, showQuiet = false;
   // Logos by the ID a row carries. They come in a request of their own, made
   // only when a row names one not seen yet, so a poll stays small.
   var icons = {}, iconsAsked = {};
-  try { filter = localStorage.getItem(STORE) || 'all'; } catch (e) { /* private window */ }
+  try {
+    filter = localStorage.getItem(STORE) || 'all';
+    showQuiet = localStorage.getItem(QUIET) === '1';
+  } catch (e) { /* private window */ }
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -320,8 +323,10 @@
     var now = new Date();
     logEl.classList.toggle('trl-dated', lines.some(function (l) { return new Date(l.at).toDateString() !== now.toDateString(); }));
     var frag = document.createDocumentFragment();
-    lines.forEach(function (l) {
+    C.foldQuiet(lines, showQuiet).forEach(function (l) {
+      if (l.fold) { frag.appendChild(fold(l)); return; }
       var row = el('div', 'trl-line');
+      if (l.quiet) row.style.opacity = '.6';
       row.appendChild(el('span', 'trl-t', C.timeLabel(l.at, lang, now)));
       var level = ['info', 'warn', 'error'].indexOf(l.level) >= 0 ? l.level : 'info';
       var g = el('span', 'trl-g trl-l-' + level);
@@ -334,7 +339,7 @@
         row.appendChild(who);
       }
       var m = el('span', 'trl-m', l.text);
-      m.title = l.text;
+      m.title = l.raw && l.raw !== l.text ? l.text + '\n' + l.raw : l.text;
       row.appendChild(m);
       frag.appendChild(row);
     });
@@ -342,6 +347,31 @@
     logEl.appendChild(frag);
     logEl.setAttribute('aria-label', one ? C.fmt(L.t_log_of, { name: one.name }) : L.t_log);
     if (follow) logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  // A run of routine lines from the server's syslog shows as one line that
+  // counts them. A click on it shows or hides every such run.
+  function fold(f) {
+    var row = el('div', 'trl-line');
+    row.setAttribute('role', 'button');
+    row.tabIndex = 0;
+    row.dataset.focus = f.id;
+    row.style.cursor = 'pointer';
+    row.style.opacity = '.75';
+    var g = el('span', 'trl-g trl-l-info');
+    g.innerHTML = GLYPH['caret'];
+    row.appendChild(g);
+    row.appendChild(el('span', 'trl-m', C.fmt(showQuiet ? L.t_quiet_hide : L.t_quiet_show, { n: f.count })));
+    function act() {
+      showQuiet = !showQuiet;
+      try { localStorage.setItem(QUIET, showQuiet ? '1' : '0'); } catch (e) { /* private window */ }
+      draw();
+    }
+    row.addEventListener('click', act);
+    row.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act(); }
+    });
+    return row;
   }
 
   // The log view keeps the height the tile has with everything on it, so the
@@ -514,6 +544,10 @@
     section(L.t_win_next, w.next, function (li, n) {
       li.appendChild(el('span', 'trl-t', n.at));
       li.appendChild(el('span', 'trl-dlg-text', n.title));
+    });
+    section(L.t_win_disks, w.disks, function (li, d) {
+      li.appendChild(el('span', 'trl-t', d.name));
+      li.appendChild(el('span', 'trl-dlg-text', d.last ? d.text + ', ' + d.last : d.text));
     });
     if (w.quiet) box.appendChild(el('p', 'trl-dlg-sub', w.quiet));
     section(L.t_log, w.log, function (li, l) {
