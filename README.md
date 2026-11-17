@@ -62,6 +62,12 @@ The tile reads every app in your [fortress](#3-the-fortress), the group of apps 
 
 Under the rows sits one log for all apps, newest at the bottom, in the dark terminal look it keeps on every Unraid theme. Click a row, or one of the buttons above the log, and the log shows only that app's lines. Once the filter names an app, the tile header gets a button that opens that app's web page.
 
+Below the apps sit two rows for the server itself, and they show even before TollRoll joins a fortress. The **Unraid** row brings Unraid's syslog into the log, sorted into errors, warnings and info. The lines that matter most, such as disk errors, parity checks, the mover, sign-ins or running out of memory, get one short sentence in your language that says what they mean. Hover a line to see the original. Routine noise folds into a single line.
+
+The same row watches for the unusual: a sign-in from an address TollRoll has not seen before, a burst of failed sign-ins, a new plugin, changed settings on the flash drive, a new scheduled task, a share newly open to guests and many files deleted at once. When `/var/log` is 80% full it names the biggest file and who writes it, and at 90% it sends one Unraid notification.
+
+The **Disks** row counts every spin-up of an array or pool disk, today and over the last 7 days, with its likely cause: a container, a VM, an SMB or NFS client, the mover, a parity check or a scheduled task. When the cause cannot be known, it says so. Both rows only read, so they never wake a disk themselves.
+
 A selector in the tile header switches between four views: **Everything**, the **Apps** alone, the **Log** alone over the whole height of the tile, and the **Map** of the fortress. In the log view you tick apps on and off in a list in its head, with **All** and **None** on top. The apps view always shows every app. The map shows every device of the fortress with its apps, and whether each one is connected right now. The tile remembers the view and the apps you chose on the server, so every browser finds it the way you left it.
 
 The tile and the settings page speak the language you picked in Unraid, in all 26 languages Unraid offers. The texts that come from the apps arrive in that language too, as far as each app has them.
@@ -111,7 +117,7 @@ The plugin has three parts.
 https://raw.githubusercontent.com/junkerderprovinz/tollroll/main/plugin/tollroll.plg
 ```
 
-TollRoll needs Unraid 6.12 or newer and at least one of your apps in a fortress, since the tile shows nothing else. Apps on another network need a [ParleyPort](https://github.com/junkerderprovinz/parleyport) relay, the ones on your own network do not.
+TollRoll needs Unraid 6.12 or newer. Without a fortress the tile shows the two rows for the server, and your apps join them once TollRoll is in the same fortress as at least one of them. Apps on another network need a [ParleyPort](https://github.com/junkerderprovinz/parleyport) relay, the ones on your own network do not.
 
 <br>
 

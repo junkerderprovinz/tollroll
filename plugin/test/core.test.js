@@ -271,3 +271,65 @@ test('a member is named by its app and its device', () => {
   assert.equal(core.memberName(de, { app: 'bombvault', name: 'BombVault', device: 'cellar' }), 'BombVault auf cellar');
   assert.equal(core.memberName(en, { app: 'lantern', device: 'attic' }), 'lantern on attic');
 });
+
+test('routine lines fold into one line that counts them', () => {
+  const l = (id, quiet) => ({ id, app: 'unraid', level: 'info', text: id, quiet });
+  const log = [l('a'), l('q1', true), l('q2', true), l('b'), l('q3', true)];
+  assert.deepEqual(core.foldQuiet(log, false).map((x) => x.fold ? 'fold' + x.count : x.id), ['a', 'fold2', 'b', 'fold1']);
+  assert.deepEqual(core.foldQuiet(log, true).map((x) => x.fold ? 'fold' + x.count : x.id), ['a', 'fold2', 'q1', 'q2', 'b', 'fold1', 'q3']);
+  assert.deepEqual(core.foldQuiet([l('a'), l('b')], false).map((x) => x.id), ['a', 'b']);
+});
+
+test('the rows of the server count as no app in the subtitle, but their needs do', () => {
+  const view = { apps: [app(), app({ key: 'unraid', name: 'Unraid', local: true, state: 'warning', need: { severity: 'error', text: 'Disk 2 had a read error.' } }),
+    app({ key: 'disks', name: 'Disks', local: true })] };
+  assert.equal(core.subtitle(view, en, 'en'), '1 app, 1 needs you');
+});
+
+test('a row of an app says what it has to say', () => {
+  assert.deepEqual(core.rowStatus(app({ note: 'x', need: { severity: 'warn', text: 'look' } }), en, 'en'), { tone: 'warn', text: 'look' });
+  assert.deepEqual(core.rowStatus(app({ note: 'Synced 3 files' }), en, 'en'), { tone: 'ok', text: 'Synced 3 files' });
+});
+
+test('the status window of the disks lists each disk with its wake-ups', () => {
+  const disks = app({ key: 'disks', name: 'Disks', local: true, disks: [
+    { name: 'Disk 1', today: 2, week: 9, lastAt: new Date().toISOString(), last: 'the container Plex' },
+    { name: 'Parity', today: 0, week: 0 }
+  ] });
+  const w = core.statusWindow(disks, { members: [] }, [], en, 'en');
+  assert.equal(w.disks.length, 2);
+  assert.equal(w.disks[0].name, 'Disk 1');
+  assert.equal(w.disks[0].text, '2 today, 9 in 7 days');
+  assert.match(w.disks[0].last, /^last \d{1,2}:\d\d(\s?[AP]M)?: the container Plex$/);
+  assert.equal(w.disks[1].last, '');
+  assert.equal(w.quiet, '');
+});
+
+test('out of a fortress the tile is the log window above the prompt to join, with no row of the server', () => {
+  const view = { apps: [app({ key: 'unraid', name: 'Unraid', local: true }), app({ key: 'disks', name: 'Disks', local: true }), app()], log: [] };
+  const all = core.layout(view, { joined: false }, 'all');
+  assert.deepEqual(all.apps, []);
+  assert.deepEqual([all.view, all.rows, all.chips, all.log, all.map, all.join], ['all', false, true, true, false, true]);
+  for (const v of ['apps', 'log', 'map']) assert.equal(core.layout(view, { joined: false }, v).view, 'all', v);
+});
+
+test('out of a fortress the header offers no views, since every one would look the same', () => {
+  const l = core.layout({ apps: [app({ key: 'unraid', name: 'Unraid', local: true })], log: [] }, { joined: false }, 'all');
+  assert.deepEqual([l.views, l.selector], [['all'], false]);
+});
+
+test('out of a fortress with nothing from the server the tile keeps its log above the prompt to join', () => {
+  const off = core.layout({ apps: [], log: [] }, { joined: false }, 'all');
+  assert.deepEqual([off.rows, off.log, off.join], [false, true, true]);
+});
+
+test('in a fortress the tile shows the chosen view with a row for every app and none for the server', () => {
+  const view = { apps: [app(), app({ key: 'unraid', name: 'Unraid', local: true }), app({ key: 'disks', name: 'Disks', local: true })], log: [] };
+  const all = core.layout(view, { joined: true }, 'all');
+  assert.deepEqual(all.apps.map((a) => a.key), ['alpha']);
+  assert.deepEqual([all.view, all.rows, all.chips, all.log, all.map, all.join], ['all', true, true, true, false, false]);
+  assert.deepEqual([all.views, all.selector], [['all', 'apps', 'log', 'map'], true]);
+  assert.deepEqual(core.layout(view, { joined: true }, 'apps').apps.map((a) => a.key), ['alpha']);
+  const map = core.layout(view, { joined: true }, 'map');
+  assert.deepEqual([map.rows, map.log, map.map], [false, false, true]);
+});

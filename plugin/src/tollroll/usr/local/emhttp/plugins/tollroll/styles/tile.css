@@ -13,6 +13,7 @@
 .Theme--white .trl,.Theme--azure .trl{--trl-ok:#1f7a43;--trl-warn:#b55d0c;--trl-fail:#b8322f;--trl-idle:#2a6fbd;--trl-off:#767676}
 
 .trl-sub{display:block;font-size:12px;font-weight:400;opacity:.7;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trl-sub:empty{display:none}
 
 .trl-rows{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;margin:0;padding:0;list-style:none}
 @container (max-width:520px){.trl-rows{grid-template-columns:1fr}}
@@ -46,10 +47,11 @@
 .trl-chips:empty{display:none}
 .trl-chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border:none !important;border-radius:999px;
   background:var(--trl-chip) !important;color:inherit !important;font:500 12.5px/1 inherit;white-space:nowrap;cursor:pointer;margin:0 !important;min-width:0 !important}
-.trl-chip:hover{background:var(--trl-chip-hover) !important}
+.trl-chip:hover{background:var(--tt-hover-wash,var(--trl-chip-hover)) !important}
 .trl-chip .trl-n{opacity:.65;font-size:11.5px;font-variant-numeric:tabular-nums}
-/* Fixed colours: themes and scripts on the box restyle generic buttons. */
-.trl-chip[aria-pressed="true"]{background:#f4c63d !important;color:#161616 !important}
+/* The picked chip takes the accent like the chosen view. The !important
+   holds against themes and scripts that restyle generic buttons. */
+.trl-chip[aria-pressed="true"]{background:var(--tt-accent,#f4c63d) !important;color:var(--tt-accent-text,#161616) !important}
 .trl-chip[aria-pressed="true"] .trl-n{opacity:.8}
 
 /* The log brings its own dark background, like a terminal, so it reads the
@@ -88,22 +90,25 @@
 .trl-ctl{display:flex;align-items:center;gap:4px;flex:none}
 .trl-gl{display:inline-grid;place-items:center;flex:none}
 .trl-gl svg{display:block;width:16px;height:16px}
-.trl-control{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:6px;color:inherit !important;opacity:.75}
-.trl-control:hover{opacity:1;background:color-mix(in srgb,currentColor 9%,transparent)}
+/* TowerTorch turns the header controls into badges in the accent colour with
+   their glyph in its ink, so only a plain control takes the header's colour. */
+.trl-control{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:6px}
+.trl-control:not(.tt-dash-btn){color:inherit !important;opacity:.75}
+.trl-control:not(.tt-dash-btn):hover{opacity:1;background:color-mix(in srgb,currentColor 9%,transparent)}
 .trl-control:focus-visible{outline:2px solid #f4c63d;outline-offset:1px}
 .trl-control svg{width:17px;height:17px}
 
 /* The views of the tile: GlimStone's well in Unraid's colours. Only the
-   chosen segment is filled, in the tile's gold. */
+   chosen segment is filled, in the accent colour TowerTorch sets. */
 .trl-hs{display:inline-grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px;padding:3px;margin-right:6px;border-radius:999px;
   background:color-mix(in srgb,currentColor 10%,transparent)}
 .trl-hs[hidden]{display:none}
 .trl-hs button{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:26px;padding:0 12px;border:0 !important;border-radius:999px;margin:0 !important;
   background:transparent !important;color:inherit !important;font:500 12.5px/1 inherit;white-space:nowrap;cursor:pointer;opacity:.8;min-width:0 !important;
   transition:background-color .15s,color .15s,opacity .15s}
-.trl-hs button:hover{background:color-mix(in srgb,currentColor 9%,transparent) !important;opacity:1}
-.trl-hs button[aria-checked="true"]{background:#f4c63d !important;color:#161616 !important;opacity:1}
-.trl-hs button:focus-visible{outline:2px solid #f4c63d;outline-offset:1px}
+.trl-hs button:hover{background:var(--tt-hover-wash,color-mix(in srgb,currentColor 9%,transparent)) !important;opacity:1}
+.trl-hs button[aria-checked="true"]{background:var(--tt-accent,#f4c63d) !important;color:var(--tt-accent-text,#161616) !important;opacity:1}
+.trl-hs button:focus-visible{outline:2px solid var(--tt-accent,#f4c63d);outline-offset:1px}
 .trl-hs svg{width:14px;height:14px}
 @media (prefers-reduced-motion:reduce){.trl-hs button{transition:none}}
 @container (max-width:720px){.trl-hs .trl-hs-word{display:none}.trl-hs button{padding:0 9px}}

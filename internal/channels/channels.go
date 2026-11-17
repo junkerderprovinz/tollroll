@@ -138,3 +138,12 @@ func (s *Store) save(list []notify.Channel) error {
 	}
 	return os.Rename(tmp, s.path)
 }
+
+// Unraid sends e as one Unraid notification, whichever channels are on, for
+// what the server itself has to say.
+func (s *Store) Unraid(ctx context.Context, e notify.Event) notify.Result {
+	s.mu.Lock()
+	d := s.d
+	s.mu.Unlock()
+	return d.Test(ctx, notify.Channel{ID: "unraid", Kind: notify.KindUnraid}, e)
+}

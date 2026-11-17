@@ -20,19 +20,22 @@
     caret: '<svg class="trl-caret" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
   });
   var VIEWS = [['all', 't_v_all', 'IconDashboard'], ['apps', 't_v_apps', 'IconTabApps'], ['log', 't_v_log', 'IconLog'], ['map', 't_v_map', 'IconFleet']];
-  var STORE = 'tollroll.filter';
+  var STORE = 'tollroll.filter', QUIET = 'tollroll.quiet';
 
   var tile = root.closest('tbody') || document.body;
   var subEl = document.getElementById('trl-sub');
   var openEl = document.getElementById('trl-open');
   var hsEl = document.getElementById('trl-hs');
 
-  var view = null, fort = null, prefs = { view: 'all', hidden: [] }, openApp = null;
-  var filter = 'all', follow = true, timer = null, picking = null;
+  var view = null, fort = null, prefs = { view: 'all', hidden: [] }, openApp = null, views = VIEWS;
+  var filter = 'all', follow = true, timer = null, picking = null, showQuiet = false;
   // Logos by the ID a row carries. They come in a request of their own, made
   // only when a row names one not seen yet, so a poll stays small.
   var icons = {}, iconsAsked = {};
-  try { filter = localStorage.getItem(STORE) || 'all'; } catch (e) { /* private window */ }
+  try {
+    filter = localStorage.getItem(STORE) || 'all';
+    showQuiet = localStorage.getItem(QUIET) === '1';
+  } catch (e) { /* private window */ }
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -159,11 +162,12 @@
     setView('log');
   }
 
-  function drawHS() {
-    hsEl.hidden = !fort || !fort.joined;
+  function drawHS(lay) {
+    views = VIEWS.filter(function (v) { return lay.views.indexOf(v[0]) >= 0; });
+    hsEl.hidden = !lay.selector;
     hsEl.textContent = '';
-    VIEWS.forEach(function (v) {
-      var on = prefs.view === v[0];
+    views.forEach(function (v) {
+      var on = lay.view === v[0];
       var b = el('button');
       b.type = 'button';
       b.setAttribute('role', 'radio');
@@ -182,8 +186,8 @@
   hsEl.addEventListener('keydown', function (e) {
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
     e.preventDefault();
-    var i = VIEWS.findIndex(function (v) { return v[0] === prefs.view; });
-    var next = VIEWS[(i + (e.key === 'ArrowRight' ? 1 : VIEWS.length - 1)) % VIEWS.length][0];
+    var i = Math.max(0, views.findIndex(function (v) { return v[0] === prefs.view; }));
+    var next = views[(i + (e.key === 'ArrowRight' ? 1 : views.length - 1)) % views.length][0];
     setView(next);
     var b = hsEl.querySelector('[data-focus="view:' + next + '"]');
     if (b) b.focus();
@@ -320,8 +324,10 @@
     var now = new Date();
     logEl.classList.toggle('trl-dated', lines.some(function (l) { return new Date(l.at).toDateString() !== now.toDateString(); }));
     var frag = document.createDocumentFragment();
-    lines.forEach(function (l) {
+    C.foldQuiet(lines, showQuiet).forEach(function (l) {
+      if (l.fold) { frag.appendChild(fold(l)); return; }
       var row = el('div', 'trl-line');
+      if (l.quiet) row.style.opacity = '.6';
       row.appendChild(el('span', 'trl-t', C.timeLabel(l.at, lang, now)));
       var level = ['info', 'warn', 'error'].indexOf(l.level) >= 0 ? l.level : 'info';
       var g = el('span', 'trl-g trl-l-' + level);
@@ -334,7 +340,7 @@
         row.appendChild(who);
       }
       var m = el('span', 'trl-m', l.text);
-      m.title = l.text;
+      m.title = l.raw && l.raw !== l.text ? l.text + '\n' + l.raw : l.text;
       row.appendChild(m);
       frag.appendChild(row);
     });
@@ -344,10 +350,35 @@
     if (follow) logEl.scrollTop = logEl.scrollHeight;
   }
 
+  // A run of routine lines from the server's syslog shows as one line that
+  // counts them. A click on it shows or hides every such run.
+  function fold(f) {
+    var row = el('div', 'trl-line');
+    row.setAttribute('role', 'button');
+    row.tabIndex = 0;
+    row.dataset.focus = f.id;
+    row.style.cursor = 'pointer';
+    row.style.opacity = '.75';
+    var g = el('span', 'trl-g trl-l-info');
+    g.innerHTML = GLYPH['caret'];
+    row.appendChild(g);
+    row.appendChild(el('span', 'trl-m', C.fmt(showQuiet ? L.t_quiet_hide : L.t_quiet_show, { n: f.count })));
+    function act() {
+      showQuiet = !showQuiet;
+      try { localStorage.setItem(QUIET, showQuiet ? '1' : '0'); } catch (e) { /* private window */ }
+      draw();
+    }
+    row.addEventListener('click', act);
+    row.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act(); }
+    });
+    return row;
+  }
+
   // The log view keeps the height the tile has with everything on it, so the
   // dashboard does not jump when the view changes.
-  function fillHeight() {
-    drawRows(view.apps, false);
+  function fillHeight(apps) {
+    drawRows(apps, false);
     drawChips();
     var probe = [rowsEl, chipsEl];
     probe.forEach(function (n) { n.hidden = false; n.style.cssText = 'visibility:hidden;position:absolute;width:' + root.clientWidth + 'px'; });
@@ -515,6 +546,10 @@
       li.appendChild(el('span', 'trl-t', n.at));
       li.appendChild(el('span', 'trl-dlg-text', n.title));
     });
+    section(L.t_win_disks, w.disks, function (li, d) {
+      li.appendChild(el('span', 'trl-t', d.name));
+      li.appendChild(el('span', 'trl-dlg-text', d.last ? d.text + ', ' + d.last : d.text));
+    });
     if (w.quiet) box.appendChild(el('p', 'trl-dlg-sub', w.quiet));
     section(L.t_log, w.log, function (li, l) {
       li.appendChild(el('span', 'trl-t', l.at));
@@ -554,34 +589,33 @@
     var active = document.activeElement;
     var keep = active && tile.contains(active) && active.dataset ? active.dataset.focus : null;
     var joined = fort.joined;
-    var v = joined ? prefs.view : 'all';
+    var lay = C.layout(view, fort, prefs.view), v = lay.view;
     filter = C.validFilter(view, filter);
     var devices = C.mapDevices(fort, view.apps).length;
     subEl.textContent = !joined ? '' : v === 'map' ? C.plural(L, 't_map', devices, lang) : C.subtitle(view, L, lang, devices);
-    drawHS();
+    drawHS(lay);
 
-    show(emptyEl, !joined);
-    show(rowsEl, joined && (v === 'all' || v === 'apps'));
-    show(chipsEl, joined && v === 'all');
-    show(logBox, joined && (v === 'all' || v === 'log'));
+    show(emptyEl, lay.join);
+    show(rowsEl, lay.rows);
+    show(chipsEl, lay.chips);
+    show(logBox, lay.log);
     show(logHead, v === 'log');
-    show(mapBox, joined && v === 'map');
+    show(mapBox, lay.map);
     logBox.classList.toggle('trl-logbox-full', v === 'log');
     logEl.style.height = '';
 
-    if (!joined) {
-      drawEmpty();
-    } else if (v === 'map') {
+    if (lay.join) drawEmpty();
+    if (v === 'map') {
       drawMap();
     } else {
       var chosen = C.shown(view.apps, prefs.hidden);
       if (v === 'all') {
-        drawRows(view.apps, false);
+        drawRows(lay.apps, false);
         drawChips();
         var apps = byKey();
         drawLog(C.filterLog(view.log, filter), filter === 'all' ? null : apps[filter]);
       } else if (v === 'apps') {
-        drawRows(view.apps, true);
+        drawRows(lay.apps, true);
       } else {
         var keys = chosen.map(function (a) { return a.key; });
         var lines = view.log.filter(function (l) { return keys.indexOf(l.app) >= 0; });
@@ -590,7 +624,7 @@
         logCount.textContent = C.plural(L, 't_lines', lines.length, lang);
         logHead.appendChild(logCount);
         drawLog(lines, chosen.length === 1 ? chosen[0] : null);
-        fillHeight();
+        fillHeight(C.layout(view, fort, 'all').apps);
       }
     }
     drawOpen(v);

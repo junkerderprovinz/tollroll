@@ -67,7 +67,9 @@ type View struct {
 // and Icon the ID of its logo in Icons, both empty when the app names none.
 // Need and Work are what the row shows, Needs, Tasks and Next what the status
 // window lists for every instance that answers. No address of the app is
-// ever on the board.
+// ever on the board. Local marks a row of the server TollRoll runs on, Note
+// is what such a row says while nothing needs you, and Disks fill the status
+// window of the row of its disks.
 type App struct {
 	Key       string `json:"key"`
 	Name      string `json:"name"`
@@ -81,6 +83,19 @@ type App struct {
 	Next      []Next `json:"next,omitempty"`
 	Color     string `json:"color,omitempty"`
 	Icon      string `json:"icon,omitempty"`
+	Local     bool   `json:"local,omitempty"`
+	Note      string `json:"note,omitempty"`
+	Disks     []Disk `json:"disks,omitempty"`
+}
+
+// Disk is one disk on the row of the server's disks: how often it woke today
+// and in the last seven days, and when and why it woke last.
+type Disk struct {
+	Name   string    `json:"name"`
+	Today  int       `json:"today"`
+	Week   int       `json:"week"`
+	LastAt time.Time `json:"lastAt,omitzero"`
+	Last   string    `json:"last,omitempty"`
 }
 
 // Need is the most urgent thing an app asks the user to look at.
@@ -104,17 +119,25 @@ type Next struct {
 // listed caps each list of the status window.
 const listed = 5
 
-// Line is one line of the shared log. App is the key of its row.
+// Line is one line of the shared log. App is the key of its row. Raw is the
+// line a plain sentence explains, and Quiet marks a routine one the tile folds
+// away.
 type Line struct {
 	ID    string    `json:"id"`
 	At    time.Time `json:"at"`
 	App   string    `json:"app"`
 	Level string    `json:"level"`
 	Text  string    `json:"text"`
+	Raw   string    `json:"raw,omitempty"`
+	Quiet bool      `json:"quiet,omitempty"`
 }
 
 // Board builds views. It is safe for concurrent use.
 type Board struct {
+	// Local adds the rows and lines of the server TollRoll runs on. Set it
+	// before the first view.
+	Local Local
+
 	list   func() []Source
 	reader Reader
 	now    func() time.Time
@@ -302,6 +325,10 @@ func (b *Board) build(srcs []Source, lang string, now time.Time) View {
 	slices.SortStableFunc(v.Apps, func(a, b App) int {
 		return cmp.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
 	})
+	if b.Local != nil {
+		v.Apps = append(v.Apps, b.Local.Rows(lang)...)
+		v.Log = append(v.Log, b.Local.Lines(lang)...)
+	}
 
 	for _, src := range srcs {
 		buf := b.state[key(src)].logs[lang]
