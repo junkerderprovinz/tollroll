@@ -1,6 +1,7 @@
 // Package alert turns what the board sees into notifications: an app that
 // stops answering, one that answers again, and every need an app newly
-// raises. Each is told once, however often the apps are read.
+// raises. Each is told once, however often the apps are read, and the hub the
+// events go through keeps an app gone wrong from flooding the channels.
 package alert
 
 import (
@@ -10,7 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"slices"
 	"strings"
 	"time"
 	"unicode"
@@ -40,9 +40,6 @@ const (
 	// needMemory is how long a need that was told stays told, so one that
 	// comes and goes is not repeated every time it returns.
 	needMemory = 12 * time.Hour
-	// needsPerHour bounds what one app can send, so an app gone wrong cannot
-	// flood the channels. Needs past it wait for the next hour.
-	needsPerHour = 6
 	// maxText cuts what an app wrote to what a notification shows.
 	maxText = 300
 	// sendFor bounds the delivery of one event, retries included.
@@ -71,7 +68,6 @@ type track struct {
 	learned      bool
 	told         map[string]time.Time
 	open         map[string]bool
-	sent         []time.Time
 }
 
 // Next compares seen with what was told before and returns the events to
@@ -141,7 +137,6 @@ func (tr *track) next(s board.Seen, tx Texts, now time.Time) []notify.Event {
 			delete(tr.told, id)
 		}
 	}
-	tr.sent = slices.DeleteFunc(tr.sent, func(at time.Time) bool { return now.Sub(at) >= time.Hour })
 	for _, n := range s.Needs {
 		if _, ok := tr.told[n.ID]; ok {
 			continue
@@ -150,11 +145,7 @@ func (tr *track) next(s board.Seen, tx Texts, now time.Time) []notify.Event {
 			tr.told[n.ID] = now
 			continue
 		}
-		if len(tr.sent) >= needsPerHour {
-			continue
-		}
 		tr.told[n.ID] = now
-		tr.sent = append(tr.sent, now)
 		out = append(out, event(KindNeed, severity(n.Severity), tx.Get("n_need_title", s.Name), Plain(n.Text), s, "need:"+n.ID))
 	}
 	tr.learned = true

@@ -95,7 +95,7 @@ func run(ctx context.Context, cfg config) error {
 		Texts: func(lang string) map[string]string { return alert.LoadTexts(cfg.LangDir, lang) },
 	}
 	var b *board.Board
-	hb := hub.New(hub.Options{Channels: ch, Settings: hub.OpenStore(cfg.Hub), Texts: texts, Journal: j, State: cfg.HubState,
+	hb := hub.New(hub.Options{Channels: ch, Unraid: ch.Unraid, Settings: hub.OpenStore(cfg.Hub), Texts: texts, Journal: j, State: cfg.HubState,
 		Open: func(lang string) []string { return board.OpenLines(b.View(ctx, lang)) }})
 	j.Hub = hb.TakesOver
 	fort, err := fortress.Open(fortress.Options{Dir: cfg.Fortress, Device: device, Version: version, LAN: true, Journal: j,
@@ -112,10 +112,13 @@ func run(ctx context.Context, cfg config) error {
 		Texts: func(lang string) map[string]string { return alert.LoadTexts(cfg.LangDir, lang) },
 		Lang:  func() string { return alert.Language(cfg.Dynamix) },
 		Notify: func(ctx context.Context, e notify.Event) {
-			if r := ch.Unraid(ctx, e); !r.OK() {
-				slog.Warn("notification failed", "channel", r.Channel, "code", r.Code, "err", r.Err)
+			for _, r := range hb.Offer(ctx, hub.Message{App: host.Unraid, Name: "Unraid", Key: e.Kind, Unraid: true, Event: e}) {
+				if !r.OK() {
+					slog.Warn("notification failed", "channel", r.Channel, "code", r.Code, "err", r.Err)
+				}
 			}
 		},
+		Clear: func(kind string) { hb.Resolve(host.Unraid, kind) },
 	})
 	b.Local = unraid
 	// The host saves what it learned once ctx ends, which the service waits

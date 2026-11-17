@@ -23,8 +23,9 @@ type server struct {
 	used  map[string]float64
 	files map[string]uint64
 
-	mu   sync.Mutex
-	sent []notify.Event
+	mu      sync.Mutex
+	sent    []notify.Event
+	cleared []string
 }
 
 func newServer(t *testing.T) *server {
@@ -48,6 +49,11 @@ func (s *server) host(t *testing.T) *Host {
 			s.mu.Lock()
 			defer s.mu.Unlock()
 			s.sent = append(s.sent, e)
+		},
+		Clear: func(kind string) {
+			s.mu.Lock()
+			defer s.mu.Unlock()
+			s.cleared = append(s.cleared, kind)
 		},
 	})
 }
@@ -250,13 +256,16 @@ func TestVarLogAtNinetyPercentSendsOneUnraidNotification(t *testing.T) {
 	s.used["/var/log"] = 0.91
 	s.look(h)
 	s.look(h)
-	if len(s.sent) != 1 || s.sent[0].Title != "/var/log is almost full" || s.sent[0].Severity != notify.SeverityWarning {
+	if len(s.sent) != 1 || s.sent[0].Title != "/var/log is almost full" || s.sent[0].Severity != notify.SeverityCritical || s.sent[0].Kind != "host.varlog_full" {
 		t.Fatalf("%+v", s.sent)
 	}
 	s.used["/var/log"] = 0.5
 	s.look(h)
 	if r := row(h.Rows("en"), "unraid"); r.Need != nil {
 		t.Errorf("room again: %+v", r.Need)
+	}
+	if len(s.cleared) != 1 || s.cleared[0] != "host.varlog_full" {
+		t.Errorf("cleared %q", s.cleared)
 	}
 }
 

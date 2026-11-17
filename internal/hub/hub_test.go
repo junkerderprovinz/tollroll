@@ -3,12 +3,17 @@ package hub
 import (
 	"context"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/junkerderprovinz/parleyport/kit/notify"
+	"github.com/junkerderprovinz/parleyport/kit/status"
+
+	"github.com/junkerderprovinz/tollroll/internal/alert"
+	"github.com/junkerderprovinz/tollroll/internal/board"
 )
 
 type channels struct {
@@ -213,5 +218,59 @@ func TestQuietHoursMayRunPastMidnight(t *testing.T) {
 	}
 	if (Window{On: true, From: "09:00", To: "17:00"}).quiet(time.Date(1, 1, 1, 18, 0, 0, 0, time.UTC)) {
 		t.Error("a window within the day")
+	}
+}
+
+func TestTheServersAlertReachesUnraidWithoutAChannelOnceUntilItIsOver(t *testing.T) {
+	e := newEnv(t, Settings{Quiet: Window{On: true, From: "00:00", To: "23:59"}})
+	e.ch.on = false
+	var unraid []string
+	e.h.o.Unraid = func(_ context.Context, ev notify.Event) notify.Result {
+		unraid = append(unraid, ev.Title)
+		return notify.Result{Channel: "unraid", Kind: notify.KindUnraid}
+	}
+	full := Message{App: "unraid", Name: "Unraid", Key: "host.varlog_full", Unraid: true,
+		Event: notify.Event{Kind: "host.varlog_full", Severity: notify.SeverityCritical, Title: "/var/log is almost full"}}
+	e.h.Offer(context.Background(), full)
+	e.h.Offer(context.Background(), full)
+	if len(unraid) != 1 || len(e.ch.sent) != 0 {
+		t.Fatalf("unraid %q, channels %+v", unraid, e.ch.sent)
+	}
+	e.h.Resolve("unraid", "host.varlog_full")
+	e.ch.on = true
+	e.h.Offer(context.Background(), full)
+	if len(unraid) != 1 || len(e.ch.sent) != 1 {
+		t.Errorf("with a channel on: unraid %q, channels %+v", unraid, e.ch.sent)
+	}
+	e.h.mu.Lock()
+	defer e.h.mu.Unlock()
+	if len(e.h.day) != 2 {
+		t.Errorf("the summary keeps %d", len(e.h.day))
+	}
+}
+
+func TestAnAppThatRaisesNeedsByTheDozenSendsSixAndOneCollectedMessage(t *testing.T) {
+	e := newEnv(t, Settings{})
+	tr := &alert.Tracker{}
+	tx := alert.Texts{"n_need_title": "{name} needs you"}
+	seen := func(n int) []board.Seen {
+		s := board.Seen{Source: "m1", App: "knightloader", Name: "KnightLoader"}
+		for i := range n {
+			s.Needs = append(s.Needs, status.Need{ID: "n" + strconv.Itoa(i), Severity: status.SeverityWarn, Text: "Download " + strconv.Itoa(i) + " failed"})
+		}
+		return []board.Seen{s}
+	}
+	tr.Next(seen(0), tx)
+	for _, ev := range tr.Next(seen(50), tx) {
+		e.h.Send(context.Background(), ev)
+	}
+	if n := len(e.ch.titles()); n != 6 {
+		t.Fatalf("%d sent at once, want 6", n)
+	}
+	e.h.Tick(context.Background())
+	e.h.Tick(context.Background())
+	got := e.ch.sent
+	if len(got) != 7 || got[6].Title != "Collected" || !strings.HasSuffix(got[6].Body, "and 34 more") {
+		t.Errorf("%d sent, last %+v", len(got), got[len(got)-1])
 	}
 }

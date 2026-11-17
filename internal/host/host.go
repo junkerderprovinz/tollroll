@@ -63,13 +63,15 @@ type Space struct {
 // empty. State is the file on the flash drive that keeps what the watch
 // learned and the wake-up counts. Texts returns the plugin's strings in a
 // language and Lang names Unraid's, for the notification. Notify sends the
-// one notification the host sends, when /var/log is nearly full.
+// one notification the host sends, when /var/log is nearly full, and Clear
+// says by its kind that it is over.
 type Options struct {
 	Root   string
 	State  string
 	Texts  func(lang string) map[string]string
 	Lang   func() string
 	Notify func(ctx context.Context, e notify.Event)
+	Clear  func(kind string)
 	Now    func() time.Time
 	Space  func(path string) (Space, error)
 	// Own names the server's addresses and host name, whose own lines come
@@ -99,6 +101,7 @@ type Host struct {
 	arrayAt     time.Time
 	room        room
 	roomNeed    *entry
+	cleared     []string
 	routerOn    bool
 	routerLogs  map[string]*routerLog
 	silent      map[string]bool
@@ -191,7 +194,14 @@ func (h *Host) path(p string) string { return filepath.Join(h.o.Root, p) }
 func (h *Host) step(ctx context.Context) {
 	h.mu.Lock()
 	tell := h.look()
+	cleared := h.cleared
+	h.cleared = nil
 	h.mu.Unlock()
+	for _, kind := range cleared {
+		if h.o.Clear != nil {
+			h.o.Clear(kind)
+		}
+	}
 	for _, e := range tell {
 		if h.o.Notify != nil {
 			sctx, cancel := context.WithTimeout(ctx, time.Minute)
@@ -241,6 +251,9 @@ func (h *Host) look() []notify.Event {
 	}
 	return tell
 }
+
+// varLogFull is the kind of the alert that /var/log is nearly full.
+const varLogFull = "host.varlog_full"
 
 var unraidVersion = regexp.MustCompile(`version="([^"]+)"`)
 
@@ -528,6 +541,7 @@ func (h *Host) varLog(now time.Time) []notify.Event {
 	pct := int((sp.Total - sp.Free) * 100 / sp.Total)
 	note, tell, back := h.room.step(pct)
 	if back {
+		h.cleared = append(h.cleared, varLogFull)
 		h.roomNeed = nil
 		h.add(entry{at: now, app: Unraid, level: info, key: "h_room_ok", args: map[string]string{"pct": strconv.Itoa(pct)}})
 	}
@@ -552,7 +566,7 @@ func (h *Host) varLog(now time.Time) []notify.Event {
 	}
 	tx := h.o.Texts(h.o.Lang())
 	return []notify.Event{{
-		Kind: "host.varlog_full", Severity: notify.SeverityWarning,
+		Kind: varLogFull, Severity: notify.SeverityCritical,
 		Title: tx["h_room_title"], Body: say(tx, entry{key: "h_room_body", args: e.args}),
 	}}
 }

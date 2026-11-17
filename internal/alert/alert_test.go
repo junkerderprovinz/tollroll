@@ -356,26 +356,6 @@ func TestAFlappingAppIsToldDownOnlyOnceInAWhile(t *testing.T) {
 	}
 }
 
-func TestAnAppCanRaiseOnlyAFewNeedsAnHour(t *testing.T) {
-	tr, wait := clock()
-	tr.Next([]board.Seen{up()}, en)
-	var needs []status.Need
-	for i := range 50 {
-		needs = append(needs, need(strings.Repeat("n", i+1), status.SeverityWarn, "x"))
-	}
-	if got := tr.Next([]board.Seen{up(needs...)}, en); len(got) != needsPerHour {
-		t.Fatalf("sent %d events, want %d", len(got), needsPerHour)
-	}
-	wait(30 * time.Minute)
-	if got := tr.Next([]board.Seen{up(needs...)}, en); len(got) != 0 {
-		t.Fatalf("within the hour: %d events", len(got))
-	}
-	wait(31 * time.Minute)
-	if got := tr.Next([]board.Seen{up(needs...)}, en); len(got) != needsPerHour {
-		t.Errorf("an hour later: %d events, want %d", len(got), needsPerHour)
-	}
-}
-
 func TestANeedThatEndsIsReportedGoneByItsKey(t *testing.T) {
 	tr := &Tracker{}
 	s := func(needs ...status.Need) board.Seen {

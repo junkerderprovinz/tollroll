@@ -31,6 +31,10 @@ const (
 	burstWindow = time.Hour
 	// listed is how many held messages one collected message names.
 	listed = 10
+	// keepHeld and keepDay bound what the hub keeps of an app gone wrong
+	// that raises thousands of messages, on the flash drive as well.
+	keepHeld = 200
+	keepDay  = 1000
 	// dayFor is how far back the daily summary looks.
 	dayFor = 24 * time.Hour
 	// sendFor bounds the delivery of one message, retries included.
@@ -40,12 +44,15 @@ const (
 // Message is one thing to tell. App is the ID of the app it is about and
 // Name how it is shown. Key names what it is about, so a message about the
 // same thing is told once until a message with Resolved or a success says it
-// is over. Without a Key, the words of the message are its key.
+// is over. Without a Key, the words of the message are its key. Unraid sends
+// it as one of Unraid's own notifications while no channel is on, for what
+// the server must say either way.
 type Message struct {
 	App      string
 	Name     string
 	Key      string
 	Resolved bool
+	Unraid   bool
 	Event    notify.Event
 }
 
@@ -63,9 +70,11 @@ type Journal interface {
 // Options set up a Hub. Texts names the language to write in and its
 // strings. Open lists what is still open across the apps, one line each, for
 // the daily summary; nil leaves that out. State is where the held messages
-// and what was told are kept over a restart.
+// and what was told are kept over a restart. Unraid sends a message as an
+// Unraid notification whatever channels are on.
 type Options struct {
 	Channels Sender
+	Unraid   func(ctx context.Context, e notify.Event) notify.Result
 	Settings *Store
 	Texts    func() (string, map[string]string)
 	Open     func(lang string) []string
@@ -176,7 +185,7 @@ func (h *Hub) Offer(ctx context.Context, m Message) []notify.Result {
 		h.told[key] = now
 	}
 	k := kept{App: m.App, Name: m.Name, At: now, Title: e.Title, Sev: e.Severity}
-	h.day = append(h.day, k)
+	h.day = last(append(h.day, k), keepDay)
 	alert := e.Severity == notify.SeverityCritical
 	switch {
 	case alert:
@@ -184,12 +193,17 @@ func (h *Hub) Offer(ctx context.Context, m Message) []notify.Result {
 		h.mu.Unlock()
 		return nil
 	case s.Quiet.quiet(now) || !h.room(m.App, now):
-		h.held = append(h.held, k)
+		h.held = last(append(h.held, k), keepHeld)
 		h.mu.Unlock()
 		return nil
 	}
 	h.sent = append(h.sent, stamp{App: m.App, At: now})
 	h.mu.Unlock()
+	if m.Unraid && !h.Enabled() && h.o.Unraid != nil {
+		sctx, cancel := context.WithTimeout(ctx, sendFor)
+		defer cancel()
+		return []notify.Result{h.o.Unraid(sctx, e)}
+	}
 	return h.deliver(ctx, e)
 }
 
@@ -343,6 +357,14 @@ func (h *Hub) summary(tx map[string]string, lang string) notify.Event {
 		}
 	}
 	return notify.Event{Kind: "tollroll.digest", Severity: notify.SeverityInfo, Title: tx["n_digest_title"], Body: strings.Join(lines, "\n")}
+}
+
+// last keeps the newest n of ks.
+func last(ks []kept, n int) []kept {
+	if len(ks) > n {
+		return slices.Clone(ks[len(ks)-n:])
+	}
+	return ks
 }
 
 func worst(ks []kept) notify.Severity {
