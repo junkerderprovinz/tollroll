@@ -3,7 +3,7 @@
   <!ENTITY name      "tollroll">
   <!ENTITY slug      "tollroll">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "1.0.1">
+  <!ENTITY version   "1.0.0">
   <!ENTITY launch    "Settings/tollroll">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/tollroll/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
