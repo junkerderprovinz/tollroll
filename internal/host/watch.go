@@ -28,6 +28,12 @@ type baseline struct {
 	Cron    map[string]bool      `json:"cron"`
 	Flash   map[string]string    `json:"flash"`
 	Guests  map[string]bool      `json:"guests"`
+	// Routers holds when each device that sends its log here sent its last
+	// line, Admins the addresses its admins signed in from and Devices the
+	// hardware addresses its DHCP server handed out to.
+	Routers map[string]time.Time `json:"routers,omitempty"`
+	Admins  map[string]time.Time `json:"admins,omitempty"`
+	Devices map[string]time.Time `json:"devices,omitempty"`
 }
 
 const (
@@ -75,7 +81,7 @@ func (w *watch) signIn(c class, at time.Time, live bool) []finding {
 			w.base.Addrs = map[string]time.Time{}
 		}
 		w.base.Addrs[addr] = at
-		w.trimAddrs()
+		trim(w.base.Addrs, keepAddrs)
 		w.changed = true
 		if !live {
 			return nil
@@ -95,18 +101,6 @@ func (w *watch) signIn(c class, at time.Time, live bool) []finding {
 		return []finding{{Level: warn, Key: "h_w_fails", Args: map[string]string{"addr": addr, "n": strconv.Itoa(len(recent))}}}
 	}
 	return nil
-}
-
-func (w *watch) trimAddrs() {
-	for len(w.base.Addrs) > keepAddrs {
-		var oldest string
-		for a, t := range w.base.Addrs {
-			if oldest == "" || t.Before(w.base.Addrs[oldest]) {
-				oldest = a
-			}
-		}
-		delete(w.base.Addrs, oldest)
-	}
 }
 
 // added learns now as the set at *known and returns what is new in it,

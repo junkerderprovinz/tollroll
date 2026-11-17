@@ -329,6 +329,14 @@
     return '';
   }
 
+  // routerStatus is what the settings page says of the router log: whether
+  // Unraid takes logs at all, and when each device that sends one last did.
+  function routerStatus(r, L, lang) {
+    if (!r.server) return [L.s_router_off];
+    if (!(r.senders || []).length) return [L.s_router_wait];
+    return r.senders.map(function (s) { return fmt(L.s_router_sender, { name: s.name, when: s.lastAt ? ago(s.lastAt, lang) : '?' }); });
+  }
+
   function lang(locale) {
     var m = /^([a-z]{2,3})(?:[_-]|$)/i.exec(String(locale || ''));
     return m ? m[1].toLowerCase() : 'en';
@@ -337,5 +345,5 @@
   return { fmt: fmt, plural: plural, rowStatus: rowStatus, foldQuiet: foldQuiet, filterLog: filterLog, chips: chips, validFilter: validFilter,
     hue: hue, mark: mark, timeLabel: timeLabel, subtitle: subtitle, needsYou: needsYou, lang: lang,
     safeIcon: safeIcon, markColors: markColors, notifyForm: notifyForm, notifyChannels: notifyChannels,
-    layout: layout, shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, statusWindow: statusWindow, ago: ago };
+    layout: layout, shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, statusWindow: statusWindow, ago: ago, routerStatus: routerStatus };
 });

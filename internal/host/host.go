@@ -72,6 +72,9 @@ type Options struct {
 	Notify func(ctx context.Context, e notify.Event)
 	Now    func() time.Time
 	Space  func(path string) (Space, error)
+	// Own names the server's addresses and host name, whose own lines come
+	// back through Unraid's syslog server when it sends its log to itself.
+	Own func() []string
 }
 
 // Host is safe for concurrent use.
@@ -79,32 +82,38 @@ type Host struct {
 	o     Options
 	probe probe
 
-	mu       sync.Mutex
-	started  bool
-	unraid   bool
-	version  string
-	syslog   tail
-	hadState bool
-	through  time.Time
-	watch    *watch
-	spins    spins
-	wakes    tally
-	last     map[string]lastWake
-	disks    []disk
-	moving   bool
-	unclean  bool
-	arrayAt  time.Time
-	room     room
-	roomNeed *entry
-	boxes    map[string]box
-	vms      map[string]bool
-	lines    []entry
-	quiet    []entry
-	needs    []entry
-	seq      int64
-	slowAt   time.Time
-	savedAt  time.Time
-	dirty    bool
+	mu          sync.Mutex
+	started     bool
+	unraid      bool
+	version     string
+	syslog      tail
+	hadState    bool
+	through     time.Time
+	watch       *watch
+	spins       spins
+	wakes       tally
+	last        map[string]lastWake
+	disks       []disk
+	moving      bool
+	unclean     bool
+	arrayAt     time.Time
+	room        room
+	roomNeed    *entry
+	routerOn    bool
+	routerLogs  map[string]*routerLog
+	silent      map[string]bool
+	routerFails map[string][]time.Time
+	routerTold  map[string]time.Time
+	idsTold     map[string]time.Time
+	boxes       map[string]box
+	vms         map[string]bool
+	lines       []entry
+	quiet       []entry
+	needs       []entry
+	seq         int64
+	slowAt      time.Time
+	savedAt     time.Time
+	dirty       bool
 }
 
 // entry is a line of the log as a key and its values, so it reads in the
@@ -152,7 +161,11 @@ func New(o Options) *Host {
 	if o.Lang == nil {
 		o.Lang = func() string { return "en" }
 	}
-	return &Host{o: o, probe: probe{root: o.Root}, syslog: tail{path: filepath.Join(o.Root, "/var/log/syslog")}}
+	if o.Own == nil {
+		o.Own = ownAddrs
+	}
+	return &Host{o: o, probe: probe{root: o.Root}, syslog: tail{path: filepath.Join(o.Root, "/var/log/syslog")},
+		silent: map[string]bool{}, routerFails: map[string][]time.Time{}, routerTold: map[string]time.Time{}, idsTold: map[string]time.Time{}}
 }
 
 // Run reads the server every 30 seconds until ctx ends, and then saves what
@@ -209,9 +222,14 @@ func (h *Host) look() []notify.Event {
 			h.woke(d, now, now)
 		}
 	}
+	slow := !h.started || now.Sub(h.slowAt) >= slowEvery
+	if slow {
+		h.findRouterLogs()
+	}
+	h.readRouters(now)
 	h.boxesAndVMs(now)
 	var tell []notify.Event
-	if !h.started || now.Sub(h.slowAt) >= slowEvery {
+	if slow {
 		h.slowAt = now
 		tell = h.slow(now)
 	}
@@ -310,7 +328,7 @@ func (h *Host) ingest(l line, now time.Time) {
 	if addr := c.Args["addr"]; addr != "" {
 		known := h.watch.knows(addr)
 		for _, f := range h.watch.signIn(c, l.At, live) {
-			h.found(f, l.At)
+			h.found(Unraid, f, l.At)
 		}
 		if (c.Key == "h_s_web_ok" || c.Key == "h_s_ssh_ok") && (known || !live) {
 			c.Quiet = true
@@ -360,8 +378,8 @@ func (h *Host) need(e entry) {
 	h.needs = keep(append(h.needs, e), keepNeeds)
 }
 
-func (h *Host) found(f finding, at time.Time) {
-	e := entry{at: at, app: Unraid, level: f.Level, key: f.Key, args: f.Args}
+func (h *Host) found(app string, f finding, at time.Time) {
+	e := entry{at: at, app: app, level: f.Level, key: f.Key, args: f.Args}
 	h.add(e)
 	h.need(e)
 }
@@ -494,7 +512,7 @@ func (h *Host) slow(now time.Time) []notify.Event {
 	}
 	fs = append(fs, w.deletes(used, h.moving || h.probe.moverRunning())...)
 	for _, f := range fs {
-		h.found(f, now)
+		h.found(Unraid, f, now)
 	}
 	if w.changed {
 		w.changed, h.dirty = false, true
@@ -578,21 +596,19 @@ func (h *Host) Rows(lang string) []board.App {
 		return nil
 	}
 	srv := board.App{Key: Unraid, Name: "Unraid", Version: h.version, State: string(status.StateOK), Instances: 1, Local: true, Color: "#f15a2c"}
-	needs := slices.Clone(h.needs)
-	if h.roomNeed != nil {
-		needs = append(needs, *h.roomNeed)
-	}
-	slices.SortStableFunc(needs, func(a, b entry) int {
-		return cmp.Or(severity[b.level]-severity[a.level], b.at.Compare(a.at))
-	})
-	for _, n := range needs[:min(len(needs), listedNeed)] {
-		srv.Needs = append(srv.Needs, board.Need{Severity: string(n.level), Text: say(tx, n)})
-	}
-	if len(srv.Needs) > 0 {
-		srv.State = string(status.StateWarning)
-		srv.Need = &srv.Needs[0]
-	}
+	h.needsOn(&srv, tx)
 	rows := []board.App{srv}
+	if len(h.routerLogs) > 0 {
+		rt := board.App{Key: Router, Name: cmp.Or(tx["h_router"], "Router"), State: string(status.StateOK), Instances: 1, Local: true}
+		var names []string
+		for _, rl := range h.routerLogs {
+			names = append(names, rl.name)
+		}
+		slices.Sort(names)
+		rt.Note = strings.ReplaceAll(tx["h_router_from"], "{routers}", strings.Join(slices.Compact(names), ", "))
+		h.needsOn(&rt, tx)
+		rows = append(rows, rt)
+	}
 	if len(h.disks) == 0 {
 		return rows
 	}
@@ -614,6 +630,29 @@ func (h *Host) Rows(lang string) []board.App {
 		ds.Note = strings.ReplaceAll(tx["h_wakes_today"], "{n}", strconv.Itoa(total))
 	}
 	return append(rows, ds)
+}
+
+// needsOn lists on row what needs you of its app, the worst and newest first.
+func (h *Host) needsOn(row *board.App, tx map[string]string) {
+	var needs []entry
+	for _, n := range h.needs {
+		if n.app == row.Key {
+			needs = append(needs, n)
+		}
+	}
+	if h.roomNeed != nil && row.Key == Unraid {
+		needs = append(needs, *h.roomNeed)
+	}
+	slices.SortStableFunc(needs, func(a, b entry) int {
+		return cmp.Or(severity[b.level]-severity[a.level], b.at.Compare(a.at))
+	})
+	for _, n := range needs[:min(len(needs), listedNeed)] {
+		row.Needs = append(row.Needs, board.Need{Severity: string(n.level), Text: say(tx, n)})
+	}
+	if len(row.Needs) > 0 {
+		row.State = string(status.StateWarning)
+		row.Need = &row.Needs[0]
+	}
 }
 
 var severity = map[status.Severity]int{info: 0, warn: 1, fault: 2}

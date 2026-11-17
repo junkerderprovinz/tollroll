@@ -117,7 +117,7 @@ func run(ctx context.Context, cfg config) error {
 		return err
 	}
 	srv := &http.Server{
-		Handler:           api.New(b, ch, texts, fort, prefs.Open(cfg.Tile)),
+		Handler:           api.New(api.Deps{Board: b, Channels: ch, Texts: texts, Fortress: fort, Prefs: prefs.Open(cfg.Tile), Router: unraid.RouterLog}),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 	w := &alert.Watcher{Every: checkEvery, Check: b.Check, Channels: ch, Texts: texts, Journal: j}

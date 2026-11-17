@@ -66,6 +66,8 @@ The server itself writes into the same log, even before TollRoll joins a fortres
 
 The log flags the unusual too: a sign-in from an address TollRoll has not seen before, a burst of failed sign-ins, a new plugin, changed settings on the flash drive, a new scheduled task, a share newly open to guests and many files deleted at once. When `/var/log` is 80% full it names the biggest file and who writes it, and at 90% it sends one Unraid notification.
 
+Your router can join the watch too. Once it sends its log to Unraid's syslog server, its lines land in a row of their own, **Router**, and TollRoll flags new sign-ins to the router, changed port forwards and firewall rules, intrusion warnings, a device that is new on your network and a router that has sent nothing for six hours. TollRoll never asks for the router's password and never connects to it. It knows the lines of the prosumer routers whose log topics read like `system,info,account`, of the gateways that send their activity log in CEF, and the DHCP, SSH and sign-in lines many home routers share. A log file on a disk that is spun down waits until the disk is awake anyway.
+
 Every time an array or pool disk spins up, the log says which one and its likely cause: a container, a VM, an SMB or NFS client, the mover, a parity check or a scheduled task. When the cause cannot be known, it says so. Pick **Disks** and open it from the tile header to see how often each disk woke up today and over the last 7 days. TollRoll only reads, so it never wakes a disk itself.
 
 Once TollRoll is in a fortress, a selector in the tile header switches between four views: **Everything**, the **Apps** alone, the **Log** alone over the whole height of the tile, and the **Map** of the fortress. In the log view you tick apps on and off in a list in its head, with **All** and **None** on top. The apps view always shows every app. The map shows every device of the fortress with its apps, and whether each one is connected right now. The tile remembers the view and the apps you chose on the server, so every browser finds it the way you left it.
@@ -126,7 +128,8 @@ TollRoll needs Unraid 6.12 or newer. Without a fortress the tile shows the serve
 1. Copy the phrase, the twelve words, from an app of your fortress that shows it, such as BombVault.
 2. In Unraid, open **Settings → Utilities → TollRoll**, paste the phrase and join. Every app of the fortress shows up by itself.
 3. To get notified, fill in a channel under **Notifications** and try it with **Send a test message**. Every change in the settings is saved right away, a small tick says so.
-4. Open the **Dashboard**. The TollRoll tile sits in the middle column.
+4. To watch your router as well, open **Settings → Syslog Server** in Unraid, switch on the local syslog server and pick a folder on a pool for its files. Then set this server's address as the remote syslog server in your router, port 514 over UDP. The **Router log** card under **General** shows once lines arrive.
+5. Open the **Dashboard**. The TollRoll tile sits in the middle column.
 
 <br>
 

@@ -333,3 +333,10 @@ test('in a fortress the tile shows the chosen view with a row for every app and 
   const map = core.layout(view, { joined: true }, 'map');
   assert.deepEqual([map.rows, map.log, map.map], [false, false, true]);
 });
+
+test('the settings say whether the router log arrives and from whom', () => {
+  assert.deepEqual(core.routerStatus({ server: false, senders: [] }, en, 'en'), [en.s_router_off]);
+  assert.deepEqual(core.routerStatus({ server: true, senders: [] }, en, 'en'), [en.s_router_wait]);
+  const lines = core.routerStatus({ server: true, senders: [{ name: 'gw', lastAt: new Date(Date.now() - 120000).toISOString() }] }, en, 'en');
+  assert.deepEqual(lines, ['gw, last line 2 minutes ago']);
+});

@@ -17,6 +17,7 @@ import (
 	"github.com/junkerderprovinz/tollroll/internal/alert"
 	"github.com/junkerderprovinz/tollroll/internal/board"
 	"github.com/junkerderprovinz/tollroll/internal/channels"
+	"github.com/junkerderprovinz/tollroll/internal/host"
 	"github.com/junkerderprovinz/tollroll/internal/prefs"
 )
 
@@ -65,7 +66,8 @@ func newEnv(t *testing.T) *env {
 	texts := func() (string, alert.Texts) {
 		return "en", alert.Texts{"n_test_title": "TollRoll test", "n_test_body": "It works."}
 	}
-	e.h = New(b, ch, texts, e.fort, prefs.Open(filepath.Join(dir, "tile.json")))
+	e.h = New(Deps{Board: b, Channels: ch, Texts: texts, Fortress: e.fort, Prefs: prefs.Open(filepath.Join(dir, "tile.json")),
+		Router: func() host.RouterLog { return host.RouterLog{Server: true, Senders: []host.Sender{{Name: "gw"}}} }})
 	return e
 }
 
@@ -148,5 +150,13 @@ func TestAnOversizedBodyIsRefused(t *testing.T) {
 	code, _ := e.do("POST", "/api/fortress/join", `{"phrase":"`+strings.Repeat("a", 2<<20)+`"}`)
 	if code != http.StatusRequestEntityTooLarge {
 		t.Fatalf("code %d", code)
+	}
+}
+
+func TestTheRouterLogIsServed(t *testing.T) {
+	e := newEnv(t)
+	code, out := e.do("GET", "/api/router", "")
+	if code != 200 || out["server"] != true || len(out["senders"].([]any)) != 1 {
+		t.Fatalf("%d %v", code, out)
 	}
 }

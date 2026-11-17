@@ -10,6 +10,7 @@
  *   GET  api.php?path=fortress               -> GET  /api/fortress
  *   GET  api.php?path=status&id=<id>&lang=<tag> -> GET /api/fortress/status
  *   GET  api.php?path=tile                   -> GET  /api/tile
+ *   GET  api.php?path=router                 -> GET  /api/router
  *   POST api.php  path=notify      data=JSON  -> PUT  /api/notify
  *   POST api.php  path=notify_test data=JSON  -> POST /api/notify/test
  *   POST api.php  path=join        data=JSON  -> POST /api/fortress/join
@@ -24,7 +25,7 @@
 
 $sock   = '/var/run/tollroll.sock';
 $reads  = ['board' => '/api/board', 'icons' => '/api/icons', 'notify' => '/api/notify', 'fortress' => '/api/fortress',
-           'status' => '/api/fortress/status', 'tile' => '/api/tile'];
+           'status' => '/api/fortress/status', 'tile' => '/api/tile', 'router' => '/api/router'];
 $writes = ['notify' => ['PUT', '/api/notify'], 'notify_test' => ['POST', '/api/notify/test'],
            'join' => ['POST', '/api/fortress/join'], 'leave' => ['POST', '/api/fortress/leave'],
            'remove' => ['POST', '/api/fortress/remove'],

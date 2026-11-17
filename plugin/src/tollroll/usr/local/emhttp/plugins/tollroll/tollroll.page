@@ -67,6 +67,12 @@ $trs_rbtn = function ($brand, $name, $href) use ($trs_marks, $trs_e) {
             <div class="trs-ctl"><button type="button" id="trs-map" class="trs-btn"><span class="trs-gl" data-glyph="IconFleet"></span><span><?=$h('s_map')?></span></button></div>
           </div>
         </section>
+
+        <section class="trs-card" aria-labelledby="trs-h-router">
+          <h3 class="trs-h"><span id="trs-h-router"><?=$h('s_router')?></span></h3>
+          <p class="trs-hint"><?=$h('s_router_hint')?></p>
+          <div id="trs-router" role="status"></div>
+        </section>
       </div>
 
       <div class="trs-pane" role="tabpanel" id="trs-pane-notify" aria-labelledby="trs-tab-notify" hidden>

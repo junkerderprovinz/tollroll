@@ -104,6 +104,12 @@
     }, function () { reading = false; });
   }
 
+  var routerEl = document.getElementById('trs-router');
+  get('router').then(function (r) {
+    if (r.error) return;
+    C.routerStatus(r, L, lang).forEach(function (t) { routerEl.appendChild(el('p', 'trs-prose', t)); });
+  });
+
   /* The card gets the fortress from the service and the steps go back to it. */
   var JOIN = { phrase_invalid: 'phrase', bad_request: 'phrase' };
   var REMOVE = { no_member: 'noMember', not_joined: 'noMember' };

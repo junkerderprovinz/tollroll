@@ -16,6 +16,7 @@ import (
 	"github.com/junkerderprovinz/tollroll/internal/board"
 	"github.com/junkerderprovinz/tollroll/internal/channels"
 	"github.com/junkerderprovinz/tollroll/internal/fortress"
+	"github.com/junkerderprovinz/tollroll/internal/host"
 	"github.com/junkerderprovinz/tollroll/internal/prefs"
 )
 
@@ -23,12 +24,24 @@ const maxBody = 64 << 10
 
 var langTag = regexp.MustCompile(`^[a-zA-Z]{2,3}([-_][a-zA-Z0-9]{2,8})?$`)
 
+// Deps are what the handler serves. Texts gives the words of a channel's
+// test message, Router what Unraid's syslog server keeps of the router.
+type Deps struct {
+	Board    *board.Board
+	Channels *channels.Store
+	Texts    func() (string, alert.Texts)
+	Fortress Fortress
+	Prefs    *prefs.Store
+	Router   func() host.RouterLog
+}
+
 type handler struct {
 	board    *board.Board
 	channels *channels.Store
 	texts    func() (string, alert.Texts)
 	fortress Fortress
 	prefs    *prefs.Store
+	router   func() host.RouterLog
 }
 
 // Fortress is the tile's membership in a fortress.
@@ -40,9 +53,9 @@ type Fortress interface {
 	Source(id string) (board.Source, error)
 }
 
-// New returns the handler. texts gives the words of a channel's test message.
-func New(b *board.Board, ch *channels.Store, texts func() (string, alert.Texts), fort Fortress, p *prefs.Store) http.Handler {
-	h := &handler{board: b, channels: ch, texts: texts, fortress: fort, prefs: p}
+// New returns the handler.
+func New(d Deps) http.Handler {
+	h := &handler{board: d.Board, channels: d.Channels, texts: d.Texts, fortress: d.Fortress, prefs: d.Prefs, router: d.Router}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/board", h.view)
 	mux.HandleFunc("GET /api/icons", h.icons)
@@ -56,7 +69,12 @@ func New(b *board.Board, ch *channels.Store, texts func() (string, alert.Texts),
 	mux.HandleFunc("GET /api/fortress/status", h.memberStatus)
 	mux.HandleFunc("GET /api/tile", h.tile)
 	mux.HandleFunc("PUT /api/tile", h.setTile)
+	mux.HandleFunc("GET /api/router", h.routerLog)
 	return mux
+}
+
+func (h *handler) routerLog(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, h.router())
 }
 
 func (h *handler) tile(w http.ResponseWriter, _ *http.Request) {

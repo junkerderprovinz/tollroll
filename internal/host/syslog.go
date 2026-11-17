@@ -25,28 +25,34 @@ var (
 	rfc3339 = regexp.MustCompile(`^(\d{4}-\d\d-\d\dT\S+) \S+ ([^:\[\s]+)(?:\[\d+\])?: ?(.*)$`)
 )
 
-// parse reads a line of rsyslog's classic format, whose time has no year and
-// is taken as the latest one not after now, or of its RFC 3339 format.
+// parse reads a line of rsyslog's classic format or of its RFC 3339 format.
 func parse(s string, now time.Time) (line, bool) {
-	if m := classic.FindStringSubmatch(s); m != nil {
-		at, err := time.ParseInLocation(time.Stamp, m[1], now.Location())
-		if err != nil {
-			return line{}, false
-		}
-		at = at.AddDate(now.Year(), 0, 0)
-		if at.After(now.Add(24 * time.Hour)) {
-			at = at.AddDate(-1, 0, 0)
-		}
-		return line{At: at, Prog: m[2], Msg: m[3]}, true
+	m := classic.FindStringSubmatch(s)
+	if m == nil {
+		m = rfc3339.FindStringSubmatch(s)
 	}
-	if m := rfc3339.FindStringSubmatch(s); m != nil {
-		at, err := time.Parse(time.RFC3339Nano, m[1])
-		if err != nil {
-			return line{}, false
-		}
-		return line{At: at, Prog: m[2], Msg: m[3]}, true
+	if m == nil {
+		return line{}, false
 	}
-	return line{}, false
+	at, ok := stamp(m[1], now)
+	return line{At: at, Prog: m[2], Msg: m[3]}, ok
+}
+
+// stamp reads the time of a line. The classic one has no year and is taken
+// as the latest one not after now.
+func stamp(s string, now time.Time) (time.Time, bool) {
+	if at, err := time.Parse(time.RFC3339Nano, s); err == nil {
+		return at, true
+	}
+	at, err := time.ParseInLocation(time.Stamp, s, now.Location())
+	if err != nil {
+		return time.Time{}, false
+	}
+	at = at.AddDate(now.Year(), 0, 0)
+	if at.After(now.Add(24 * time.Hour)) {
+		at = at.AddDate(-1, 0, 0)
+	}
+	return at, true
 }
 
 // firstRead bounds how much of each file the first look reads. Unraid's
