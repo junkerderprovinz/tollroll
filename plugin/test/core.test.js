@@ -309,11 +309,13 @@ test('out of a fortress the tile is the log window above the prompt to join, wit
   const view = { apps: [app({ key: 'unraid', name: 'Unraid', local: true }), app({ key: 'disks', name: 'Disks', local: true }), app()], log: [] };
   const all = core.layout(view, { joined: false }, 'all');
   assert.deepEqual(all.apps, []);
-  assert.deepEqual(all.views, ['all', 'log']);
   assert.deepEqual([all.view, all.rows, all.chips, all.log, all.map, all.join], ['all', false, true, true, false, true]);
-  const log = core.layout(view, { joined: false }, 'log');
-  assert.deepEqual([log.view, log.rows, log.chips, log.log, log.join], ['log', false, false, true, true]);
-  for (const v of ['apps', 'map']) assert.equal(core.layout(view, { joined: false }, v).view, 'all', 'there are no apps and no map without a fortress');
+  for (const v of ['apps', 'log', 'map']) assert.equal(core.layout(view, { joined: false }, v).view, 'all', v);
+});
+
+test('out of a fortress the header offers no views, since every one would look the same', () => {
+  const l = core.layout({ apps: [app({ key: 'unraid', name: 'Unraid', local: true })], log: [] }, { joined: false }, 'all');
+  assert.deepEqual([l.views, l.selector], [['all'], false]);
 });
 
 test('out of a fortress with nothing from the server the tile keeps its log above the prompt to join', () => {
@@ -326,7 +328,7 @@ test('in a fortress the tile shows the chosen view with a row for every app and 
   const all = core.layout(view, { joined: true }, 'all');
   assert.deepEqual(all.apps.map((a) => a.key), ['alpha']);
   assert.deepEqual([all.view, all.rows, all.chips, all.log, all.map, all.join], ['all', true, true, true, false, false]);
-  assert.deepEqual(all.views, ['all', 'apps', 'log', 'map']);
+  assert.deepEqual([all.views, all.selector], [['all', 'apps', 'log', 'map'], true]);
   assert.deepEqual(core.layout(view, { joined: true }, 'apps').apps.map((a) => a.key), ['alpha']);
   const map = core.layout(view, { joined: true }, 'map');
   assert.deepEqual([map.rows, map.log, map.map], [false, false, true]);

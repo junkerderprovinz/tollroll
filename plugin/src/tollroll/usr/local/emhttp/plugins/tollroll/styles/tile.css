@@ -13,6 +13,7 @@
 .Theme--white .trl,.Theme--azure .trl{--trl-ok:#1f7a43;--trl-warn:#b55d0c;--trl-fail:#b8322f;--trl-idle:#2a6fbd;--trl-off:#767676}
 
 .trl-sub{display:block;font-size:12px;font-weight:400;opacity:.7;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trl-sub:empty{display:none}
 
 .trl-rows{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;margin:0;padding:0;list-style:none}
 @container (max-width:520px){.trl-rows{grid-template-columns:1fr}}

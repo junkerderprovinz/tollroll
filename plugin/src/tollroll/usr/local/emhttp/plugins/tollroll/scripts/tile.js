@@ -164,7 +164,7 @@
 
   function drawHS(lay) {
     views = VIEWS.filter(function (v) { return lay.views.indexOf(v[0]) >= 0; });
-    hsEl.hidden = false;
+    hsEl.hidden = !lay.selector;
     hsEl.textContent = '';
     views.forEach(function (v) {
       var on = lay.view === v[0];

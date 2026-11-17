@@ -226,14 +226,15 @@
 
   /* layout says what the tile shows: the view chosen in the header. The
    * server gets no row: its state is in its own lines of the log. Out of a
-   * fortress that leaves the log window, with the prompt to join below. */
+   * fortress that leaves the log window, with the prompt to join below, and
+   * nothing to choose in the header. */
   function layout(view, fort, chosen) {
     var joined = !!(fort && fort.joined);
-    var views = joined ? ['all', 'apps', 'log', 'map'] : ['all', 'log'];
+    var views = joined ? ['all', 'apps', 'log', 'map'] : ['all'];
     var v = views.indexOf(chosen) >= 0 ? chosen : 'all';
     var apps = joined ? view.apps.filter(function (a) { return !a.local; }) : [];
     return {
-      view: v, views: views, apps: apps, join: !joined,
+      view: v, views: views, selector: views.length > 1, apps: apps, join: !joined,
       rows: (v === 'all' || v === 'apps') && apps.length > 0,
       chips: v === 'all',
       log: v === 'all' || v === 'log',
