@@ -377,8 +377,8 @@
 
   // The log view keeps the height the tile has with everything on it, so the
   // dashboard does not jump when the view changes.
-  function fillHeight() {
-    drawRows(view.apps, false);
+  function fillHeight(apps) {
+    drawRows(apps, false);
     drawChips();
     var probe = [rowsEl, chipsEl];
     probe.forEach(function (n) { n.hidden = false; n.style.cssText = 'visibility:hidden;position:absolute;width:' + root.clientWidth + 'px'; });
@@ -608,7 +608,7 @@
     if (v === 'map') {
       drawMap();
     } else {
-      var chosen = C.shown(lay.apps, prefs.hidden);
+      var chosen = C.shown(view.apps, prefs.hidden);
       if (v === 'all') {
         drawRows(lay.apps, false);
         drawChips();
@@ -624,7 +624,7 @@
         logCount.textContent = C.plural(L, 't_lines', lines.length, lang);
         logHead.appendChild(logCount);
         drawLog(lines, chosen.length === 1 ? chosen[0] : null);
-        fillHeight();
+        fillHeight(C.layout(view, fort, 'all').apps);
       }
     }
     drawOpen(v);

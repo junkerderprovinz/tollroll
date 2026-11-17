@@ -39,14 +39,8 @@
   }
 
   /* The app's own words win: its most urgent need, then its running work.
-   * Only a quiet app gets the tile's word for its state. A row of the server
-   * always does, since its needs and notes are lines of the log already. */
+   * Only a quiet app gets the tile's word for its state. */
   function rowStatus(app, L, lang) {
-    if (app.local) {
-      if (app.state === 'ok') return { tone: 'ok', text: L.t_st_ok };
-      var st = STATES[app.state] || STATES.unreachable;
-      return { tone: app.need && app.need.severity === 'error' ? 'fail' : st[0], text: L[st[1]] };
-    }
     if (app.state !== 'unreachable' && app.need) {
       return { tone: app.need.severity === 'error' ? 'fail' : 'warn', text: app.need.text };
     }
@@ -230,17 +224,17 @@
     return n ? s + ', ' + plural(L, 't_attn', n, lang) : s;
   }
 
-  /* layout says what the tile shows: the view chosen in the header. Out of a
-   * fortress it is the same log window with only the server's rows, no map,
-   * and the prompt to join below. */
+  /* layout says what the tile shows: the view chosen in the header. The
+   * server gets no row: its state is in its own lines of the log. Out of a
+   * fortress that leaves the log window, with the prompt to join below. */
   function layout(view, fort, chosen) {
     var joined = !!(fort && fort.joined);
-    var views = joined ? ['all', 'apps', 'log', 'map'] : ['all', 'apps', 'log'];
+    var views = joined ? ['all', 'apps', 'log', 'map'] : ['all', 'log'];
     var v = views.indexOf(chosen) >= 0 ? chosen : 'all';
-    var apps = joined ? view.apps : view.apps.filter(function (a) { return a.local; });
+    var apps = joined ? view.apps.filter(function (a) { return !a.local; }) : [];
     return {
       view: v, views: views, apps: apps, join: !joined,
-      rows: (v === 'all' || v === 'apps') && (joined || apps.length > 0),
+      rows: (v === 'all' || v === 'apps') && apps.length > 0,
       chips: v === 'all',
       log: v === 'all' || v === 'log',
       map: v === 'map'

@@ -286,13 +286,6 @@ test('the rows of the server count as no app in the subtitle, but their needs do
   assert.equal(core.subtitle(view, en, 'en'), '1 app, 1 needs you');
 });
 
-test('a row of the server shows its state alone, since its entries stand in the log', () => {
-  assert.deepEqual(core.rowStatus(app({ key: 'disks', local: true, note: 'Wake-ups today: 3' }), en, 'en'), { tone: 'ok', text: 'running' });
-  const unraid = { key: 'unraid', local: true, state: 'warning' };
-  assert.deepEqual(core.rowStatus(app(Object.assign({ need: { severity: 'warn', text: 'Many files deleted within minutes' } }, unraid)), en, 'en'), { tone: 'warn', text: 'needs a look' });
-  assert.deepEqual(core.rowStatus(app(Object.assign({ need: { severity: 'error', text: 'Disk 2 had a read error.' } }, unraid)), en, 'en'), { tone: 'fail', text: 'needs a look' });
-});
-
 test('a row of an app says what it has to say', () => {
   assert.deepEqual(core.rowStatus(app({ note: 'x', need: { severity: 'warn', text: 'look' } }), en, 'en'), { tone: 'warn', text: 'look' });
   assert.deepEqual(core.rowStatus(app({ note: 'Synced 3 files' }), en, 'en'), { tone: 'ok', text: 'Synced 3 files' });
@@ -312,15 +305,15 @@ test('the status window of the disks lists each disk with its wake-ups', () => {
   assert.equal(w.quiet, '');
 });
 
-test('out of a fortress the tile is the log window with the rows of the server above the prompt to join', () => {
+test('out of a fortress the tile is the log window above the prompt to join, with no row of the server', () => {
   const view = { apps: [app({ key: 'unraid', name: 'Unraid', local: true }), app({ key: 'disks', name: 'Disks', local: true }), app()], log: [] };
   const all = core.layout(view, { joined: false }, 'all');
-  assert.deepEqual(all.apps.map((a) => a.key), ['unraid', 'disks']);
-  assert.deepEqual(all.views, ['all', 'apps', 'log']);
-  assert.deepEqual([all.view, all.rows, all.chips, all.log, all.map, all.join], ['all', true, true, true, false, true]);
+  assert.deepEqual(all.apps, []);
+  assert.deepEqual(all.views, ['all', 'log']);
+  assert.deepEqual([all.view, all.rows, all.chips, all.log, all.map, all.join], ['all', false, true, true, false, true]);
   const log = core.layout(view, { joined: false }, 'log');
   assert.deepEqual([log.view, log.rows, log.chips, log.log, log.join], ['log', false, false, true, true]);
-  assert.equal(core.layout(view, { joined: false }, 'map').view, 'all', 'there is no map without a fortress');
+  for (const v of ['apps', 'map']) assert.equal(core.layout(view, { joined: false }, v).view, 'all', 'there are no apps and no map without a fortress');
 });
 
 test('out of a fortress with nothing from the server the tile keeps its log above the prompt to join', () => {
@@ -328,12 +321,13 @@ test('out of a fortress with nothing from the server the tile keeps its log abov
   assert.deepEqual([off.rows, off.log, off.join], [false, true, true]);
 });
 
-test('in a fortress the tile shows the chosen view with every row', () => {
-  const view = { apps: [app(), app({ key: 'unraid', name: 'Unraid', local: true })], log: [] };
+test('in a fortress the tile shows the chosen view with a row for every app and none for the server', () => {
+  const view = { apps: [app(), app({ key: 'unraid', name: 'Unraid', local: true }), app({ key: 'disks', name: 'Disks', local: true })], log: [] };
   const all = core.layout(view, { joined: true }, 'all');
-  assert.deepEqual(all.apps.map((a) => a.key), ['alpha', 'unraid']);
+  assert.deepEqual(all.apps.map((a) => a.key), ['alpha']);
   assert.deepEqual([all.view, all.rows, all.chips, all.log, all.map, all.join], ['all', true, true, true, false, false]);
   assert.deepEqual(all.views, ['all', 'apps', 'log', 'map']);
+  assert.deepEqual(core.layout(view, { joined: true }, 'apps').apps.map((a) => a.key), ['alpha']);
   const map = core.layout(view, { joined: true }, 'map');
   assert.deepEqual([map.rows, map.log, map.map], [false, false, true]);
 });
