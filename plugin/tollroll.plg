@@ -33,16 +33,23 @@ One dashboard tile for the apps of your fortress: a row per app with how it is
 doing, and one log with the lines of all of them, filtered by a click. It joins
 the fortress with its phrase and reads the status report every member serves.
 
-### Unreleased
-Your Unraid server gets a place on the tile: its syslog in plain words, the disks that woke up and why, and a watch for anything unusual. Thanks to @Revan335 for asking about it in [#3](https://github.com/junkerderprovinz/tollroll/issues/3).
+### 1.0.2
+Your Unraid server writes into the tile's log: its syslog in plain words, the disks that woke up and why, and anything unusual. Thanks to @Revan335 for the idea in [#3](https://github.com/junkerderprovinz/tollroll/issues/3).
 
 ✨ **Added**
 - Unraid's syslog joins the log, sorted into errors, warnings and info. The lines that matter most, such as disk errors, parity checks, the mover, sign-ins or running out of memory, come with one short sentence that says what they mean. Hover a line to see the original.
 - Routine noise like Docker's network chatter folds into one line, and a click shows it.
-- A Disks row tells you which disk woke up, how often today and in the last 7 days, and the likely cause: a container, a VM, an SMB or NFS client, the mover, a parity check or a scheduled task. When TollRoll can't tell, it says so. It only reads, so it never wakes a disk itself.
-- The Unraid row watches for the unusual: a sign-in from an address it has not seen before, a burst of failed sign-ins, a new plugin, changed settings on the flash drive, a new scheduled task, a share newly open to guests, and many files deleted at once.
-- When /var/log is 80% full, the Unraid row names the biggest file and who writes it. At 90% you get one Unraid notification.
-- The Unraid and Disks rows work without a fortress too. Until TollRoll joins one, they sit above the prompt to join.
+- When an array or pool disk wakes up, the log says which one and what likely woke it: a container, a VM, an SMB or NFS client, the mover, a parity check or a scheduled task. When TollRoll can't tell, it says so. Pick Disks above the log and press Open in the tile header to see how often each disk woke up today and in the last 7 days. TollRoll only reads, so it never wakes a disk itself.
+- The log flags the unusual too: a sign-in from an address TollRoll has not seen before, a burst of failed sign-ins, a new plugin, changed settings on the flash drive, a new scheduled task, a share newly open to guests, and many files deleted at once.
+- When /var/log is 80% full, the log names the biggest file and who writes it. At 90% you get one Unraid notification.
+- The server's lines are there before TollRoll joins a fortress. Until it does, the tile is the log with the prompt to join below it.
+
+🎨 **Design**
+- With TowerTorch, the chosen view and the chosen filter above the log take your accent colour.
+- Without a fortress the tile header holds only the title and its buttons, since every view would show the same log.
+
+🐛 **Fixed**
+- With TowerTorch, the gear in the tile header was white and hard to see. It now has the same colour as the other header buttons.
 
 🌐 **Translations**
 - Every new text in all 26 languages Unraid offers.
