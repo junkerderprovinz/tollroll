@@ -286,9 +286,16 @@ test('the rows of the server count as no app in the subtitle, but their needs do
   assert.equal(core.subtitle(view, en, 'en'), '1 app, 1 needs you');
 });
 
-test('a quiet row of the server says what it has to say', () => {
-  assert.deepEqual(core.rowStatus(app({ key: 'disks', local: true, note: 'Wake-ups today: 3' }), en, 'en'), { tone: 'ok', text: 'Wake-ups today: 3' });
+test('a row of the server shows its state alone, since its entries stand in the log', () => {
+  assert.deepEqual(core.rowStatus(app({ key: 'disks', local: true, note: 'Wake-ups today: 3' }), en, 'en'), { tone: 'ok', text: 'running' });
+  const unraid = { key: 'unraid', local: true, state: 'warning' };
+  assert.deepEqual(core.rowStatus(app(Object.assign({ need: { severity: 'warn', text: 'Many files deleted within minutes' } }, unraid)), en, 'en'), { tone: 'warn', text: 'needs a look' });
+  assert.deepEqual(core.rowStatus(app(Object.assign({ need: { severity: 'error', text: 'Disk 2 had a read error.' } }, unraid)), en, 'en'), { tone: 'fail', text: 'needs a look' });
+});
+
+test('a row of an app says what it has to say', () => {
   assert.deepEqual(core.rowStatus(app({ note: 'x', need: { severity: 'warn', text: 'look' } }), en, 'en'), { tone: 'warn', text: 'look' });
+  assert.deepEqual(core.rowStatus(app({ note: 'Synced 3 files' }), en, 'en'), { tone: 'ok', text: 'Synced 3 files' });
 });
 
 test('the status window of the disks lists each disk with its wake-ups', () => {

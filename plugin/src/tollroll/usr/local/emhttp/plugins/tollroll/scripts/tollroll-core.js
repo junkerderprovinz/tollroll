@@ -39,8 +39,14 @@
   }
 
   /* The app's own words win: its most urgent need, then its running work.
-   * Only a quiet app gets the tile's word for its state. */
+   * Only a quiet app gets the tile's word for its state. A row of the server
+   * always does, since its needs and notes are lines of the log already. */
   function rowStatus(app, L, lang) {
+    if (app.local) {
+      if (app.state === 'ok') return { tone: 'ok', text: L.t_st_ok };
+      var st = STATES[app.state] || STATES.unreachable;
+      return { tone: app.need && app.need.severity === 'error' ? 'fail' : st[0], text: L[st[1]] };
+    }
     if (app.state !== 'unreachable' && app.need) {
       return { tone: app.need.severity === 'error' ? 'fail' : 'warn', text: app.need.text };
     }
