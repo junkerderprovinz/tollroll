@@ -92,6 +92,8 @@ type Host struct {
 	last     map[string]lastWake
 	disks    []disk
 	moving   bool
+	unclean  bool
+	arrayAt  time.Time
 	room     room
 	roomNeed *entry
 	boxes    map[string]box
@@ -291,6 +293,14 @@ func (h *Host) ingest(l line, now time.Time) {
 		h.moving = true
 	case "h_s_mover_done":
 		h.moving = false
+	case "h_s_unclean":
+		h.unclean = true
+	case "h_s_array_start":
+		h.arrayAt = l.At
+	case "h_s_array_stop":
+		h.unclean = false
+	case "h_s_parity_start":
+		c.Key = h.parityCause(l.At)
 	}
 	if dev := c.Args["dev"]; dev != "" {
 		if d, ok := h.byDevice(dev); ok {
