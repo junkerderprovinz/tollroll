@@ -224,6 +224,22 @@
     return n ? s + ', ' + plural(L, 't_attn', n, lang) : s;
   }
 
+  /* layout says what the tile shows. Out of a fortress that is the rows of
+   * the server above the prompt to join, in one the view chosen in the header
+   * with every row. */
+  function layout(view, fort, chosen) {
+    var joined = !!(fort && fort.joined);
+    var v = joined ? chosen : 'all';
+    var apps = joined ? view.apps : view.apps.filter(function (a) { return a.local; });
+    return {
+      view: v, apps: apps, join: !joined,
+      rows: joined ? v === 'all' || v === 'apps' : apps.length > 0,
+      chips: joined && v === 'all',
+      log: joined && (v === 'all' || v === 'log'),
+      map: joined && v === 'map'
+    };
+  }
+
   function shown(apps, hidden) {
     return (apps || []).filter(function (a) { return (hidden || []).indexOf(a.key) < 0; });
   }
@@ -319,5 +335,5 @@
   return { fmt: fmt, plural: plural, rowStatus: rowStatus, foldQuiet: foldQuiet, filterLog: filterLog, chips: chips, validFilter: validFilter,
     hue: hue, mark: mark, timeLabel: timeLabel, subtitle: subtitle, needsYou: needsYou, lang: lang,
     safeIcon: safeIcon, markColors: markColors, notifyForm: notifyForm, notifyChannels: notifyChannels,
-    shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, statusWindow: statusWindow, ago: ago };
+    layout: layout, shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, statusWindow: statusWindow, ago: ago };
 });

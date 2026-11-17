@@ -42,6 +42,7 @@ Your Unraid server gets a place on the tile: its syslog in plain words, the disk
 - A Disks row tells you which disk woke up, how often today and in the last 7 days, and the likely cause: a container, a VM, an SMB or NFS client, the mover, a parity check or a scheduled task. When TollRoll can't tell, it says so. It only reads, so it never wakes a disk itself.
 - The Unraid row watches for the unusual: a sign-in from an address it has not seen before, a burst of failed sign-ins, a new plugin, changed settings on the flash drive, a new scheduled task, a share newly open to guests, and many files deleted at once.
 - When /var/log is 80% full, the Unraid row names the biggest file and who writes it. At 90% you get one Unraid notification.
+- The Unraid and Disks rows work without a fortress too. Until TollRoll joins one, they sit above the prompt to join.
 
 🌐 **Translations**
 - Every new text in all 26 languages Unraid offers.

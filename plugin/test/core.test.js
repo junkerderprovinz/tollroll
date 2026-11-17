@@ -304,3 +304,21 @@ test('the status window of the disks lists each disk with its wake-ups', () => {
   assert.equal(w.disks[1].last, '');
   assert.equal(w.quiet, '');
 });
+
+test('out of a fortress the tile shows the rows of the server above the prompt to join', () => {
+  const view = { apps: [app({ key: 'unraid', name: 'Unraid', local: true }), app({ key: 'disks', name: 'Disks', local: true })], log: [] };
+  const l = core.layout(view, { joined: false }, 'log');
+  assert.deepEqual(l.apps.map((a) => a.key), ['unraid', 'disks']);
+  assert.deepEqual([l.view, l.rows, l.chips, l.log, l.map, l.join], ['all', true, false, false, false, true]);
+  const off = core.layout({ apps: [], log: [] }, { joined: false }, 'all');
+  assert.deepEqual([off.rows, off.join], [false, true]);
+});
+
+test('in a fortress the tile shows the chosen view with every row', () => {
+  const view = { apps: [app(), app({ key: 'unraid', name: 'Unraid', local: true })], log: [] };
+  const all = core.layout(view, { joined: true }, 'all');
+  assert.deepEqual(all.apps.map((a) => a.key), ['alpha', 'unraid']);
+  assert.deepEqual([all.view, all.rows, all.chips, all.log, all.map, all.join], ['all', true, true, true, false, false]);
+  const map = core.layout(view, { joined: true }, 'map');
+  assert.deepEqual([map.rows, map.log, map.map], [false, false, true]);
+});

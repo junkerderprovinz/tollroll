@@ -61,3 +61,12 @@ func TestTheServersRowsNeverReachTheNotifications(t *testing.T) {
 		}
 	}
 }
+
+func TestTheServersRowsShowWhileTollRollIsInNoFortress(t *testing.T) {
+	w := newWorld(t)
+	w.board.Local = &server{}
+	v := w.view()
+	if len(v.Apps) != 1 || v.Apps[0].Key != "unraid" || len(v.Log) != 2 {
+		t.Fatalf("rows %+v, log %+v", v.Apps, v.Log)
+	}
+}

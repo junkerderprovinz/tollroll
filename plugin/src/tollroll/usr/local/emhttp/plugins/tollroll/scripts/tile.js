@@ -588,22 +588,23 @@
     var active = document.activeElement;
     var keep = active && tile.contains(active) && active.dataset ? active.dataset.focus : null;
     var joined = fort.joined;
-    var v = joined ? prefs.view : 'all';
+    var lay = C.layout(view, fort, prefs.view), v = lay.view;
     filter = C.validFilter(view, filter);
     var devices = C.mapDevices(fort, view.apps).length;
     subEl.textContent = !joined ? '' : v === 'map' ? C.plural(L, 't_map', devices, lang) : C.subtitle(view, L, lang, devices);
     drawHS();
 
-    show(emptyEl, !joined);
-    show(rowsEl, joined && (v === 'all' || v === 'apps'));
-    show(chipsEl, joined && v === 'all');
-    show(logBox, joined && (v === 'all' || v === 'log'));
+    show(emptyEl, lay.join);
+    show(rowsEl, lay.rows);
+    show(chipsEl, lay.chips);
+    show(logBox, lay.log);
     show(logHead, v === 'log');
-    show(mapBox, joined && v === 'map');
+    show(mapBox, lay.map);
     logBox.classList.toggle('trl-logbox-full', v === 'log');
     logEl.style.height = '';
 
     if (!joined) {
+      drawRows(lay.apps, false);
       drawEmpty();
     } else if (v === 'map') {
       drawMap();
