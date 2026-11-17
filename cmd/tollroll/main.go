@@ -24,6 +24,7 @@ import (
 	"github.com/junkerderprovinz/tollroll/internal/board"
 	"github.com/junkerderprovinz/tollroll/internal/channels"
 	"github.com/junkerderprovinz/tollroll/internal/fortress"
+	"github.com/junkerderprovinz/tollroll/internal/host"
 	"github.com/junkerderprovinz/tollroll/internal/journal"
 	"github.com/junkerderprovinz/tollroll/internal/prefs"
 )
@@ -35,6 +36,7 @@ type config struct {
 	Dynamix  string
 	Fortress string
 	Tile     string
+	Watch    string
 }
 
 // version is set at build time.
@@ -48,6 +50,7 @@ func configFromEnv() config {
 		Dynamix:  cmp.Or(os.Getenv("DYNAMIX_CFG"), "/boot/config/plugins/dynamix/dynamix.cfg"),
 		Fortress: cmp.Or(os.Getenv("FORTRESS"), "/boot/config/plugins/tollroll/fortress"),
 		Tile:     cmp.Or(os.Getenv("TILE"), "/boot/config/plugins/tollroll/tile.json"),
+		Watch:    cmp.Or(os.Getenv("WATCH"), "/boot/config/plugins/tollroll/watch.json"),
 	}
 }
 
@@ -82,6 +85,29 @@ func run(ctx context.Context, cfg config) error {
 	defer func() { _ = fort.Close() }()
 	go fort.Watch(ctx)
 	b := board.New(fort.Sources, fort.Reader())
+	unraid := host.New(host.Options{
+		State: cfg.Watch,
+		Texts: func(lang string) map[string]string { return alert.LoadTexts(cfg.LangDir, lang) },
+		Lang:  func() string { return alert.Language(cfg.Dynamix) },
+		Notify: func(ctx context.Context, e notify.Event) {
+			if r := ch.Unraid(ctx, e); !r.OK() {
+				slog.Warn("notification failed", "channel", r.Channel, "code", r.Code, "err", r.Err)
+			}
+		},
+	})
+	b.Local = unraid
+	// The host saves what it learned once ctx ends, which the service waits
+	// for before it exits.
+	hostCtx, stopHost := context.WithCancel(ctx)
+	hostDone := make(chan struct{})
+	go func() {
+		defer close(hostDone)
+		unraid.Run(hostCtx)
+	}()
+	defer func() {
+		stopHost()
+		<-hostDone
+	}()
 	texts := func() (string, alert.Texts) {
 		lang := alert.Language(cfg.Dynamix)
 		return lang, alert.LoadTexts(cfg.LangDir, lang)
