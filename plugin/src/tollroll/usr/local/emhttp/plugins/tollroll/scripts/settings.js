@@ -104,6 +104,46 @@
     }, function () { reading = false; });
   }
 
+  /* The advisor's suggestions, each with a way to its app and one to leave
+   * it out from now on. */
+  var adviceEl = document.getElementById('trs-advice');
+
+  function drawAdvice(list) {
+    adviceEl.textContent = '';
+    if (!list.length) { adviceEl.appendChild(el('p', 'trs-prose', L.a_none)); return; }
+    list.forEach(function (s) {
+      var row = el('div', 'trs-row');
+      var lbl = el('div', 'trs-lbl');
+      lbl.appendChild(el('span', 'trs-name', s.name));
+      lbl.appendChild(el('span', 'trs-sub', L[s.text] || ''));
+      row.appendChild(lbl);
+      var ctl = el('div', 'trs-ctl');
+      if (/^https:\/\/github\.com\/junkerderprovinz\/[a-z]+$/.test(s.link)) {
+        var a = el('a', 'trs-btn');
+        a.href = s.link;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.appendChild(glyph('IconExternalLink'));
+        a.appendChild(el('span', '', L.a_more));
+        ctl.appendChild(a);
+      }
+      var b = el('button', 'trs-btn');
+      b.type = 'button';
+      b.appendChild(glyph('IconClose'));
+      b.appendChild(el('span', '', L.a_dismiss));
+      b.addEventListener('click', function () {
+        b.disabled = true;
+        post('advice_dismiss', { id: s.id }).then(function (r) {
+          if (r.suggestions) drawAdvice(r.suggestions); else b.disabled = false;
+        }, function () { b.disabled = false; });
+      });
+      ctl.appendChild(b);
+      row.appendChild(ctl);
+      adviceEl.appendChild(row);
+    });
+  }
+  get('advice').then(function (r) { if (r.suggestions) drawAdvice(r.suggestions); });
+
   var routerEl = document.getElementById('trs-router');
   get('router').then(function (r) {
     if (r.error) return;

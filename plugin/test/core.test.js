@@ -310,7 +310,7 @@ test('out of a fortress the tile is the log window above the prompt to join, wit
   const all = core.layout(view, { joined: false }, 'all');
   assert.deepEqual(all.apps, []);
   assert.deepEqual([all.view, all.rows, all.chips, all.log, all.map, all.join], ['all', false, true, true, false, true]);
-  for (const v of ['apps', 'log', 'map']) assert.equal(core.layout(view, { joined: false }, v).view, 'all', v);
+  for (const v of ['apps', 'open', 'log', 'map']) assert.equal(core.layout(view, { joined: false }, v).view, 'all', v);
 });
 
 test('out of a fortress the header offers no views, since every one would look the same', () => {
@@ -328,7 +328,7 @@ test('in a fortress the tile shows the chosen view with a row for every app and 
   const all = core.layout(view, { joined: true }, 'all');
   assert.deepEqual(all.apps.map((a) => a.key), ['alpha']);
   assert.deepEqual([all.view, all.rows, all.chips, all.log, all.map, all.join], ['all', true, true, true, false, false]);
-  assert.deepEqual([all.views, all.selector], [['all', 'apps', 'log', 'map'], true]);
+  assert.deepEqual([all.views, all.selector], [['all', 'apps', 'open', 'log', 'map'], true]);
   assert.deepEqual(core.layout(view, { joined: true }, 'apps').apps.map((a) => a.key), ['alpha']);
   const map = core.layout(view, { joined: true }, 'map');
   assert.deepEqual([map.rows, map.log, map.map], [false, false, true]);
@@ -352,4 +352,15 @@ test('the hub form keeps a saved time for a field left empty and every app level
 test('a level can be set for every app of the fortress and for one that is away', () => {
   const apps = [app({ key: 'shiplog', name: 'ShipLog' }), app({ key: 'unraid', name: 'Unraid', local: true }), app({ key: 'bombvault', name: 'BombVault' })];
   assert.deepEqual(core.levelApps(apps, { knightloader: 'critical' }).map((a) => a.key), ['bombvault', 'knightloader', 'shiplog']);
+});
+
+test('the open view lists every app with what needs it, errors first, and an app that does not answer', () => {
+  const apps = [
+    app({ key: 'a', name: 'Alpha', needs: [{ severity: 'warn', text: 'look' }] }),
+    app({ key: 'b', name: 'Beta' }),
+    app({ key: 'c', name: 'Gamma', needs: [{ severity: 'error', text: 'broke' }, { severity: 'warn', text: 'and this' }] }),
+    app({ key: 'd', name: 'Delta', state: 'unreachable' }),
+  ];
+  const got = core.openPoints(apps, en).map((g) => g.app.name + ':' + g.items.map((i) => i.tone + ' ' + i.text).join('|'));
+  assert.deepEqual(got, ['Gamma:fail broke|warn and this', 'Alpha:warn look', 'Delta:off ' + en.t_st_unreachable]);
 });

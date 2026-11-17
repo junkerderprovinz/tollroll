@@ -232,5 +232,17 @@
   "s_level_info": "Tot",
   "s_level_warning": "Avertismente și mai grave",
   "s_level_failure": "Eșecuri și mai grave",
-  "s_level_critical": "Doar alerte"
+  "s_level_critical": "Doar alerte",
+  "a_title": "Sugestii",
+  "a_hint": "TollRoll s-a uitat la acest server și a găsit lucruri de care s-ar putea ocupa o aplicație din fortăreață.",
+  "a_none": "Nimic de sugerat. Serverul tău e pe mâini bune.",
+  "a_dismiss": "Nu e nevoie",
+  "a_more": "Află mai multe",
+  "a_backup": "Încă nimic nu face backup acestui server. BombVault se ocupă de backupurile tale.",
+  "a_updates": "Aici rulează containere și nimic nu te anunță despre actualizările lor. ShipLog arată ce container are o actualizare și ce s-a schimbat.",
+  "a_health": "Nimic nu verifică starea acestui server. FireSquire are grijă de el și îți spune când o repornire e sigură.",
+  "h_advice": "O sugestie de la TollRoll: {text}",
+  "t_v_open": "Deschise",
+  "t_open_none": "Nimic nu e deschis. Toate aplicațiile merg bine.",
+  "t_open_title": "Puncte deschise ale tuturor aplicațiilor"
 }

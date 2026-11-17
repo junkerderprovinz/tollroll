@@ -45,7 +45,7 @@ const (
 	keepLines  = 150
 	keepQuiet  = 80
 	keepNeeds  = 50
-	listedNeed = 5
+	listedNeed = 20
 )
 
 // The keys of the rows.
@@ -581,9 +581,38 @@ func say(tx map[string]string, e entry) string {
 		s = strings.ReplaceAll(strings.ReplaceAll(s, "{cause}", phrase), "{who}", phrase)
 	}
 	for k, v := range e.args {
+		if key, ok := strings.CutPrefix(v, "@"); ok && tx[key] != "" {
+			v = tx[key]
+		}
 		s = strings.ReplaceAll(s, "{"+k+"}", v)
 	}
 	return s
+}
+
+// Advise puts a suggestion into the server's log, by the key of its
+// sentence.
+func (h *Host) Advise(key string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.add(entry{at: h.o.Now(), app: Unraid, level: info, key: "h_advice", args: map[string]string{"text": "@" + key}})
+}
+
+// Server says whether this is an Unraid server and names its containers and
+// the plugins installed on it, as the last look found them.
+func (h *Host) Server() (unraid bool, containers, plugins []string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	for _, b := range h.boxes {
+		containers = append(containers, b.name)
+	}
+	if h.watch != nil {
+		for p := range h.watch.base.Plugins {
+			plugins = append(plugins, p)
+		}
+	}
+	slices.Sort(containers)
+	slices.Sort(plugins)
+	return h.unraid, containers, plugins
 }
 
 // Rows returns the row of the server and the row of its disks, none off

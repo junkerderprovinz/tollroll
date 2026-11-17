@@ -225,5 +225,17 @@
   "s_level_info": "Her şey",
   "s_level_warning": "Uyarılar ve daha ciddisi",
   "s_level_failure": "Hatalar ve daha ciddisi",
-  "s_level_critical": "Yalnızca alarmlar"
+  "s_level_critical": "Yalnızca alarmlar",
+  "a_title": "Öneriler",
+  "a_hint": "TollRoll bu sunucuya bir göz attı ve kalenin bir uygulamasının ilgilenebileceği şeyler buldu.",
+  "a_none": "Önerilecek bir şey yok. Sunucun emin ellerde.",
+  "a_dismiss": "Gerek yok",
+  "a_more": "Daha fazla bilgi",
+  "a_backup": "Bu sunucuyu henüz hiçbir şey yedeklemiyor. BombVault yedeklerinle ilgilenir.",
+  "a_updates": "Burada konteynerler çalışıyor ve hiçbir şey sana güncellemelerinden haber vermiyor. ShipLog hangi konteynerde güncelleme olduğunu ve neyin değiştiğini gösterir.",
+  "a_health": "Bu sunucunun sağlığını hiçbir şey kontrol etmiyor. FireSquire ona göz kulak olur ve yeniden başlatmanın ne zaman güvenli olduğunu sana söyler.",
+  "h_advice": "TollRoll'dan bir öneri: {text}",
+  "t_v_open": "Açık",
+  "t_open_none": "Açık bir şey yok. Tüm uygulamalar yolunda.",
+  "t_open_title": "Tüm uygulamaların açık konuları"
 }

@@ -68,6 +68,12 @@ $trs_rbtn = function ($brand, $name, $href) use ($trs_marks, $trs_e) {
           </div>
         </section>
 
+        <section class="trs-card" aria-labelledby="trs-h-advice">
+          <h3 class="trs-h"><span id="trs-h-advice"><?=$h('a_title')?></span></h3>
+          <p class="trs-hint"><?=$h('a_hint')?></p>
+          <div id="trs-advice"></div>
+        </section>
+
         <section class="trs-card" aria-labelledby="trs-h-router">
           <h3 class="trs-h"><span id="trs-h-router"><?=$h('s_router')?></span></h3>
           <p class="trs-hint"><?=$h('s_router_hint')?></p>

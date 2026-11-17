@@ -11,13 +11,14 @@ import (
 	"sync"
 )
 
-// The views of the tile: rows and log, the rows alone, the log alone, or the
-// map of the fortress.
+// The views of the tile: rows and log, the rows alone, the log alone, the
+// map of the fortress, or what is open across the apps.
 const (
 	ViewAll  = "all"
 	ViewApps = "apps"
 	ViewLog  = "log"
 	ViewMap  = "map"
+	ViewOpen = "open"
 )
 
 // maxHidden and maxID bound the apps left out to what a tile can show: the
@@ -94,7 +95,7 @@ func (s *Store) Set(p Prefs) error {
 }
 
 func check(p Prefs) error {
-	if p.View != ViewAll && p.View != ViewApps && p.View != ViewLog && p.View != ViewMap {
+	if p.View != ViewAll && p.View != ViewApps && p.View != ViewLog && p.View != ViewMap && p.View != ViewOpen {
 		return ErrView
 	}
 	if len(p.Hidden) > maxHidden {

@@ -218,5 +218,17 @@
   "s_level_info": "Tất cả",
   "s_level_warning": "Cảnh báo trở lên",
   "s_level_failure": "Lỗi trở lên",
-  "s_level_critical": "Chỉ báo động"
+  "s_level_critical": "Chỉ báo động",
+  "a_title": "Gợi ý",
+  "a_hint": "TollRoll đã xem qua máy chủ này và tìm thấy những việc mà một ứng dụng của pháo đài có thể lo giúp.",
+  "a_none": "Không có gì để gợi ý. Máy chủ của bạn đang được chăm sóc tốt.",
+  "a_dismiss": "Không cần",
+  "a_more": "Tìm hiểu thêm",
+  "a_backup": "Chưa có gì sao lưu máy chủ này. BombVault sẽ lo các bản sao lưu cho bạn.",
+  "a_updates": "Ở đây có container đang chạy, nhưng không có gì báo cho bạn về các bản cập nhật của chúng. ShipLog cho biết container nào có bản cập nhật và những gì đã thay đổi.",
+  "a_health": "Chưa có gì kiểm tra tình trạng của máy chủ này. FireSquire sẽ để mắt đến nó và cho bạn biết khi nào khởi động lại là an toàn.",
+  "h_advice": "Một gợi ý từ TollRoll: {text}",
+  "t_v_open": "Còn mở",
+  "t_open_none": "Không có gì còn mở. Mọi ứng dụng đều ổn.",
+  "t_open_title": "Các mục còn mở của mọi ứng dụng"
 }

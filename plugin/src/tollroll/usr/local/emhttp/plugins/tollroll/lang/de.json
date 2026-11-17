@@ -225,5 +225,17 @@
   "s_level_info": "Alles",
   "s_level_warning": "Warnungen und Schlimmeres",
   "s_level_failure": "Fehler und Schlimmeres",
-  "s_level_critical": "Nur Alarme"
+  "s_level_critical": "Nur Alarme",
+  "a_title": "Vorschläge",
+  "a_hint": "TollRoll hat sich diesen Server angesehen und Dinge gefunden, um die sich eine App der Festung kümmern könnte.",
+  "a_none": "Nichts vorzuschlagen. Dein Server ist in guten Händen.",
+  "a_dismiss": "Brauch ich nicht",
+  "a_more": "Mehr dazu",
+  "a_backup": "Noch sichert nichts diesen Server. BombVault kümmert sich um deine Sicherungen.",
+  "a_updates": "Hier laufen Container, und nichts sagt dir Bescheid, wenn es Updates gibt. ShipLog zeigt, welcher Container ein Update hat und was sich geändert hat.",
+  "a_health": "Nichts prüft, wie es diesem Server geht. FireSquire behält ihn im Blick und sagt dir, wann ein Neustart sicher ist.",
+  "h_advice": "Ein Vorschlag von TollRoll: {text}",
+  "t_v_open": "Offen",
+  "t_open_none": "Nichts ist offen. Allen Apps geht es gut.",
+  "t_open_title": "Offene Punkte aller Apps"
 }

@@ -116,8 +116,12 @@ type Next struct {
 	At    time.Time `json:"at"`
 }
 
-// listed caps each list of the status window.
-const listed = 5
+// listed caps each list of the status window, and listedNeeds what needs
+// you, which the tile's view of everything open lists in full.
+const (
+	listed      = 5
+	listedNeeds = 20
+)
 
 // Line is one line of the shared log. App is the key of its row. Raw is the
 // line a plain sentence explains, and Quiet marks a routine one the tile folds
@@ -403,7 +407,7 @@ func details(a *App, ins []instance) {
 		a.Needs = append(a.Needs, Need{Severity: string(n.Severity), Text: cut(n.Text, maxText)})
 	}
 	slices.SortStableFunc(a.Next, func(x, y Next) int { return x.At.Compare(y.At) })
-	a.Needs, a.Tasks, a.Next = first(a.Needs), first(a.Tasks), first(a.Next)
+	a.Needs, a.Tasks, a.Next = a.Needs[:min(len(a.Needs), listedNeeds)], first(a.Tasks), first(a.Next)
 }
 
 func first[T any](l []T) []T {
@@ -527,4 +531,20 @@ func OpenLines(v View) []string {
 		}
 	}
 	return out
+}
+
+// Doing reports whether an app on the board runs or has planned work of
+// kind, as its last answer in any language said.
+func (b *Board) Doing(kind status.WorkKind) bool {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	for _, s := range b.state {
+		for _, rep := range s.reports {
+			if slices.ContainsFunc(rep.Work, func(t status.Task) bool { return t.Kind == kind }) ||
+				slices.ContainsFunc(rep.Next, func(n status.Scheduled) bool { return n.Kind == kind }) {
+				return true
+			}
+		}
+	}
+	return false
 }

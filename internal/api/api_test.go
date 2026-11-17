@@ -14,6 +14,7 @@ import (
 	"github.com/junkerderprovinz/parleyport/kit/notify"
 	"github.com/junkerderprovinz/parleyport/kit/status"
 
+	"github.com/junkerderprovinz/tollroll/internal/advisor"
 	"github.com/junkerderprovinz/tollroll/internal/alert"
 	"github.com/junkerderprovinz/tollroll/internal/board"
 	"github.com/junkerderprovinz/tollroll/internal/channels"
@@ -69,6 +70,8 @@ func newEnv(t *testing.T) *env {
 	}
 	e.h = New(Deps{Board: b, Channels: ch, Texts: texts, Fortress: e.fort, Prefs: prefs.Open(filepath.Join(dir, "tile.json")),
 		Hub:    hub.OpenStore(filepath.Join(dir, "hub.json")),
+		Advice: advisor.Open(filepath.Join(dir, "advice.json")),
+		Facts:  func() advisor.Facts { return advisor.Facts{Unraid: true, Containers: []string{"jellyfin"}} },
 		Router: func() host.RouterLog { return host.RouterLog{Server: true, Senders: []host.Sender{{Name: "gw"}}} }})
 	return e
 }
@@ -174,5 +177,20 @@ func TestTheHubSettingsAreKeptAndCheckedOnTheServer(t *testing.T) {
 	}
 	if _, out := e.do("GET", "/api/hub", ""); out["quiet"].(map[string]any)["from"] != "23:00" {
 		t.Errorf("%v", out)
+	}
+}
+
+func TestSuggestionsAreListedAndDismissed(t *testing.T) {
+	e := newEnv(t)
+	_, out := e.do("GET", "/api/advice", "")
+	if got := out["suggestions"].([]any); len(got) != 3 || got[0].(map[string]any)["text"] != "a_backup" {
+		t.Fatalf("%v", out)
+	}
+	code, out := e.do("POST", "/api/advice/dismiss", `{"id":"updates"}`)
+	if got := out["suggestions"].([]any); code != 200 || len(got) != 2 {
+		t.Errorf("%d %v", code, out)
+	}
+	if code, _ := e.do("POST", "/api/advice/dismiss", `{"id":"nope"}`); code != 404 {
+		t.Errorf("%d", code)
 	}
 }

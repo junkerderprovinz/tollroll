@@ -19,7 +19,8 @@
     error: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
     caret: '<svg class="trl-caret" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
   });
-  var VIEWS = [['all', 't_v_all', 'IconDashboard'], ['apps', 't_v_apps', 'IconTabApps'], ['log', 't_v_log', 'IconLog'], ['map', 't_v_map', 'IconFleet']];
+  var VIEWS = [['all', 't_v_all', 'IconDashboard'], ['apps', 't_v_apps', 'IconTabApps'], ['open', 't_v_open', 'IconWarning'],
+    ['log', 't_v_log', 'IconLog'], ['map', 't_v_map', 'IconFleet']];
   var STORE = 'tollroll.filter', QUIET = 'tollroll.quiet';
 
   var tile = root.closest('tbody') || document.body;
@@ -78,8 +79,10 @@
   logBox.appendChild(logHead);
   logBox.appendChild(logEl);
   var mapBox = el('div', 'trl-mapbox');
+  var openBox = el('div', 'trl-openbox');
   var emptyEl = el('div', 'trl-empty');
-  [rowsEl, chipsEl, logBox, mapBox, emptyEl].forEach(function (n) { root.appendChild(n); });
+  [rowsEl, chipsEl, logBox, mapBox, openBox, emptyEl].forEach(function (n) { root.appendChild(n); });
+  var advice = [];
 
   // A logo goes in as an img only, never into the DOM as markup, so nothing
   // in it can run.
@@ -476,6 +479,45 @@
   }
   if (window.ResizeObserver) new ResizeObserver(function () { if (prefs.view === 'map') drawWires(); }).observe(root);
 
+  // The open view: what needs you in every app, then what the advisor
+  // suggests. A suggestion leads to its app's page.
+  function drawOpen() {
+    openBox.textContent = '';
+    openBox.appendChild(el('h4', 'trl-open-h', L.t_open_title));
+    var groups = C.openPoints(view.apps, L);
+    if (!groups.length) openBox.appendChild(el('p', 'trl-note', L.t_open_none));
+    groups.forEach(function (g) {
+      var hd = el('div', 'trl-open-app');
+      hd.appendChild(mark(g.app, true));
+      hd.appendChild(el('span', '', g.app.name));
+      openBox.appendChild(hd);
+      var ul = el('ul', 'trl-dlg-list');
+      g.items.forEach(function (it) {
+        var li = el('li');
+        li.appendChild(el('span', 'trl-dot trl-' + it.tone));
+        li.appendChild(el('span', 'trl-dlg-text', it.text));
+        ul.appendChild(li);
+      });
+      openBox.appendChild(ul);
+    });
+    if (!advice.length) return;
+    openBox.appendChild(el('h4', 'trl-open-h', L.a_title));
+    var ul = el('ul', 'trl-dlg-list');
+    advice.forEach(function (s) {
+      var li = el('li');
+      li.appendChild(el('span', 'trl-dlg-text', L[s.text] || ''));
+      if (/^https:\/\/github\.com\/junkerderprovinz\/[a-z]+$/.test(s.link)) {
+        var a = el('a', 'trl-open-more', L.a_more);
+        a.href = s.link;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        li.appendChild(a);
+      }
+      ul.appendChild(li);
+    });
+    openBox.appendChild(ul);
+  }
+
   function drawEmpty() {
     emptyEl.textContent = '';
     var removed = fort && fort.removedHere;
@@ -601,12 +643,15 @@
     show(logBox, lay.log);
     show(logHead, v === 'log');
     show(mapBox, lay.map);
+    show(openBox, lay.open);
     logBox.classList.toggle('trl-logbox-full', v === 'log');
     logEl.style.height = '';
 
     if (lay.join) drawEmpty();
     if (v === 'map') {
       drawMap();
+    } else if (v === 'open') {
+      drawOpen();
     } else {
       var chosen = C.shown(view.apps, prefs.hidden);
       if (v === 'all') {
@@ -647,6 +692,9 @@
         fort = r[1];
         draw();
         loadIcons();
+        if (prefs.view === 'open') {
+          get('advice').then(function (a) { advice = a.suggestions || []; draw(); }, function () { /* the open points stay */ });
+        }
       })
       .catch(function () {
         if (!view) { show(logBox, true); note(L.t_engine, 'trl-l-error'); }

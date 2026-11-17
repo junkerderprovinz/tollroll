@@ -28,7 +28,7 @@ func TestTheChosenViewOutlivesARestart(t *testing.T) {
 
 func TestEveryViewOfTheTileIsKept(t *testing.T) {
 	s := Open(filepath.Join(t.TempDir(), "tile.json"))
-	for _, v := range []string{ViewAll, ViewApps, ViewLog, ViewMap} {
+	for _, v := range []string{ViewAll, ViewApps, ViewLog, ViewMap, ViewOpen} {
 		if err := s.Set(Prefs{View: v}); err != nil || s.Get().View != v {
 			t.Errorf("Set(%q) = %v, view %q", v, err, s.Get().View)
 		}

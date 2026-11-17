@@ -239,5 +239,17 @@
   "s_level_info": "Vše",
   "s_level_warning": "Varování a horší",
   "s_level_failure": "Selhání a horší",
-  "s_level_critical": "Jen výstrahy"
+  "s_level_critical": "Jen výstrahy",
+  "a_title": "Návrhy",
+  "a_hint": "TollRoll se podíval na tento server a našel věci, o které by se mohla postarat aplikace z pevnosti.",
+  "a_none": "Není co navrhnout. Tvůj server je v dobrých rukou.",
+  "a_dismiss": "Nepotřebuji",
+  "a_more": "Více informací",
+  "a_backup": "Tento server zatím nic nezálohuje. BombVault se postará o tvé zálohy.",
+  "a_updates": "Běží tu kontejnery a nic ti neřekne o jejich aktualizacích. ShipLog ukáže, který kontejner má aktualizaci a co se změnilo.",
+  "a_health": "Zdraví tohoto serveru nic nehlídá. FireSquire na něj dohlédne a řekne ti, kdy je restart bezpečný.",
+  "h_advice": "Návrh od TollRoll: {text}",
+  "t_v_open": "Otevřené",
+  "t_open_none": "Nic není otevřené. Všem aplikacím se daří dobře.",
+  "t_open_title": "Otevřené body všech aplikací"
 }

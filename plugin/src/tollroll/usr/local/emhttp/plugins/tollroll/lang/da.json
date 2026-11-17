@@ -225,5 +225,17 @@
   "s_level_info": "Alt",
   "s_level_warning": "Advarsler og værre",
   "s_level_failure": "Fejl og værre",
-  "s_level_critical": "Kun alarmer"
+  "s_level_critical": "Kun alarmer",
+  "a_title": "Forslag",
+  "a_hint": "TollRoll har kigget på denne server og fundet ting, som en app fra fæstningen kunne tage sig af.",
+  "a_none": "Intet at foreslå. Din server er i gode hænder.",
+  "a_dismiss": "Ikke nødvendigt",
+  "a_more": "Læs mere",
+  "a_backup": "Intet tager backup af denne server endnu. BombVault tager sig af dine backups.",
+  "a_updates": "Her kører containere, og intet fortæller dig om deres opdateringer. ShipLog viser, hvilken container der har en opdatering, og hvad der er ændret.",
+  "a_health": "Intet tjekker, hvordan denne server har det. FireSquire holder øje med den og siger til, når en genstart er sikker.",
+  "h_advice": "Et forslag fra TollRoll: {text}",
+  "t_v_open": "Åbne",
+  "t_open_none": "Intet er åbent. Alle apps har det fint.",
+  "t_open_title": "Åbne punkter fra alle apps"
 }

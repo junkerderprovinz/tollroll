@@ -230,7 +230,7 @@
    * nothing to choose in the header. */
   function layout(view, fort, chosen) {
     var joined = !!(fort && fort.joined);
-    var views = joined ? ['all', 'apps', 'log', 'map'] : ['all'];
+    var views = joined ? ['all', 'apps', 'open', 'log', 'map'] : ['all'];
     var v = views.indexOf(chosen) >= 0 ? chosen : 'all';
     var apps = joined ? view.apps.filter(function (a) { return !a.local; }) : [];
     return {
@@ -238,8 +238,23 @@
       rows: (v === 'all' || v === 'apps') && apps.length > 0,
       chips: v === 'all',
       log: v === 'all' || v === 'log',
-      map: v === 'map'
+      map: v === 'map',
+      open: v === 'open'
     };
+  }
+
+  /* openPoints is everything open across the apps for the view of that
+   * name: each app with what needs it, the server's rows among them, the
+   * apps with an error first. An app that does not answer is open too. */
+  function openPoints(apps, L) {
+    var out = [];
+    (apps || []).forEach(function (a) {
+      var items = (a.needs || []).map(function (n) { return { tone: n.severity === 'error' ? 'fail' : 'warn', text: n.text }; });
+      if (!items.length && a.state === 'unreachable') items.push({ tone: 'off', text: L.t_st_unreachable });
+      if (items.length) out.push({ app: a, items: items });
+    });
+    function worst(g) { return g.items.some(function (i) { return i.tone === 'fail'; }) ? 0 : 1; }
+    return out.sort(function (x, y) { return worst(x) - worst(y) || x.app.name.localeCompare(y.app.name); });
   }
 
   function shown(apps, hidden) {
@@ -369,5 +384,5 @@
   return { fmt: fmt, plural: plural, rowStatus: rowStatus, foldQuiet: foldQuiet, filterLog: filterLog, chips: chips, validFilter: validFilter,
     hue: hue, mark: mark, timeLabel: timeLabel, subtitle: subtitle, needsYou: needsYou, lang: lang,
     safeIcon: safeIcon, markColors: markColors, notifyForm: notifyForm, notifyChannels: notifyChannels,
-    layout: layout, shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, statusWindow: statusWindow, ago: ago, routerStatus: routerStatus, hubSettings: hubSettings, levelApps: levelApps };
+    layout: layout, shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, statusWindow: statusWindow, ago: ago, routerStatus: routerStatus, hubSettings: hubSettings, levelApps: levelApps, openPoints: openPoints };
 });

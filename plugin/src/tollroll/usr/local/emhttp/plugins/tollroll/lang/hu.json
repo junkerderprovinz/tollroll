@@ -225,5 +225,17 @@
   "s_level_info": "Minden",
   "s_level_warning": "Figyelmeztetések és súlyosabbak",
   "s_level_failure": "Hibák és súlyosabbak",
-  "s_level_critical": "Csak riasztások"
+  "s_level_critical": "Csak riasztások",
+  "a_title": "Javaslatok",
+  "a_hint": "A TollRoll megnézte ezt a szervert, és talált olyan dolgokat, amelyekről az erőd egyik alkalmazása gondoskodhatna.",
+  "a_none": "Nincs mit javasolni. A szervered jó kezekben van.",
+  "a_dismiss": "Nem kell",
+  "a_more": "Bővebben",
+  "a_backup": "Ezt a szervert még semmi sem menti. A BombVault gondoskodik a biztonsági mentéseidről.",
+  "a_updates": "Itt konténerek futnak, és semmi sem szól neked a frissítéseikről. A ShipLog megmutatja, melyik konténerhez van frissítés, és mi változott.",
+  "a_health": "Semmi sem figyeli ennek a szervernek az állapotát. A FireSquire szemmel tartja, és szól, mikor biztonságos az újraindítás.",
+  "h_advice": "Egy javaslat a TollRolltól: {text}",
+  "t_v_open": "Nyitott",
+  "t_open_none": "Nincs semmi nyitott. Minden alkalmazás jól van.",
+  "t_open_title": "Az összes alkalmazás nyitott pontjai"
 }

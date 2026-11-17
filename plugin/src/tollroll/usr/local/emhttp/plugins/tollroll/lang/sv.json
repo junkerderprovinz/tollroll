@@ -225,5 +225,17 @@
   "s_level_info": "Allt",
   "s_level_warning": "Varningar och värre",
   "s_level_failure": "Fel och värre",
-  "s_level_critical": "Bara larm"
+  "s_level_critical": "Bara larm",
+  "a_title": "Förslag",
+  "a_hint": "TollRoll har tittat på den här servern och hittat saker som en app i fästningen kan ta hand om.",
+  "a_none": "Inget att föreslå. Din server är i goda händer.",
+  "a_dismiss": "Behövs inte",
+  "a_more": "Läs mer",
+  "a_backup": "Inget säkerhetskopierar den här servern än. BombVault tar hand om dina säkerhetskopior.",
+  "a_updates": "Här körs containrar, och inget berättar för dig om deras uppdateringar. ShipLog visar vilken container som har en uppdatering och vad som har ändrats.",
+  "a_health": "Inget kollar hur den här servern mår. FireSquire håller koll på den och säger till när en omstart är säker.",
+  "h_advice": "Ett förslag från TollRoll: {text}",
+  "t_v_open": "Öppna",
+  "t_open_none": "Inget är öppet. Alla appar mår bra.",
+  "t_open_title": "Öppna punkter från alla appar"
 }

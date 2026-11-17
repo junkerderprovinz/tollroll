@@ -225,5 +225,17 @@
   "s_level_info": "Kaikki",
   "s_level_warning": "Varoitukset ja vakavammat",
   "s_level_failure": "Virheet ja vakavammat",
-  "s_level_critical": "Vain hälytykset"
+  "s_level_critical": "Vain hälytykset",
+  "a_title": "Ehdotukset",
+  "a_hint": "TollRoll katsoi tätä palvelinta ja löysi asioita, jotka jokin linnoituksen sovellus voisi hoitaa.",
+  "a_none": "Ei ehdotettavaa. Palvelimesi on hyvissä käsissä.",
+  "a_dismiss": "Ei tarvita",
+  "a_more": "Lue lisää",
+  "a_backup": "Mikään ei vielä varmuuskopioi tätä palvelinta. BombVault hoitaa varmuuskopiosi.",
+  "a_updates": "Täällä pyörii kontteja, eikä mikään kerro sinulle niiden päivityksistä. ShipLog näyttää, mihin konttiin on päivitys ja mikä muuttui.",
+  "a_health": "Mikään ei tarkkaile tämän palvelimen kuntoa. FireSquire pitää sitä silmällä ja kertoo, milloin uudelleenkäynnistys on turvallinen.",
+  "h_advice": "TollRollin ehdotus: {text}",
+  "t_v_open": "Avoimet",
+  "t_open_none": "Mikään ei ole avoinna. Kaikki sovellukset voivat hyvin.",
+  "t_open_title": "Kaikkien sovellusten avoimet asiat"
 }

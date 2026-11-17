@@ -225,5 +225,17 @@
   "s_level_info": "Alles",
   "s_level_warning": "Waarschuwingen en erger",
   "s_level_failure": "Fouten en erger",
-  "s_level_critical": "Alleen alarmen"
+  "s_level_critical": "Alleen alarmen",
+  "a_title": "Suggesties",
+  "a_hint": "TollRoll heeft deze server bekeken en dingen gevonden waar een app van de vesting voor kan zorgen.",
+  "a_none": "Niets voor te stellen. Je server is in goede handen.",
+  "a_dismiss": "Niet nodig",
+  "a_more": "Meer weten",
+  "a_backup": "Nog niets maakt een back-up van deze server. BombVault zorgt voor je back-ups.",
+  "a_updates": "Hier draaien containers, en niets vertelt je over hun updates. ShipLog laat zien welke container een update heeft en wat er is veranderd.",
+  "a_health": "Niets houdt de gezondheid van deze server in de gaten. FireSquire let erop en vertelt je wanneer een herstart veilig is.",
+  "h_advice": "Een suggestie van TollRoll: {text}",
+  "t_v_open": "Open",
+  "t_open_none": "Niets staat open. Alle apps doen het prima.",
+  "t_open_title": "Openstaande punten van alle apps"
 }

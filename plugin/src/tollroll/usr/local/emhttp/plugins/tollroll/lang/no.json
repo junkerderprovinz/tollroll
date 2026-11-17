@@ -225,5 +225,17 @@
   "s_level_info": "Alt",
   "s_level_warning": "Advarsler og verre",
   "s_level_failure": "Feil og verre",
-  "s_level_critical": "Bare alarmer"
+  "s_level_critical": "Bare alarmer",
+  "a_title": "Forslag",
+  "a_hint": "TollRoll har sett på denne serveren og funnet ting som en app fra festningen kunne tatt seg av.",
+  "a_none": "Ingenting å foreslå. Serveren din er i gode hender.",
+  "a_dismiss": "Ikke nødvendig",
+  "a_more": "Les mer",
+  "a_backup": "Ingenting tar sikkerhetskopi av denne serveren ennå. BombVault tar seg av sikkerhetskopiene dine.",
+  "a_updates": "Her kjører det containere, og ingenting forteller deg om oppdateringene deres. ShipLog viser hvilken container som har en oppdatering, og hva som er endret.",
+  "a_health": "Ingenting sjekker helsen til denne serveren. FireSquire holder øye med den og sier fra når en omstart er trygg.",
+  "h_advice": "Et forslag fra TollRoll: {text}",
+  "t_v_open": "Åpne",
+  "t_open_none": "Ingenting er åpent. Alle appene har det fint.",
+  "t_open_title": "Åpne punkter fra alle apper"
 }

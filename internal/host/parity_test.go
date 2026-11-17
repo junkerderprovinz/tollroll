@@ -105,3 +105,21 @@ func TestCronFieldsMatchTheirTimes(t *testing.T) {
 		}
 	}
 }
+
+func TestASuggestionInTheLogReadsInTheReadersLanguage(t *testing.T) {
+	s := newServer(t)
+	h := s.host(t)
+	s.look(h)
+	h.Advise("a_health")
+	de := alert.LoadTexts(langDir, "de")
+	want := strings.ReplaceAll(de["h_advice"], "{text}", de["a_health"])
+	var got string
+	for _, l := range h.Lines("de") {
+		if l.Text == want {
+			got = l.Text
+		}
+	}
+	if got == "" || de["a_health"] == "" {
+		t.Errorf("no line %q", want)
+	}
+}

@@ -218,5 +218,17 @@
   "s_level_info": "全部",
   "s_level_warning": "警告及以上",
   "s_level_failure": "失败及以上",
-  "s_level_critical": "仅警报"
+  "s_level_critical": "仅警报",
+  "a_title": "建议",
+  "a_hint": "TollRoll 查看了这台服务器，发现了一些堡垒中的应用可以帮忙处理的事。",
+  "a_none": "暂无建议。你的服务器一切安好。",
+  "a_dismiss": "不需要",
+  "a_more": "了解更多",
+  "a_backup": "这台服务器还没有任何备份。BombVault 会负责你的备份。",
+  "a_updates": "这里运行着容器，但没有任何东西告诉你它们的更新。ShipLog 会显示哪个容器有更新以及改了什么。",
+  "a_health": "没有任何东西检查这台服务器的健康状况。FireSquire 会帮你盯着，并告诉你什么时候可以安全重启。",
+  "h_advice": "来自 TollRoll 的建议：{text}",
+  "t_v_open": "未解决",
+  "t_open_none": "没有未解决的事项。所有应用都运行良好。",
+  "t_open_title": "所有应用的未解决事项"
 }

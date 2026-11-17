@@ -12,6 +12,7 @@ import (
 	"github.com/junkerderprovinz/parleyport/kit/group"
 	"github.com/junkerderprovinz/parleyport/kit/notify"
 
+	"github.com/junkerderprovinz/tollroll/internal/advisor"
 	"github.com/junkerderprovinz/tollroll/internal/alert"
 	"github.com/junkerderprovinz/tollroll/internal/board"
 	"github.com/junkerderprovinz/tollroll/internal/channels"
@@ -35,6 +36,8 @@ type Deps struct {
 	Prefs    *prefs.Store
 	Router   func() host.RouterLog
 	Hub      *hub.Store
+	Advice   *advisor.Store
+	Facts    func() advisor.Facts
 }
 
 type handler struct {
@@ -45,6 +48,8 @@ type handler struct {
 	prefs    *prefs.Store
 	router   func() host.RouterLog
 	hub      *hub.Store
+	advice   *advisor.Store
+	facts    func() advisor.Facts
 }
 
 // Fortress is the tile's membership in a fortress.
@@ -58,7 +63,7 @@ type Fortress interface {
 
 // New returns the handler.
 func New(d Deps) http.Handler {
-	h := &handler{board: d.Board, channels: d.Channels, texts: d.Texts, fortress: d.Fortress, prefs: d.Prefs, router: d.Router, hub: d.Hub}
+	h := &handler{board: d.Board, channels: d.Channels, texts: d.Texts, fortress: d.Fortress, prefs: d.Prefs, router: d.Router, hub: d.Hub, advice: d.Advice, facts: d.Facts}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/board", h.view)
 	mux.HandleFunc("GET /api/icons", h.icons)
@@ -75,7 +80,33 @@ func New(d Deps) http.Handler {
 	mux.HandleFunc("GET /api/router", h.routerLog)
 	mux.HandleFunc("GET /api/hub", h.hubSettings)
 	mux.HandleFunc("PUT /api/hub", h.setHub)
+	mux.HandleFunc("GET /api/advice", h.suggestions)
+	mux.HandleFunc("POST /api/advice/dismiss", h.dismiss)
 	return mux
+}
+
+// suggestions lists what the advisor suggests, each by the key of its
+// sentence, which the page words in its language.
+func (h *handler) suggestions(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"suggestions": h.advice.List(h.facts())})
+}
+
+func (h *handler) dismiss(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		ID string `json:"id"`
+	}
+	if !readJSON(w, r, &body) {
+		return
+	}
+	err := h.advice.Dismiss(body.ID)
+	switch {
+	case errors.Is(err, advisor.ErrNoSuggestion):
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "no_suggestion"})
+	case err != nil:
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "save_failed"})
+	default:
+		h.suggestions(w, r)
+	}
 }
 
 func (h *handler) hubSettings(w http.ResponseWriter, _ *http.Request) {

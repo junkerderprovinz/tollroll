@@ -428,3 +428,24 @@ func TestOnlyAFewLanguagesAreKept(t *testing.T) {
 		}
 	}
 }
+
+func TestTheBoardKnowsWhetherAnAppBacksUp(t *testing.T) {
+	r := &fakeDoing{rep: status.Report{App: status.App{ID: "a", Name: "A"}, State: status.StateOK,
+		Next: []status.Scheduled{{Kind: status.KindBackup, Title: "Nightly"}}}}
+	b := New(func() []Source { return []Source{{ID: "m1"}} }, r)
+	if b.Doing(status.KindBackup) {
+		t.Fatal("before any read")
+	}
+	b.View(context.Background(), "en")
+	if !b.Doing(status.KindBackup) || b.Doing(status.KindUpdate) {
+		t.Error("after a read")
+	}
+}
+
+type fakeDoing struct{ rep status.Report }
+
+func (f *fakeDoing) Report(context.Context, Source, string) (status.Report, error) { return f.rep, nil }
+
+func (f *fakeDoing) Log(_ context.Context, _ Source, after, _ string, _ int) (status.LogPage, error) {
+	return status.LogPage{Next: after}, nil
+}

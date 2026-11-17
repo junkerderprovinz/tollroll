@@ -20,6 +20,7 @@ import (
 	"github.com/junkerderprovinz/parleyport/kit/notify"
 	"github.com/junkerderprovinz/parleyport/kit/status"
 
+	"github.com/junkerderprovinz/tollroll/internal/advisor"
 	"github.com/junkerderprovinz/tollroll/internal/alert"
 	"github.com/junkerderprovinz/tollroll/internal/api"
 	"github.com/junkerderprovinz/tollroll/internal/board"
@@ -28,6 +29,7 @@ import (
 	"github.com/junkerderprovinz/tollroll/internal/host"
 	"github.com/junkerderprovinz/tollroll/internal/hub"
 	"github.com/junkerderprovinz/tollroll/internal/journal"
+	"github.com/junkerderprovinz/tollroll/internal/plugins"
 	"github.com/junkerderprovinz/tollroll/internal/prefs"
 )
 
@@ -41,6 +43,8 @@ type config struct {
 	Watch    string
 	Hub      string
 	HubState string
+	Advice   string
+	Plugins  string
 }
 
 // version is set at build time.
@@ -57,6 +61,8 @@ func configFromEnv() config {
 		Watch:    cmp.Or(os.Getenv("WATCH"), "/boot/config/plugins/tollroll/watch.json"),
 		Hub:      cmp.Or(os.Getenv("HUB"), "/boot/config/plugins/tollroll/hub.json"),
 		HubState: cmp.Or(os.Getenv("HUB_STATE"), "/boot/config/plugins/tollroll/hub-state.json"),
+		Advice:   cmp.Or(os.Getenv("ADVICE"), "/boot/config/plugins/tollroll/advice.json"),
+		Plugins:  cmp.Or(os.Getenv("PLUGINS"), plugins.Dir),
 	}
 }
 
@@ -99,7 +105,8 @@ func run(ctx context.Context, cfg config) error {
 	}
 	defer func() { _ = fort.Close() }()
 	go fort.Watch(ctx)
-	b = board.New(fort.Sources, fort.Reader())
+	files := plugins.Files{Dir: cfg.Plugins}
+	b = board.New(plugins.Join(fort.Sources, fort.Reader(), files))
 	unraid := host.New(host.Options{
 		State: cfg.Watch,
 		Texts: func(lang string) map[string]string { return alert.LoadTexts(cfg.LangDir, lang) },
@@ -133,12 +140,26 @@ func run(ctx context.Context, cfg config) error {
 		lang, tx := texts()
 		return lang, tx
 	}
+	adv := advisor.Open(cfg.Advice)
+	facts := func() advisor.Facts {
+		isUnraid, boxes, plugs := unraid.Server()
+		f := advisor.Facts{Unraid: isUnraid, Containers: boxes, Plugins: plugs, Backs: b.Doing(status.KindBackup)}
+		for _, m := range fort.Map().Members {
+			f.Apps = append(f.Apps, m.App)
+		}
+		for _, s := range files.Sources() {
+			f.Apps = append(f.Apps, s.Name)
+		}
+		return f
+	}
+	go firstAdvice(ctx, adv, facts, unraid.Advise)
 	ln, err := listen(cfg.Socket)
 	if err != nil {
 		return err
 	}
 	srv := &http.Server{
-		Handler:           api.New(api.Deps{Board: b, Channels: ch, Texts: alertTexts, Fortress: fort, Prefs: prefs.Open(cfg.Tile), Router: unraid.RouterLog, Hub: hb.Settings()}),
+		Handler: api.New(api.Deps{Board: b, Channels: ch, Texts: alertTexts, Fortress: fort, Prefs: prefs.Open(cfg.Tile), Router: unraid.RouterLog, Hub: hb.Settings(),
+			Advice: adv, Facts: facts}),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 	w := &alert.Watcher{Every: checkEvery, Check: b.Check, Channels: hb, Texts: alertTexts, Journal: j}
@@ -154,6 +175,23 @@ func run(ctx context.Context, cfg config) error {
 		return err
 	}
 	return nil
+}
+
+// adviseAfter gives the host its first look and the members of the fortress
+// time to answer before the advisor looks for the first time.
+const adviseAfter = 3 * time.Minute
+
+// firstAdvice puts what the advisor suggests on its first look at this
+// server into the server's log, once.
+func firstAdvice(ctx context.Context, adv *advisor.Store, facts func() advisor.Facts, note func(key string)) {
+	select {
+	case <-ctx.Done():
+		return
+	case <-time.After(adviseAfter):
+	}
+	for _, s := range adv.First(facts()) {
+		note(s.Text)
+	}
 }
 
 // listen opens the socket for root and its group, which is what the WebGUI's

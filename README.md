@@ -70,7 +70,9 @@ Your router can join the watch too. Once it sends its log to Unraid's syslog ser
 
 Every time an array or pool disk spins up, the log says which one and its likely cause: a container, a VM, an SMB or NFS client, the mover, a parity check or a scheduled task. When the cause cannot be known, it says so. Pick **Disks** and open it from the tile header to see how often each disk woke up today and over the last 7 days. TollRoll only reads, so it never wakes a disk itself.
 
-Once TollRoll is in a fortress, a selector in the tile header switches between four views: **Everything**, the **Apps** alone, the **Log** alone over the whole height of the tile, and the **Map** of the fortress. In the log view you tick apps on and off in a list in its head, with **All** and **None** on top. The apps view always shows every app. The map shows every device of the fortress with its apps, and whether each one is connected right now. The tile remembers the view and the apps you chose on the server, so every browser finds it the way you left it.
+Once TollRoll is in a fortress, a selector in the tile header switches between five views: **Everything**, the **Apps** alone, **Open** with everything that needs you in any app in one list, the **Log** alone over the whole height of the tile, and the **Map** of the fortress. In the log view you tick apps on and off in a list in its head, with **All** and **None** on top. The apps view always shows every app. The map shows every device of the fortress with its apps, and whether each one is connected right now. The tile remembers the view and the apps you chose on the server, so every browser finds it the way you left it.
+
+On its first start TollRoll looks at the server and suggests the app of the house that would take care of something nothing takes care of yet: BombVault when nothing backs up, ShipLog when containers run and nothing watches their updates, FireSquire when nothing checks the server's health. The suggestions show up once in the log, and they stay in the **Open** view and under **General** in the settings until the app joins or you mark one as not needed.
 
 The tile and the settings page speak the language you picked in Unraid, in all 26 languages Unraid offers. The texts that come from the apps arrive in that language too, as far as each app has them.
 
@@ -161,6 +163,10 @@ An app of the fortress can let TollRoll send its notifications. It works like th
 4. `key` names what the message is about. TollRoll sends a key once until a `success` with the same key, or `{"key": "job-7", "resolved": true}`, says it is over, or until 20 hours pass. Without a key, the words of the message are its key.
 5. `{"taken": true}` means TollRoll has it and sends it, now or once the quiet hours end. Anything else means your app sends the message itself: `hub_off` while the switch is off or no channel is on, `bad_event`, a permission someone switched off, a member that is away or a timeout. With several TollRolls, try them one after the other first.
 6. Healthchecks pings stay with your app.
+
+### Plugins that report through a file
+
+A plugin on the same server whose fortress member joins only while one of its checks runs can still have a row on the tile. It writes its status report, in the format of kit/status, to `/var/local/fortress/<app>.json`, where `<app>` is the report's app ID, and may add one file per language as `/var/local/fortress/<app>.<lang>.json`. It replaces the file in one rename and writes it again at least once an hour. An older report reads as an app that does not answer. TollRoll reads only regular files there, of at most 256 KiB, and the folder lives in memory, so no disk wakes for it.
 
 <br>
 

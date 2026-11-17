@@ -232,5 +232,17 @@
   "s_level_info": "Tutto",
   "s_level_warning": "Avvertimenti e più gravi",
   "s_level_failure": "Errori e più gravi",
-  "s_level_critical": "Solo allarmi"
+  "s_level_critical": "Solo allarmi",
+  "a_title": "Suggerimenti",
+  "a_hint": "TollRoll ha dato un'occhiata a questo server e ha trovato cose di cui potrebbe occuparsi un'app della fortezza.",
+  "a_none": "Niente da suggerire. Il tuo server è in buone mani.",
+  "a_dismiss": "Non serve",
+  "a_more": "Scopri di più",
+  "a_backup": "Ancora niente fa il backup di questo server. BombVault si occupa dei tuoi backup.",
+  "a_updates": "Qui girano dei container e niente ti avvisa dei loro aggiornamenti. ShipLog mostra quale container ha un aggiornamento e cosa è cambiato.",
+  "a_health": "Niente controlla la salute di questo server. FireSquire lo tiene d'occhio e ti dice quando un riavvio è sicuro.",
+  "h_advice": "Un suggerimento da TollRoll: {text}",
+  "t_v_open": "Aperti",
+  "t_open_none": "Niente di aperto. Tutte le app stanno bene.",
+  "t_open_title": "Punti aperti di tutte le app"
 }
