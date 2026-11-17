@@ -46,10 +46,11 @@
 .trl-chips:empty{display:none}
 .trl-chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border:none !important;border-radius:999px;
   background:var(--trl-chip) !important;color:inherit !important;font:500 12.5px/1 inherit;white-space:nowrap;cursor:pointer;margin:0 !important;min-width:0 !important}
-.trl-chip:hover{background:var(--trl-chip-hover) !important}
+.trl-chip:hover{background:var(--tt-hover-wash,var(--trl-chip-hover)) !important}
 .trl-chip .trl-n{opacity:.65;font-size:11.5px;font-variant-numeric:tabular-nums}
-/* Fixed colours: themes and scripts on the box restyle generic buttons. */
-.trl-chip[aria-pressed="true"]{background:#f4c63d !important;color:#161616 !important}
+/* The picked chip takes the accent like the chosen view. The !important
+   holds against themes and scripts that restyle generic buttons. */
+.trl-chip[aria-pressed="true"]{background:var(--tt-accent,#f4c63d) !important;color:var(--tt-accent-text,#161616) !important}
 .trl-chip[aria-pressed="true"] .trl-n{opacity:.8}
 
 /* The log brings its own dark background, like a terminal, so it reads the
