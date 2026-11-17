@@ -27,7 +27,7 @@
   var openEl = document.getElementById('trl-open');
   var hsEl = document.getElementById('trl-hs');
 
-  var view = null, fort = null, prefs = { view: 'all', hidden: [] }, openApp = null;
+  var view = null, fort = null, prefs = { view: 'all', hidden: [] }, openApp = null, views = VIEWS;
   var filter = 'all', follow = true, timer = null, picking = null, showQuiet = false;
   // Logos by the ID a row carries. They come in a request of their own, made
   // only when a row names one not seen yet, so a poll stays small.
@@ -162,11 +162,12 @@
     setView('log');
   }
 
-  function drawHS() {
-    hsEl.hidden = !fort || !fort.joined;
+  function drawHS(lay) {
+    views = VIEWS.filter(function (v) { return lay.views.indexOf(v[0]) >= 0; });
+    hsEl.hidden = false;
     hsEl.textContent = '';
-    VIEWS.forEach(function (v) {
-      var on = prefs.view === v[0];
+    views.forEach(function (v) {
+      var on = lay.view === v[0];
       var b = el('button');
       b.type = 'button';
       b.setAttribute('role', 'radio');
@@ -185,8 +186,8 @@
   hsEl.addEventListener('keydown', function (e) {
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
     e.preventDefault();
-    var i = VIEWS.findIndex(function (v) { return v[0] === prefs.view; });
-    var next = VIEWS[(i + (e.key === 'ArrowRight' ? 1 : VIEWS.length - 1)) % VIEWS.length][0];
+    var i = Math.max(0, views.findIndex(function (v) { return v[0] === prefs.view; }));
+    var next = views[(i + (e.key === 'ArrowRight' ? 1 : views.length - 1)) % views.length][0];
     setView(next);
     var b = hsEl.querySelector('[data-focus="view:' + next + '"]');
     if (b) b.focus();
@@ -592,7 +593,7 @@
     filter = C.validFilter(view, filter);
     var devices = C.mapDevices(fort, view.apps).length;
     subEl.textContent = !joined ? '' : v === 'map' ? C.plural(L, 't_map', devices, lang) : C.subtitle(view, L, lang, devices);
-    drawHS();
+    drawHS(lay);
 
     show(emptyEl, lay.join);
     show(rowsEl, lay.rows);
@@ -603,20 +604,18 @@
     logBox.classList.toggle('trl-logbox-full', v === 'log');
     logEl.style.height = '';
 
-    if (!joined) {
-      drawRows(lay.apps, false);
-      drawEmpty();
-    } else if (v === 'map') {
+    if (lay.join) drawEmpty();
+    if (v === 'map') {
       drawMap();
     } else {
-      var chosen = C.shown(view.apps, prefs.hidden);
+      var chosen = C.shown(lay.apps, prefs.hidden);
       if (v === 'all') {
-        drawRows(view.apps, false);
+        drawRows(lay.apps, false);
         drawChips();
         var apps = byKey();
         drawLog(C.filterLog(view.log, filter), filter === 'all' ? null : apps[filter]);
       } else if (v === 'apps') {
-        drawRows(view.apps, true);
+        drawRows(lay.apps, true);
       } else {
         var keys = chosen.map(function (a) { return a.key; });
         var lines = view.log.filter(function (l) { return keys.indexOf(l.app) >= 0; });

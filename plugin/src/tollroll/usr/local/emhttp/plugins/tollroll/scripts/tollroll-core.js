@@ -224,19 +224,20 @@
     return n ? s + ', ' + plural(L, 't_attn', n, lang) : s;
   }
 
-  /* layout says what the tile shows. Out of a fortress that is the rows of
-   * the server above the prompt to join, in one the view chosen in the header
-   * with every row. */
+  /* layout says what the tile shows: the view chosen in the header. Out of a
+   * fortress it is the same log window with only the server's rows, no map,
+   * and the prompt to join below. */
   function layout(view, fort, chosen) {
     var joined = !!(fort && fort.joined);
-    var v = joined ? chosen : 'all';
+    var views = joined ? ['all', 'apps', 'log', 'map'] : ['all', 'apps', 'log'];
+    var v = views.indexOf(chosen) >= 0 ? chosen : 'all';
     var apps = joined ? view.apps : view.apps.filter(function (a) { return a.local; });
     return {
-      view: v, apps: apps, join: !joined,
-      rows: joined ? v === 'all' || v === 'apps' : apps.length > 0,
-      chips: joined && v === 'all',
-      log: joined && (v === 'all' || v === 'log'),
-      map: joined && v === 'map'
+      view: v, views: views, apps: apps, join: !joined,
+      rows: (v === 'all' || v === 'apps') && (joined || apps.length > 0),
+      chips: v === 'all',
+      log: v === 'all' || v === 'log',
+      map: v === 'map'
     };
   }
 

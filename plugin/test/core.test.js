@@ -305,13 +305,20 @@ test('the status window of the disks lists each disk with its wake-ups', () => {
   assert.equal(w.quiet, '');
 });
 
-test('out of a fortress the tile shows the rows of the server above the prompt to join', () => {
-  const view = { apps: [app({ key: 'unraid', name: 'Unraid', local: true }), app({ key: 'disks', name: 'Disks', local: true })], log: [] };
-  const l = core.layout(view, { joined: false }, 'log');
-  assert.deepEqual(l.apps.map((a) => a.key), ['unraid', 'disks']);
-  assert.deepEqual([l.view, l.rows, l.chips, l.log, l.map, l.join], ['all', true, false, false, false, true]);
+test('out of a fortress the tile is the log window with the rows of the server above the prompt to join', () => {
+  const view = { apps: [app({ key: 'unraid', name: 'Unraid', local: true }), app({ key: 'disks', name: 'Disks', local: true }), app()], log: [] };
+  const all = core.layout(view, { joined: false }, 'all');
+  assert.deepEqual(all.apps.map((a) => a.key), ['unraid', 'disks']);
+  assert.deepEqual(all.views, ['all', 'apps', 'log']);
+  assert.deepEqual([all.view, all.rows, all.chips, all.log, all.map, all.join], ['all', true, true, true, false, true]);
+  const log = core.layout(view, { joined: false }, 'log');
+  assert.deepEqual([log.view, log.rows, log.chips, log.log, log.join], ['log', false, false, true, true]);
+  assert.equal(core.layout(view, { joined: false }, 'map').view, 'all', 'there is no map without a fortress');
+});
+
+test('out of a fortress with nothing from the server the tile keeps its log above the prompt to join', () => {
   const off = core.layout({ apps: [], log: [] }, { joined: false }, 'all');
-  assert.deepEqual([off.rows, off.join], [false, true]);
+  assert.deepEqual([off.rows, off.log, off.join], [false, true, true]);
 });
 
 test('in a fortress the tile shows the chosen view with every row', () => {
@@ -319,6 +326,7 @@ test('in a fortress the tile shows the chosen view with every row', () => {
   const all = core.layout(view, { joined: true }, 'all');
   assert.deepEqual(all.apps.map((a) => a.key), ['alpha', 'unraid']);
   assert.deepEqual([all.view, all.rows, all.chips, all.log, all.map, all.join], ['all', true, true, true, false, false]);
+  assert.deepEqual(all.views, ['all', 'apps', 'log', 'map']);
   const map = core.layout(view, { joined: true }, 'map');
   assert.deepEqual([map.rows, map.log, map.map], [false, false, true]);
 });
