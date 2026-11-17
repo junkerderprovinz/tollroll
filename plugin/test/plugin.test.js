@@ -84,10 +84,10 @@ test('the plg is plain XML', () => {
   assert.match(plg, /<!ENTITY name\s+"tollroll">/);
 });
 
-test('the newest changes block matches its release notes', () => {
+test('the newest released changes block matches its release notes', () => {
   const plg = fs.readFileSync(path.join(ROOT, 'tollroll.plg'), 'utf8');
   const changes = /<CHANGES>([\s\S]*?)<\/CHANGES>/.exec(plg)[1];
-  const [, version, block] = /^### (\S+)\n([\s\S]*?)(?=^### |(?![\s\S]))/m.exec(changes);
+  const [, version, block] = /^### (\d\S*)\n([\s\S]*?)(?=^### |(?![\s\S]))/m.exec(changes);
   const labels = ['✨ **Added**', '🎨 **Design**', '⚡ **Improved**', '🐛 **Fixed**', '🌐 **Translations**'];
   for (const line of block.match(/^\S+ \*\*.+$/gm)) assert.ok(labels.includes(line), line);
   // The release workflow turns the labels into headings for the release page.
