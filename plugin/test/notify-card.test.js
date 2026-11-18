@@ -40,7 +40,9 @@ function dom() {
     setAttribute(k, v) { this.attrs[k] = String(v); }
     getAttribute(k) { return k in this.attrs ? this.attrs[k] : null; }
     addEventListener(type, fn) { (this.listeners[type] = this.listeners[type] || []).push(fn); }
-    fire(type, e) { for (const fn of this.listeners[type] || []) fn(Object.assign({ target: this, preventDefault() {} }, e)); }
+    fire(type, e) { const ev = Object.assign({ target: this, preventDefault() {} }, e); for (const fn of this.listeners[type] || []) fn(ev); if (this['on' + type]) this['on' + type](ev); }
+    get classList() { const n = this; const list = () => n.className.split(' ').filter(Boolean); return { add: (...c) => { n.className = [...new Set([...list(), ...c])].join(' '); }, remove: (...c) => { n.className = list().filter((x) => !c.includes(x)).join(' '); }, contains: (c) => list().includes(c) }; }
+    removeAttribute(k) { delete this.attrs[k]; }
     click() { if (!this.disabled) this.fire('click'); }
     focus() { doc.activeElement = this; }
     getBoundingClientRect() { return { left: 0, top: 0, width: 10, height: 10 }; }
@@ -161,7 +163,8 @@ test('a picked tile shows its fields in the window, and Save adds the channel at
   p.open();
   p.tile('discord').click();
   assert.equal(p.win().byClass('glim-nc-tile').length, 0);
-  assert.deepEqual(p.win().byClass('glim-nc-win-btn').map((b) => b.textContent), [en.nc_test, en.nc_cancel, en.nc_back, en.nc_save]);
+  assert.deepEqual(p.win().byClass('glim-nc-win-btn').map((b) => b.textContent), [en.nc_cancel, en.nc_back, en.nc_test, en.nc_save]);
+  assert.ok((' ' + p.win().className + ' ').includes(' glim-nc-win-form '), 'the form narrows the window');
   const url = p.win().byClass('glim-nc-in').find((i) => i.attrs.placeholder === 'https://discord.com/api/webhooks/...');
   url.value = 'https://discord.com/api/webhooks/1/x';
   url.fire('input');
@@ -346,4 +349,40 @@ test('every string the card asks for is in every language', () => {
     for (const k of keys) assert.ok(tx[k], l + ' ' + k);
     assert.match(tx.nc_none, /\{query\}/, l);
   }
+});
+
+test("the window's test shows its outcome on its button and at the foot's start, and a press beside a form keeps it", async () => {
+  const p = mounted([], { test: { ok: false, code: 'timeout' } });
+  await settle();
+  p.open();
+  p.tile('ntfy').click();
+  const test = p.foot(en.nc_test);
+  test.click();
+  assert.equal(test.attrs['aria-busy'], 'true');
+  await settle();
+  assert.equal(test.attrs['aria-busy'], undefined);
+  assert.ok(test.className.includes('glim-nc-tone-bad'));
+  assert.equal(test.attrs.title, en.nc_test_failed + ': ' + en.nc_fail_timeout);
+  assert.equal(test.textContent, en.nc_test, 'its words stay');
+  const start = p.win().byClass('glim-nc-win-start')[0];
+  assert.equal(start.textContent, en.nc_test_failed + ': ' + en.nc_fail_timeout);
+  p.doc.body.byClass('glim-nc-scrim')[0].click();
+  assert.ok(p.win(), 'the form stays open');
+});
+
+test('the search clears with its own button', async () => {
+  const p = mounted([]);
+  await settle();
+  p.open();
+  const search = p.win().byClass('glim-nc-search')[0];
+  const clear = p.win().byClass('glim-nc-search-clear')[0];
+  assert.equal(clear.hidden, true);
+  search.value = 'slack';
+  search.fire('input');
+  assert.equal(clear.hidden, false);
+  assert.equal(p.win().byClass('glim-nc-tile').length, 1);
+  clear.click();
+  assert.equal(search.value, '');
+  assert.equal(p.win().byClass('glim-nc-tile').length, KINDS.length);
+  assert.equal(p.doc.activeElement, search);
 });
