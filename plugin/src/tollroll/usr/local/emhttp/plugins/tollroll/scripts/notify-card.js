@@ -2,9 +2,9 @@
  * a framework. Every channel is a sub-card of its own with its switch, what it
  * sends, its few fields and a test. A channel is added in a picker window, as
  * GlimStone's PickerWindow draws one: the services as tiles with their marks
- * under a search, and once one is picked its fields in the same window. The
- * channels are kept in the kit's notify format, so the same file serves every
- * plugin that keeps its channels that way.
+ * under a search, and once one is picked its fields in the same window.
+ * The channels keep to the kit's notify format, so the same file serves every plugin
+ * that keeps its channels that way.
  *
  * mount(el, adapter, opts) draws the card into el. The adapter loads the
  * channels, saves the whole list (it answers with the list as saved, secrets
