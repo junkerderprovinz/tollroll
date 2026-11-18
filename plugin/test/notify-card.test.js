@@ -116,6 +116,7 @@ test('the arrows move across the grid, and up from the first row is the search',
 test('every kind the card offers has its mark, and the services their own colours', () => {
   for (const k of KINDS) assert.match(marks.marks[k], /^<svg [^>]*viewBox=/, k);
   for (const k of KINDS.filter((x) => x !== 'smtp' && x !== 'webhook')) assert.match(marks.tiles[k].tile, /^#[0-9a-f]{6}$/i, k);
+  assert.deepEqual(marks.tiles.healthchecks, { tile: '#5cb85f', ink: '#161616' }, "Healthchecks.io lights in its mark's green");
 });
 
 test('a new channel is on, sends everything and takes an id no other channel has', () => {
