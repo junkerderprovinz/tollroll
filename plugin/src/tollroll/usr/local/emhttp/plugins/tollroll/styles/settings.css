@@ -160,7 +160,53 @@ html:is(.Theme--white, .Theme--azure) .trs-hero { --trs-hero-sil: 30%; }
 .trs-grid .trs-hint { margin: 6px 0 0; }
 .trs-matrix { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .trs-select { width: auto; font-family: inherit; }
-.trs-time { width: auto; font-family: inherit; }
+/* GlimStone's time field (time-field.js): a filled field-button with the
+   clock and HH:MM, and the popover with its hour and minute columns, which
+   lives in <body> and so carries its own colours. */
+.trs-page button.trs-time {
+  display: inline-flex; align-items: center; gap: 8px; width: auto; min-width: 0; height: 32px; padding: 0 12px;
+  font-family: inherit; font-size: 13px; font-variant-numeric: tabular-nums; letter-spacing: normal; text-transform: none; cursor: pointer;
+}
+.trs-page button.trs-time:hover { background: var(--trs-field-focus) !important; }
+.trs-tp-g { display: inline-flex; line-height: 0; color: var(--trs-dim); }
+.trs-tp-g svg { width: 14px; height: 14px; display: block; }
+.trs-tp {
+  --trs-tp-ground: var(--background-color, #1c1b1b);
+  --trs-tp-ink: var(--text-color, #f2f2f2);
+  --trs-tp-dim: var(--alt-text-color, #8d8d8d);
+  --trs-tp-on: var(--link-text-color, #486dba);
+  --trs-tp-on-ink: #fff;
+  --trs-tp-r: 4px;
+  position: fixed; z-index: 1000002; transform: translateX(-50%);
+  display: flex; align-items: stretch; width: max-content; padding: 4px;
+  border-radius: var(--trs-tp-r); background: var(--trs-tp-ground); color: var(--trs-tp-ink);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .45); font-size: 13px; line-height: 1.2;
+}
+html.tt-popups-on .trs-tp {
+  --trs-tp-ground: var(--tt-surface-3, #2e2e2e);
+  --trs-tp-ink: var(--tt-text, #e6e6e6);
+  --trs-tp-dim: var(--tt-text-dim, #8a8a8a);
+  --trs-tp-on: var(--tt-accent, #FCC419);
+  --trs-tp-on-ink: var(--tt-accent-text, #161616);
+  --trs-tp-r: var(--tt-radius-card, 20px);
+  box-shadow: var(--tt-elev-3, 0 12px 30px rgba(0, 0, 0, .6));
+}
+.trs-tp *, .trs-tp *::before, .trs-tp *::after { box-sizing: border-box; }
+.trs-tp-col { display: flex; flex-direction: column; gap: 2px; max-height: 176px; margin: 0; padding: 4px; overflow-y: auto; overscroll-behavior: contain; list-style: none; }
+.trs-tp-col li { margin: 0; }
+.trs-tp-colon { display: flex; align-items: center; padding: 0 2px; color: var(--trs-tp-dim); }
+.trs-tp button.trs-tp-opt {
+  display: block; width: 100%; min-width: 44px; margin: 0; padding: 5px 12px; border: none; border-radius: calc(var(--trs-tp-r) * .6);
+  box-shadow: none; background: transparent; color: var(--trs-tp-dim);
+  font: inherit; font-variant-numeric: tabular-nums; letter-spacing: normal; text-transform: none; text-align: center; cursor: pointer;
+}
+.trs-tp button.trs-tp-opt:hover { background: color-mix(in srgb, currentColor 14%, transparent); color: var(--trs-tp-ink); }
+.trs-tp button.trs-tp-opt[aria-selected="true"] { background: var(--trs-tp-on); color: var(--trs-tp-on-ink); }
+.trs-tp button.trs-tp-opt:focus-visible { outline: 2px solid var(--trs-tp-on); outline-offset: -2px; }
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-tt-motion="off"]) .trs-tp { animation: trs-tp-in var(--tt-motion-fade-dur, 110ms) ease both; }
+}
+@keyframes trs-tp-in { from { opacity: 0; } }
 .trs-times { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .trs-times label { margin: 0; font-size: 14px; font-weight: 400; }
 .trs-grid > .trs-wide { grid-column: 1 / -1; margin: 0; }
@@ -266,32 +312,25 @@ html.tt-popups-on .trs-page .trs-tab:not([aria-selected="true"]):hover { backgro
    TowerTorch gives every link, a visible focus ring, and the title strip the
    banner replaces. */
 @layer tollroll-settings {
+  /* The theme plugin dresses every button as a button; the time field stays a field. */
+  #trs-cfg button.trs-time {
+    border: none !important; box-shadow: none !important; background-color: var(--trs-field) !important; color: inherit !important; filter: none !important;
+  }
+  #trs-cfg button.trs-time:is(:hover, [aria-expanded="true"]) { background-color: var(--trs-field-focus) !important; }
   #trs-cfg input.trs-switch { margin: 0 !important; }
   #trs-cfg a.trs-rbtn { color: var(--tt-text, #e6e6e6) !important; filter: none !important; }
   @media (hover: hover) {
     #trs-cfg .trs-rbtn-unit:hover a.trs-rbtn { color: var(--trs-give-ink) !important; }
   }
   .content:has(#trs-cfg) > div.title { display: none !important; }
-  #trs-cfg :is(.trs-tab, .trs-btn, .trs-switch):focus-visible {
+  #trs-cfg :is(.trs-tab, .trs-btn, .trs-switch, .trs-time):focus-visible {
     outline: 2px solid var(--trs-focus) !important; outline-offset: 2px !important; filter: none !important;
   }
 }
 
-/* The (i) with its words in a bubble under the pointer and on keyboard
-   focus, drawn like the fortress card's. */
+/* The (i) is GlimStone's, drawn by notify-card.css; here only its place. */
 .trs-name-i { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
-.trs-page .trs-h .trs-info { margin-inline-start: 0; }
-.trs-info { position: relative; display: inline-flex; flex: none; width: 15px; height: 15px; margin-inline-start: 6px; opacity: .8; cursor: help; vertical-align: middle; }
-.trs-name-i .trs-info { margin-inline-start: 0; }
-.trs-info:is(:hover, :focus-visible) { opacity: 1; }
-.trs-info svg { width: 15px; height: 15px; }
-.trs-info::after {
-  content: attr(data-tip); position: absolute; z-index: 10; top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
-  width: max-content; max-width: min(320px, 70vw); padding: 7px 10px; border-radius: var(--trs-r-ctl);
-  background: var(--tt-surface-window, var(--mild-background-color, #262626)); color: var(--tt-text, var(--text-color, #f2f2f2));
-  box-shadow: 0 8px 24px rgba(0, 0, 0, .35); font-size: 12px; font-weight: 400; line-height: 1.45; letter-spacing: normal; text-transform: none; text-align: start; white-space: normal;
-  display: none; pointer-events: none;
-}
-.trs-info:is(:hover, :focus-visible)::after { display: block; }
+.trs-info { margin-inline-start: 6px; vertical-align: middle; }
+:is(.trs-name-i, .trs-h) .trs-info { margin-inline-start: 0; }
 .trs-subh { display: flex; align-items: center; gap: 6px; margin: 14px 0 2px; font-size: 13px; font-weight: 600; }
 .trs-ctl .trs-times { flex-wrap: nowrap; }

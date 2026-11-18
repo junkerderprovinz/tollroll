@@ -257,6 +257,9 @@
   };
   var levelsEl = document.getElementById('trs-levels');
   var hub = null;
+  [[H.from, 's_quiet_from'], [H.to, 's_quiet_to'], [H.at, 's_digest_at']].forEach(function (f) {
+    window.GlimTimeField.enhance(f[0], { label: L[f[1]] });
+  });
 
   function hubForm() {
     H.quiet.checked = hub.quiet.on;

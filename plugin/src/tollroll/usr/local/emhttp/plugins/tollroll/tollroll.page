@@ -29,9 +29,9 @@ $trs_ver_link = function ($ver, $repo) use ($trs_e) {
   return '<a class="trs-ver" href="'.$trs_e($repo.'/releases/tag/v'.$v).'" target="_blank" rel="noopener noreferrer">'.$trs_e($v).'</a>';
 };
 $trs_marks = include '/usr/local/emhttp/plugins/tollroll/include/marks.php';
-/* An explanation sits in a bubble behind an (i), as on the fortress card, so the cards stay short. */
+/* An explanation sits in a bubble behind GlimStone's (i), drawn by notify-card.css and notify-card.js, so the cards stay short. */
 $trs_info = function ($k) use ($h) {
-  return '<span class="trs-info" tabindex="0" role="img" aria-label="'.$h($k).'" data-tip="'.$h($k).'"><span class="trs-gl" data-glyph="IconInfo"></span></span>';
+  return '<span class="glim-nc-info trs-info" tabindex="0" role="img" aria-label="'.$h($k).'" data-tip="'.$h($k).'"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="4.6" r="0.9" fill="currentColor"/><path d="M8 7v4.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span>';
 };
 /* A button in the shape of the README's buttons, as on ShipLog's Info tab. */
 $trs_rbtn = function ($brand, $name, $href) use ($trs_marks, $trs_e) {
@@ -101,9 +101,9 @@ $trs_rbtn = function ($brand, $name, $href) use ($trs_marks, $trs_e) {
             <div class="trs-lbl"><span class="trs-name-i"><label class="trs-name" for="trs-q-on"><?=$h('s_quiet')?></label><?=$trs_info('s_quiet_hint')?></span></div>
             <div class="trs-ctl">
               <span class="trs-times">
-                <input type="time" class="trs-in trs-time" id="trs-q-from" aria-label="<?=$h('s_quiet_from')?>">
+                <button type="button" class="trs-in trs-time" id="trs-q-from"></button>
                 <span aria-hidden="true"><?=$h('s_quiet_to')?></span>
-                <input type="time" class="trs-in trs-time" id="trs-q-to" aria-label="<?=$h('s_quiet_to')?>">
+                <button type="button" class="trs-in trs-time" id="trs-q-to"></button>
               </span>
               <input type="checkbox" role="switch" class="trs-switch" id="trs-q-on">
             </div>
@@ -111,7 +111,7 @@ $trs_rbtn = function ($brand, $name, $href) use ($trs_marks, $trs_e) {
           <div class="trs-row">
             <div class="trs-lbl"><span class="trs-name-i"><label class="trs-name" for="trs-d-on"><?=$h('s_digest')?></label><?=$trs_info('s_digest_hint')?></span></div>
             <div class="trs-ctl">
-              <input type="time" class="trs-in trs-time" id="trs-d-at" aria-label="<?=$h('s_digest_at')?>">
+              <button type="button" class="trs-in trs-time" id="trs-d-at"></button>
               <input type="checkbox" role="switch" class="trs-switch" id="trs-d-on">
             </div>
           </div>
@@ -183,4 +183,5 @@ $trs_rbtn = function ($brand, $name, $href) use ($trs_marks, $trs_e) {
 <script src="<?autov('/plugins/tollroll/scripts/fortress-card.js')?>"></script>
 <script src="<?autov('/plugins/tollroll/scripts/notify-marks.js')?>"></script>
 <script src="<?autov('/plugins/tollroll/scripts/notify-card.js')?>"></script>
+<script src="<?autov('/plugins/tollroll/scripts/time-field.js')?>"></script>
 <script src="<?autov('/plugins/tollroll/scripts/settings.js')?>"></script>

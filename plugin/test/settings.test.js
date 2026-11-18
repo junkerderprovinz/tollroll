@@ -67,12 +67,14 @@ function page(answers, stored) {
   };
   const notifyCard = {};
   const GlimNotifyCard = { mount(el, adapter, opts) { Object.assign(notifyCard, { el, adapter, opts }); return {}; } };
+  const timeFields = [];
+  const GlimTimeField = { enhance(b, opts) { timeFields.push([b, opts.label]); return b; } };
   const location = {};
   const matchMedia = () => ({ matches: false, addEventListener() {} });
-  const window = { TollRollCore: core, TRS_T: en, TRL_LANG: 'en', TollRollGlyphs: {}, csrf_token: 't', fetch, GlimFortressCard, GlimNotifyCard, GlimNotifyMarks: {}, matchMedia };
+  const window = { TollRollCore: core, TRS_T: en, TRL_LANG: 'en', TollRollGlyphs: {}, csrf_token: 't', fetch, GlimFortressCard, GlimNotifyCard, GlimNotifyMarks: {}, GlimTimeField, matchMedia };
   const ctx = vm.createContext({ window, document, fetch, URLSearchParams, location, localStorage, setTimeout, clearTimeout });
   vm.runInContext(fs.readFileSync(path.join(PLUGIN, 'scripts', 'settings.js'), 'utf8'), ctx);
-  return { card: mounted, notifyCard, fortEl: byId['trs-fort'], byId, tabs, store, gets, posts, location, focused: () => doc.activeElement };
+  return { card: mounted, notifyCard, timeFields, fortEl: byId['trs-fort'], byId, tabs, store, gets, posts, location, focused: () => doc.activeElement };
 }
 
 // The script builds its objects in its own realm.
@@ -245,4 +247,9 @@ test('the channels card gets every kind TollRoll sends to and reaches the servic
   assert.deepEqual(plain(await nc.adapter.test(list[0])), { ok: false, code: 'dns' });
   const refused = page({ notify: { error: 'invalid', problems: [{ index: 0, code: 'invalid' }] } });
   await assert.rejects(refused.notifyCard.adapter.save(list), (e) => e.code === 'invalid' && e.problems.length === 1);
+});
+
+test("the hub's three times are GlimStone's time fields, each named for the reader", () => {
+  const p = page({});
+  assert.deepEqual(p.timeFields.map(([b, label]) => [b, label]), [[p.byId['trs-q-from'], en.s_quiet_from], [p.byId['trs-q-to'], en.s_quiet_to], [p.byId['trs-d-at'], en.s_digest_at]]);
 });
