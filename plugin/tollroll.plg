@@ -33,38 +33,37 @@ One dashboard tile for the apps of your fortress: a row per app with how it is
 doing, and one log with the lines of all of them, filtered by a click. It joins
 the fortress with its phrase and reads the status report every member serves.
 
-### 1.0.2
-Your Unraid server writes into the tile's log: its syslog in plain words, the disks that woke up and why, and anything unusual. Thanks to @Revan335 for the idea in [#3](https://github.com/junkerderprovinz/tollroll/issues/3).
+### 1.1.0
+Your server and your router write into the tile's log in plain words, and a notification hub sends the messages of every app in your fortress through one set of channels, with quiet hours and a daily summary. Thanks to @Revan335 for the idea in [#3](https://github.com/junkerderprovinz/tollroll/issues/3).
 
 ✨ **Added**
-- Unraid's syslog joins the log, sorted into errors, warnings and info. The lines that matter most, such as disk errors, parity checks, the mover, sign-ins or running out of memory, come with one short sentence that says what they mean. Hover a line to see the original.
-- Routine noise like Docker's network chatter folds into one line, and a click shows it.
-- When an array or pool disk wakes up, the log says which one and what likely woke it: a container, a VM, an SMB or NFS client, the mover, a parity check or a scheduled task. When TollRoll can't tell, it says so. Pick Disks above the log and press Open in the tile header to see how often each disk woke up today and in the last 7 days. TollRoll only reads, so it never wakes a disk itself.
-- The log flags the unusual too: a sign-in from an address TollRoll has not seen before, a burst of failed sign-ins, a new plugin, changed settings on the flash drive, a new scheduled task, a share newly open to guests, and many files deleted at once.
-- When /var/log is 80% full, the log names the biggest file and who writes it. At 90% you get one Unraid notification.
-- The server's lines are there before TollRoll joins a fortress. Until it does, the tile is the log with the prompt to join below it.
+- **Your server in the log.** Unraid's syslog joins the tile's log, sorted into errors, warnings and info. Lines that matter, such as disk errors, parity checks, the mover, sign-ins or running out of memory, come with one sentence that says what they mean, and a parity check says why it started. Hover a line to see the original, and routine noise folds into one line.
+- **Disks that wake up.** When an array or pool disk spins up, the log says which one and what likely woke it: a container, a VM, a network share, the mover, a parity check or a scheduled task. Pick Disks above the log and press Open to see how often each disk woke today and in the last 7 days. TollRoll only reads, so it never wakes a disk itself.
+- **The unusual stands out.** A sign-in from a new address, a burst of failed sign-ins, a new plugin, changed settings on the flash drive, a new scheduled task, a share newly open to guests or many files deleted at once get a line of their own. When /var/log is 80% full, the log names the biggest file and who writes it.
+- **Your router's log too.** Send it to Unraid's syslog server, and TollRoll watches it for new sign-ins, changed port forwards and firewall rules, intrusion warnings, new devices on your network and a log that goes quiet. It only reads those lines and never connects to the router.
+- **A notification hub.** Send messages to Unraid, Apprise, Discord, Gotify, Matrix, ntfy, Slack, email or a webhook. Apps of your fortress that know TollRoll hand their notifications to it, so quiet hours, a daily summary and a level per app apply to all of them. The same message goes out once, and a flood of them waits for the next free slot.
+- **The all-clear reaches every channel.** When an app says a problem is over, channels that only take problems hear it too.
+- **Messages lead to the right page.** A message can link to a page on your server, and every channel opens it under your server's address.
+- **Suggestions.** TollRoll looks at your server and suggests an app of the fortress where one would help, for backups, container updates or the server's health.
+- **Everything open in one view.** Open in the tile header lists what each app still needs from you.
+- **Plugins that only check now and then** still get their row on the tile.
+- **The Help card** offers the TollRoll Discord server beside GitHub.
 
 🎨 **Design**
-- With TowerTorch, the chosen view and the chosen filter above the log take your accent colour.
-- Without a fortress the tile header holds only the title and its buttons, since every view would show the same log.
+- **Channels picked from tiles.** Add a channel in a window with a search and the services' logos, then fill in its fields and send a test right there. Every change is saved at once.
+- **A real time picker** for the quiet hours and the daily summary: pick the hour and the minute from two lists.
+- **Cleaner settings.** Fields have no frames, every button shows its icon, controls stand at the end of their row, open lists show plain rows with a check mark, and the (i) and its bubble look like they do in your other apps.
+- **GlimStone 4.5.7.** With TowerTorch, rows, chips, views, options and tabs light in its hover colour, and the chosen view and filter above the log take your accent colour.
+- **Without a fortress** the tile header holds only the title and its buttons.
+
+⚡ **Improved**
+- **A steadier fortress.** TollRoll keeps listening on a server with a single network interface, a member that already took a new phrase no longer shows as gone, and a member that is just closing no longer locks out a newcomer.
 
 🐛 **Fixed**
-- With TowerTorch, the gear in the tile header was white and hard to see. It now has the same colour as the other header buttons.
+- **The gear in the tile header** is as easy to see as the other header buttons with TowerTorch.
 
 🌐 **Translations**
-- Every new text in all 26 languages Unraid offers.
-
-### 1.0.1
-The Help card leads to Discord, and with TowerTorch every row and tab lights in its hover colour.
-
-✨ **Added**
-- The Help card offers the TollRoll Discord server beside GitHub.
-
-🎨 **Design**
-- GlimStone 4.5.4. With TowerTorch, the rows, chips, views, options and tabs of the tile and the settings page light in TowerTorch's hover colour, a soft tint of your accent, the same as TowerTorch's own rows and buttons.
-
-🌐 **Translations**
-- The Help sentence names GitHub and Discord in all 26 languages, and French readers are addressed with tu.
+- **Every new text in all 26 languages Unraid offers,** and French readers are addressed with tu.
 
 ### 1.0.0
 Your whole fortress on one dashboard tile, with one log for every app. Joining takes twelve words, and you never type an address.
