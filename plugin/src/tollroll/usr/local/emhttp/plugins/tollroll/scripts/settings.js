@@ -216,55 +216,7 @@
 
   window.GlimFortressCard.mount(document.getElementById('trs-fort'), adapter, { lang: lang, app: { id: 'tollroll', name: 'TollRoll' } });
 
-  /* The notification channels. Switches and choices save at once, text a
-   * moment after the last key, so a half typed address is not sent. */
-  var N = {
-    unraid: document.getElementById('trs-n-unraid'),
-    apprise: document.getElementById('trs-n-apprise'),
-    hs: document.getElementById('trs-n-hs'),
-    room: document.getElementById('trs-n-room'),
-    token: document.getElementById('trs-n-token'),
-    on: document.getElementById('trs-n-on')
-  };
-  var savedEl = document.getElementById('trs-n-saved');
-  var appriseErr = document.getElementById('trs-n-apprise-err');
-  var channels = [], savedHs = '', tokenSaved = false, typing = 0, fade = 0;
-  var NAMES = { unraid: 'Unraid', apprise: 'Apprise', matrix: 'Matrix' };
-
-  // A saved token stays with its homeserver: once that changes, the field
-  // asks for a token again.
-  function tokenKept() {
-    return tokenSaved && N.hs.value.trim() === savedHs;
-  }
-
-  function tokenHint() {
-    N.token.placeholder = tokenKept() ? L.s_token_saved : L.s_n_token;
-  }
-
-  function showNotify(list) {
-    channels = list || [];
-    var f = C.notifyForm(channels);
-    N.unraid.checked = f.unraid;
-    N.apprise.value = f.apprise;
-    N.hs.value = f.hs;
-    N.room.value = f.room;
-    N.token.value = '';
-    N.on.value = f.on;
-    savedHs = f.hs;
-    tokenSaved = f.tokenSaved;
-    tokenHint();
-  }
-
-  function notifyList() {
-    return C.notifyChannels(channels, {
-      unraid: N.unraid.checked, apprise: N.apprise.value, hs: N.hs.value, room: N.room.value,
-      token: N.token.value, tokenSaved: tokenKept(), on: N.on.value
-    });
-  }
-
-  function notifyError(code) {
-    return L['s_n_err_' + code] || C.fmt(L.s_n_err_send, { code: code || 'engine' });
-  }
+  var savedEl = document.getElementById('trs-n-saved'), fade = 0;
 
   function saved(ok, text) {
     clearTimeout(fade);
@@ -275,63 +227,27 @@
     if (ok) fade = setTimeout(function () { savedEl.className = 'trs-saved'; }, 2200);
   }
 
-  // The answer brings the channels back masked; the fields keep what is
-  // typed in them, so nothing jumps under the cursor.
-  function saveNotify() {
-    clearTimeout(typing);
-    var url = N.apprise.value.trim();
-    if (url && !/^https?:\/\/[^\s]+$/i.test(url)) {
-      appriseErr.textContent = L.s_n_apprise_bad;
-      saved(false, L.s_not_saved);
-      return;
-    }
-    appriseErr.textContent = '';
-    post('notify', { channels: notifyList() }).then(function (r) {
-      if (!r.channels) { saved(false, L.s_not_saved + ': ' + notifyError(r.error)); return; }
-      channels = r.channels;
-      savedHs = N.hs.value.trim();
-      if (N.token.value.trim()) tokenSaved = true;
-      tokenHint();
-      saved(true, L.s_saved);
-    }, function () { saved(false, L.s_not_saved + ': ' + errorText('engine')); });
-  }
-
-  [N.unraid, N.on].forEach(function (n) { n.addEventListener('change', saveNotify); });
-  [N.apprise, N.hs, N.room, N.token].forEach(function (n) {
-    n.addEventListener('input', function () {
-      clearTimeout(typing);
-      typing = setTimeout(saveNotify, 700);
-    });
-    n.addEventListener('change', saveNotify);
-  });
-  N.hs.addEventListener('input', tokenHint);
-
-  // Each switched on channel gets the test message, as the form has it.
-  function testNotify() {
-    var res = document.getElementById('trs-n-res');
-    var list = notifyList().filter(function (c) { return NAMES[c.id] && c.enabled; });
-    res.textContent = '';
-    if (!list.length) { res.appendChild(el('span', '', L.s_n_test_none)); return; }
-    list.reduce(function (done, c) {
-      return done.then(function () {
-        var item = res.appendChild(el('span', 'run', NAMES[c.id] + ': ' + L.s_testing));
-        return post('notify_test', { channel: c }).then(function (r) {
-          item.className = r.ok ? 'ok' : 'err';
-          item.textContent = (r.ok ? '✓ ' : '✗ ') + NAMES[c.id] + ': ' + (r.ok ? L.s_n_sent : notifyError(r.error));
-        }, function () {
-          item.className = 'err';
-          item.textContent = '✗ ' + NAMES[c.id] + ': ' + errorText('engine');
-        });
+  /* The notification channels, in the card every plugin of the house shares.
+   * The service answers a save with the channels as kept, secrets masked,
+   * and refuses a list that does not validate with the problems in it. */
+  var KINDS = ['unraid', 'discord', 'slack', 'ntfy', 'gotify', 'matrix', 'apprise', 'smtp', 'webhook'];
+  window.GlimNotifyCard.mount(document.getElementById('trs-notify'), {
+    load: function () {
+      return get('notify').then(function (r) {
+        if (!r.channels) throw { code: r.error || 'engine' };
+        return r.channels;
       });
-    }, Promise.resolve());
-  }
-
-  function loadNotify() {
-    get('notify').then(function (r) {
-      if (r.channels) showNotify(r.channels);
-      else saved(false, errorText(r.error || 'engine'));
-    });
-  }
+    },
+    save: function (list) {
+      return post('notify', { channels: list }).then(function (r) {
+        if (!r.channels) throw { code: r.error || 'engine', problems: r.problems };
+        return r.channels;
+      });
+    },
+    test: function (channel) {
+      return post('notify_test', { channel: channel }).then(function (r) { return { ok: !!r.ok, code: r.error }; });
+    }
+  }, { t: L, lang: lang, kinds: KINDS, marks: window.GlimNotifyMarks, classes: { input: 'trs-in', button: 'trs-btn', switch: 'trs-switch' }, saved: saved });
 
   /* The hub: quiet hours, the daily summary, taking over the apps'
    * notifications and the level of each app, all saved at once. */
@@ -402,6 +318,4 @@
   });
 
   document.querySelectorAll('[data-glyph]').forEach(function (n) { n.innerHTML = GLYPH[n.dataset.glyph] || ''; });
-  document.getElementById('trs-n-test').addEventListener('click', testNotify);
-  loadNotify();
 })();

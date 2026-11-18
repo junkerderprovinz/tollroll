@@ -169,49 +169,6 @@ test('an app colour gets letters that stay readable on it', () => {
 
 const M = '********';
 
-test('the notification form reads the three channels it edits', () => {
-  const form = core.notifyForm([
-    { id: 'unraid', kind: 'unraid', enabled: true, on: 'failure' },
-    { id: 'apprise', kind: 'apprise', enabled: true, on: 'failure', apprise: { url: 'http://apprise.lan:8000/notify/k' } },
-    { id: 'matrix', kind: 'matrix', enabled: true, on: 'failure', matrix: { homeserver: 'https://m.org', room: '!r:m.org', token: M } },
-    { id: 'hook', kind: 'webhook', enabled: true, webhook: { url: 'https://h.org' } },
-  ]);
-  assert.deepEqual(form, { unraid: true, apprise: 'http://apprise.lan:8000/notify/k', hs: 'https://m.org', room: '!r:m.org', token: '', tokenSaved: true, on: 'failure' });
-  assert.deepEqual(core.notifyForm([]), { unraid: false, apprise: '', hs: '', room: '', token: '', tokenSaved: false, on: 'always' });
-});
-
-test('saving the form keeps every other channel and a saved token', () => {
-  const hook = { id: 'hook', kind: 'webhook', enabled: true, webhook: { url: 'https://h.org', headers: { Authorization: M } } };
-  const before = [hook, { id: 'matrix', kind: 'matrix', enabled: true, on: 'always', matrix: { homeserver: 'https://m.org', room: '!r:m.org', token: M } }];
-  const after = core.notifyChannels(before, { unraid: true, apprise: '', hs: 'https://m.org', room: '!s:m.org', token: '', tokenSaved: true, on: 'failure' });
-  assert.deepEqual(after, [
-    hook,
-    { id: 'matrix', kind: 'matrix', enabled: true, on: 'failure', matrix: { homeserver: 'https://m.org', room: '!s:m.org', token: M } },
-    { id: 'unraid', kind: 'unraid', enabled: true, on: 'failure' },
-  ]);
-});
-
-test('a typed token replaces the saved one, a cleared channel goes', () => {
-  const before = [{ id: 'matrix', kind: 'matrix', enabled: true, on: 'always', matrix: { homeserver: 'https://m.org', room: '!r:m.org', token: M } },
-    { id: 'apprise', kind: 'apprise', enabled: true, on: 'always', apprise: { url: 'http://a.lan/notify/k', tags: 'ops' } }];
-  const after = core.notifyChannels(before, { unraid: false, apprise: 'http://b.lan/notify/k', hs: 'https://m.org', room: '!r:m.org', token: 'syt_new', tokenSaved: true, on: 'always' });
-  assert.equal(after.find((c) => c.id === 'matrix').matrix.token, 'syt_new');
-  assert.deepEqual(after.find((c) => c.id === 'apprise').apprise, { url: 'http://b.lan/notify/k', tags: 'ops' });
-  assert.equal(after.some((c) => c.id === 'unraid'), false);
-  const cleared = core.notifyChannels(before, { unraid: false, apprise: '', hs: '', room: '', token: '', tokenSaved: true, on: 'always' });
-  assert.deepEqual(cleared, []);
-});
-
-test('a half filled channel stays, switched off, so nothing typed is lost', () => {
-  const after = core.notifyChannels([], { unraid: false, apprise: 'not a url', hs: 'https://m.org', room: '', token: '', tokenSaved: false, on: 'always' });
-  assert.deepEqual(after.map((c) => [c.id, c.enabled]), [['apprise', false], ['matrix', false]]);
-});
-
-test('a switched off unraid channel stays in the list', () => {
-  const after = core.notifyChannels([{ id: 'unraid', kind: 'unraid', enabled: true, on: 'always' }], { unraid: false, apprise: '', hs: '', room: '', token: '', tokenSaved: false, on: 'always' });
-  assert.deepEqual(after, [{ id: 'unraid', kind: 'unraid', enabled: false, on: 'always' }]);
-});
-
 test('in a fortress the subtitle counts the devices too', () => {
   const view = { apps: [app(), app({ key: 'b', state: 'failed' })] };
   assert.equal(core.subtitle(view, en, 'en', 3), '2 apps on 3 devices, 1 needs you');

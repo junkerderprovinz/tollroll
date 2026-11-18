@@ -213,13 +213,20 @@ func (j *Journal) texts(lang string) map[string]string {
 	return j.Texts(primary)
 }
 
-// say fills the placeholders of key. A channel goes by the name the settings
-// page gives it.
+// brands are the services' own names, which no language translates. Mail
+// and webhooks go by the words of the settings page.
+var brands = map[string]string{
+	"unraid": "Unraid", "discord": "Discord", "slack": "Slack", "ntfy": "ntfy", "gotify": "Gotify",
+	"matrix": "Matrix", "apprise": "Apprise", "healthchecks": "Healthchecks.io",
+}
+
+// say fills the placeholders of key. A channel goes by the name its tile
+// has on the settings page.
 func say(tx map[string]string, key string, args map[string]string) string {
 	s := tx[key]
 	for k, v := range args {
 		if k == "channel" {
-			v = cmp.Or(tx["s_n_"+v], v)
+			v = cmp.Or(brands[v], tx["nc_"+v], v)
 		}
 		s = strings.ReplaceAll(s, "{"+k+"}", v)
 	}

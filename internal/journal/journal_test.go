@@ -22,7 +22,6 @@ var words = map[string]map[string]string{
 		"r_send_failed": "Could not send a notification through {channel}",
 		"r_removed":     "Took {app} on {device} out of the fortress",
 		"r_delivered":   "Delivered a message from {name}",
-		"s_n_matrix":    "Matrix",
 	},
 	"de": {
 		"r_told_down": "Gemeldet: {name} ist nicht erreichbar",

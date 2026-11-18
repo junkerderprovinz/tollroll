@@ -1,8 +1,7 @@
 /* What the pages show, worked out without the DOM: row texts and tones, the
  * log filter, the chips above the log, the apps chosen for the log view, the
- * map of the fortress, the labels, an app's mark, the members and the
- * notification form. tile.js and settings.js draw it, plugin/test/core.test.js
- * checks it under node. */
+ * map of the fortress, the labels, an app's mark and the members. tile.js and
+ * settings.js draw it, plugin/test/core.test.js checks it under node. */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.TollRollCore = factory();
@@ -130,72 +129,6 @@
     });
     var y = 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2];
     return { bg: c, fg: y > 0.18 ? '#161616' : '#ffffff' };
-  }
-
-  /* The settings page edits three channels of notify.json by their ids and
-   * leaves every other channel as it is. The service sends saved secrets back
-   * masked, and a mask sent back keeps the saved one. */
-  var MASK = '********';
-
-  function byId(list, id) {
-    for (var i = 0; i < list.length; i++) if (list[i] && list[i].id === id) return list[i];
-    return null;
-  }
-
-  function notifyForm(list) {
-    var u = byId(list, 'unraid'), a = byId(list, 'apprise'), m = byId(list, 'matrix');
-    var mx = (m && m.matrix) || {};
-    var first = u || a || m;
-    return {
-      unraid: !!(u && u.enabled),
-      apprise: (a && a.apprise && a.apprise.url) || '',
-      hs: mx.homeserver || '',
-      room: mx.room || '',
-      token: '',
-      tokenSaved: !!mx.token,
-      on: first && first.on === 'failure' ? 'failure' : 'always'
-    };
-  }
-
-  function notifyChannels(list, f) {
-    var out = list.slice();
-    function base(id, kind) {
-      var old = byId(out, id);
-      var c = old ? JSON.parse(JSON.stringify(old)) : { id: id, kind: kind, enabled: false };
-      c.on = f.on;
-      return c;
-    }
-    function set(id, c) {
-      var i = out.indexOf(byId(out, id));
-      if (c === null) { if (i >= 0) out.splice(i, 1); return; }
-      if (i >= 0) out[i] = c; else out.push(c);
-    }
-
-    var url = f.apprise.trim();
-    var a = null;
-    if (url) {
-      a = base('apprise', 'apprise');
-      a.enabled = /^https?:\/\/[^\/\s]+/i.test(url);
-      a.apprise = Object.assign({}, a.apprise, { url: url });
-    }
-    set('apprise', a);
-
-    var hs = f.hs.trim(), room = f.room.trim(), typed = f.token.trim();
-    var m = null;
-    if (hs || room || typed) {
-      var token = typed || (f.tokenSaved ? MASK : '');
-      m = base('matrix', 'matrix');
-      m.enabled = !!(hs && room && token);
-      m.matrix = { homeserver: hs, room: room, token: token };
-    }
-    set('matrix', m);
-
-    if (byId(out, 'unraid') || f.unraid) {
-      var u = base('unraid', 'unraid');
-      u.enabled = !!f.unraid;
-      set('unraid', u);
-    }
-    return out;
   }
 
   function timeLabel(iso, lang, now) {
@@ -383,6 +316,6 @@
 
   return { fmt: fmt, plural: plural, rowStatus: rowStatus, foldQuiet: foldQuiet, filterLog: filterLog, chips: chips, validFilter: validFilter,
     hue: hue, mark: mark, timeLabel: timeLabel, subtitle: subtitle, needsYou: needsYou, lang: lang,
-    safeIcon: safeIcon, markColors: markColors, notifyForm: notifyForm, notifyChannels: notifyChannels,
+    safeIcon: safeIcon, markColors: markColors,
     layout: layout, shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, statusWindow: statusWindow, ago: ago, routerStatus: routerStatus, hubSettings: hubSettings, levelApps: levelApps, openPoints: openPoints };
 });

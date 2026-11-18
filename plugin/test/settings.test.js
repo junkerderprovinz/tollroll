@@ -65,12 +65,14 @@ function page(answers, stored) {
       return { refresh() {}, destroy() {} };
     }
   };
+  const notifyCard = {};
+  const GlimNotifyCard = { mount(el, adapter, opts) { Object.assign(notifyCard, { el, adapter, opts }); return {}; } };
   const location = {};
   const matchMedia = () => ({ matches: false, addEventListener() {} });
-  const window = { TollRollCore: core, TRS_T: en, TRL_LANG: 'en', TollRollGlyphs: {}, csrf_token: 't', fetch, GlimFortressCard, matchMedia };
+  const window = { TollRollCore: core, TRS_T: en, TRL_LANG: 'en', TollRollGlyphs: {}, csrf_token: 't', fetch, GlimFortressCard, GlimNotifyCard, GlimNotifyMarks: {}, matchMedia };
   const ctx = vm.createContext({ window, document, fetch, URLSearchParams, location, localStorage, setTimeout, clearTimeout });
   vm.runInContext(fs.readFileSync(path.join(PLUGIN, 'scripts', 'settings.js'), 'utf8'), ctx);
-  return { card: mounted, fortEl: byId['trs-fort'], byId, tabs, store, gets, posts, location, focused: () => doc.activeElement };
+  return { card: mounted, notifyCard, fortEl: byId['trs-fort'], byId, tabs, store, gets, posts, location, focused: () => doc.activeElement };
 }
 
 // The script builds its objects in its own realm.
@@ -229,4 +231,18 @@ test('the arrow keys move between the tabs and wrap around', () => {
   assert.deepEqual(shown(p), ['info']);
   p.tabs[3].fire('keydown', { key: 'Home' });
   assert.deepEqual(shown(p), ['general']);
+});
+
+test('the channels card gets every kind TollRoll sends to and reaches the service through the proxy', async () => {
+  const list = [{ id: 'unraid', kind: 'unraid', enabled: true, on: 'always' }];
+  const p = page({ notify: { channels: list }, notify_test: { ok: false, error: 'dns' } });
+  const nc = p.notifyCard;
+  assert.equal(nc.el, p.byId['trs-notify']);
+  assert.deepEqual([...nc.opts.kinds], ['unraid', 'discord', 'slack', 'ntfy', 'gotify', 'matrix', 'apprise', 'smtp', 'webhook']);
+  assert.deepEqual(plain(await nc.adapter.load()), list);
+  await nc.adapter.save(list);
+  assert.deepEqual(p.posts[0], { path: 'notify', data: { channels: list } });
+  assert.deepEqual(plain(await nc.adapter.test(list[0])), { ok: false, code: 'dns' });
+  const refused = page({ notify: { error: 'invalid', problems: [{ index: 0, code: 'invalid' }] } });
+  await assert.rejects(refused.notifyCard.adapter.save(list), (e) => e.code === 'invalid' && e.problems.length === 1);
 });

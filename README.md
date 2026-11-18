@@ -76,7 +76,7 @@ On its first start TollRoll looks at the server and suggests the app of the hous
 
 The tile and the settings page speak the language you picked in Unraid, in all 26 languages Unraid offers. The texts that come from the apps arrive in that language too, as far as each app has them.
 
-TollRoll can also tell you when something changes. Switch on Unraid's notifications, an Apprise URL or a Matrix room in the settings, and it sends a message when an app has not answered for a few minutes, when it answers again and when it shows something new that needs you. Each of these goes out once, not on every check. Pick **Only problems** to leave out the good news and the plain hints.
+TollRoll can also tell you when something changes. Under **Notifications** you add a channel by picking its service from a tile with the service's logo: Unraid's own notifications, a chat or push service, mail or a webhook. Only that channel's few fields show up, and a channel can be added more than once. TollRoll then sends a message when an app has not answered for a few minutes, when it answers again and when it shows something new that needs you. Each of these goes out once, not on every check. Set a channel to **Only problems** to leave out the good news and the plain hints.
 
 The same settings tab keeps the noise down. During the quiet hours you pick, only alerts go out, and everything else arrives as one message once they end. A daily summary at a time you choose says what each app told you and what is still open. The same message goes out once until it is resolved or 20 hours have passed. Each app sends at most 6 messages an hour and all of them together 20, and anything past that waits for the next free slot. Per app you pick the level from which it may notify you. Switch on **Take over the notifications of your apps** and the apps of your fortress that know TollRoll hand their messages to it, so all of this holds for them as well. With the switch off, or while TollRoll is away, every app keeps notifying on its own.
 
@@ -131,7 +131,7 @@ TollRoll needs Unraid 6.12 or newer. Without a fortress the tile shows the serve
 
 1. Copy the phrase, the twelve words, from an app of your fortress that shows it, such as BombVault.
 2. In Unraid, open **Settings → Utilities → TollRoll**, paste the phrase and join. Every app of the fortress shows up by itself.
-3. To get notified, fill in a channel under **Notifications** and try it with **Send a test message**. Every change in the settings is saved right away, a small tick says so.
+3. To get notified, add a channel under **Notifications** and try it with **Send a test**. Every change in the settings is saved right away, a small tick says so.
 4. To watch your router as well, open **Settings → Syslog Server** in Unraid, switch on the local syslog server and pick a folder on a pool for its files. Then set this server's address as the remote syslog server in your router, port 514 over UDP. The **Router log** card under **General** shows once lines arrive.
 5. Open the **Dashboard**. The TollRoll tile sits in the middle column.
 
