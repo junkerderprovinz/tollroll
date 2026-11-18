@@ -62,7 +62,7 @@ func (h *Hub) Action(name func(app string) string) kit.Action {
 		}
 		app := name(from.App)
 		e := notify.Event{Kind: d.Kind, Severity: d.Severity, Title: app + ": " + alert.Plain(d.Title), Body: alert.Plain(d.Body)}
-		if link := cmp.Or(d.Link, d.URL); strings.HasPrefix(link, "https://") || strings.HasPrefix(link, "http://") {
+		if link := cmp.Or(d.Link, d.URL); linkOK(link) {
 			e.Link = link
 		}
 		// The app waits for the answer only to know that TollRoll took it,
@@ -70,6 +70,13 @@ func (h *Hub) Action(name func(app string) string) kit.Action {
 		go h.Deliver(context.WithoutCancel(ctx), Message{App: from.App, Name: app, Key: d.Key, Resolved: d.Resolved, Event: e})
 		return []byte(`{"taken":true}`), nil
 	}}
+}
+
+// linkOK takes a web address and a path on this server, which the channels
+// lead to under the server's own address.
+func linkOK(link string) bool {
+	return strings.HasPrefix(link, "https://") || strings.HasPrefix(link, "http://") ||
+		strings.HasPrefix(link, "/") && !strings.HasPrefix(link, "//")
 }
 
 func (d Delivery) valid() bool {

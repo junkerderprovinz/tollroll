@@ -238,5 +238,5 @@
   "t_open_none": "Mikään ei ole avoinna. Kaikki sovellukset voivat hyvin.",
   "t_open_title": "Kaikkien sovellusten avoimet asiat",
   "s_hub": "Ilmoituskeskus",
-  "r_delivered": "Toimitti viestin sovellukselta {name}"
+  "r_delivered": "Toimitti viestin, jonka lähetti {name}"
 }

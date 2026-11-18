@@ -45,6 +45,7 @@ type config struct {
 	HubState string
 	Advice   string
 	Plugins  string
+	Nginx    string
 }
 
 // version is set at build time.
@@ -63,6 +64,7 @@ func configFromEnv() config {
 		HubState: cmp.Or(os.Getenv("HUB_STATE"), "/boot/config/plugins/tollroll/hub-state.json"),
 		Advice:   cmp.Or(os.Getenv("ADVICE"), "/boot/config/plugins/tollroll/advice.json"),
 		Plugins:  cmp.Or(os.Getenv("PLUGINS"), plugins.Dir),
+		Nginx:    cmp.Or(os.Getenv("NGINX_INI"), "/var/local/emhttp/nginx.ini"),
 	}
 }
 
@@ -84,6 +86,7 @@ func run(ctx context.Context, cfg config) error {
 	if err != nil {
 		return err
 	}
+	ch.Base = func() string { return channels.DefaultURL(cfg.Nginx) }
 	device, _ := os.Hostname()
 	texts := func() (string, map[string]string) {
 		lang := alert.Language(cfg.Dynamix)

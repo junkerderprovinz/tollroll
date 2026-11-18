@@ -238,5 +238,5 @@
   "t_open_none": "Niets staat open. Alle apps doen het prima.",
   "t_open_title": "Openstaande punten van alle apps",
   "s_hub": "Meldingencentrum",
-  "r_delivered": "Een bericht voor {name} afgeleverd"
+  "r_delivered": "Een bericht van {name} afgeleverd"
 }

@@ -231,5 +231,5 @@
   "t_open_none": "미해결 항목이 없어요. 모든 앱이 잘 돌아가고 있어요.",
   "t_open_title": "모든 앱의 미해결 항목",
   "s_hub": "알림 센터",
-  "r_delivered": "{name} 대신 메시지를 전달했어요"
+  "r_delivered": "{name}에서 온 메시지를 전달했어요"
 }

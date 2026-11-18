@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/junkerderprovinz/parleyport/kit/notify"
@@ -22,6 +24,10 @@ const Source = "TollRoll"
 // Store holds the channels and the dispatcher for them. It is safe for
 // concurrent use.
 type Store struct {
+	// Base is the address of the server's web interface, which a link that
+	// is only a path leads to on every channel but Unraid's own.
+	Base func() string
+
 	path string
 	opt  notify.Options
 
@@ -103,12 +109,59 @@ func (s *Store) Enabled() bool {
 	return false
 }
 
-// Send delivers e to every channel that takes it.
+// Send delivers e to every channel that takes it. Unraid's notifications
+// take a link that is a path on the server as it is; every other channel
+// gets it in front of Base, or no link without one.
 func (s *Store) Send(ctx context.Context, e notify.Event) []notify.Result {
 	s.mu.Lock()
-	d := s.d
+	d, list := s.d, s.list
 	s.mu.Unlock()
-	return d.Send(ctx, e)
+	if !strings.HasPrefix(e.Link, "/") {
+		return d.Send(ctx, e)
+	}
+	var here, away []notify.Channel
+	for _, c := range list {
+		if c.Kind == notify.KindUnraid {
+			here = append(here, c)
+		} else {
+			away = append(away, c)
+		}
+	}
+	var out []notify.Result
+	if dh, err := notify.NewDispatcher(here, s.opt); err == nil {
+		out = append(out, dh.Send(ctx, e)...)
+	}
+	far := e
+	far.Link = ""
+	if base := s.base(); base != "" {
+		far.Link = base + e.Link
+	}
+	if da, err := notify.NewDispatcher(away, s.opt); err == nil {
+		out = append(out, da.Send(ctx, far)...)
+	}
+	return out
+}
+
+func (s *Store) base() string {
+	if s.Base == nil {
+		return ""
+	}
+	return strings.TrimRight(s.Base(), "/")
+}
+
+var defaultURL = regexp.MustCompile(`(?m)^NGINX_DEFAULTURL="?(https?://[^"\s]+)"?\s*$`)
+
+// DefaultURL reads the address Unraid's web interface answers under from
+// its nginx.ini, or "" where there is none.
+func DefaultURL(path string) string {
+	b, err := os.ReadFile(path) //nolint:gosec // G304: the service names the file
+	if err != nil {
+		return ""
+	}
+	if m := defaultURL.FindSubmatch(b); m != nil {
+		return string(m[1])
+	}
+	return ""
 }
 
 // Test sends e once to ch as the settings page has it, saved or not, with the

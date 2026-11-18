@@ -245,5 +245,5 @@
   "t_open_none": "Nimic nu e deschis. Toate aplicațiile merg bine.",
   "t_open_title": "Puncte deschise ale tuturor aplicațiilor",
   "s_hub": "Centrul de notificări",
-  "r_delivered": "A livrat un mesaj pentru {name}"
+  "r_delivered": "A livrat un mesaj de la {name}"
 }

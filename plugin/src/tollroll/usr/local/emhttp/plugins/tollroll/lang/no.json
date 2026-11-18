@@ -238,5 +238,5 @@
   "t_open_none": "Ingenting er åpent. Alle appene har det fint.",
   "t_open_title": "Åpne punkter fra alle apper",
   "s_hub": "Varslingssentral",
-  "r_delivered": "Leverte en melding for {name}"
+  "r_delivered": "Leverte en melding fra {name}"
 }

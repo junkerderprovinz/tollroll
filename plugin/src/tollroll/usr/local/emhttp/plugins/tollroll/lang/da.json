@@ -238,5 +238,5 @@
   "t_open_none": "Intet er åbent. Alle apps har det fint.",
   "t_open_title": "Åbne punkter fra alle apps",
   "s_hub": "Notifikationscentral",
-  "r_delivered": "Leverede en besked for {name}"
+  "r_delivered": "Leverede en besked fra {name}"
 }

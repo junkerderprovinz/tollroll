@@ -238,5 +238,5 @@
   "t_open_none": "Nincs semmi nyitott. Minden alkalmazás jól van.",
   "t_open_title": "Az összes alkalmazás nyitott pontjai",
   "s_hub": "Értesítési központ",
-  "r_delivered": "Kézbesített egy üzenetet a(z) {name} nevében"
+  "r_delivered": "Kézbesített egy üzenetet ettől: {name}"
 }

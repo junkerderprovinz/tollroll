@@ -238,5 +238,5 @@
   "t_open_none": "Açık bir şey yok. Tüm uygulamalar yolunda.",
   "t_open_title": "Tüm uygulamaların açık konuları",
   "s_hub": "Bildirim merkezi",
-  "r_delivered": "{name} adına bir mesaj iletti"
+  "r_delivered": "{name} uygulamasından gelen bir mesajı iletti"
 }

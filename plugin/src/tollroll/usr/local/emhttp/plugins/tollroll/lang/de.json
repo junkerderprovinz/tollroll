@@ -238,5 +238,5 @@
   "t_open_none": "Nichts ist offen. Allen Apps geht es gut.",
   "t_open_title": "Offene Punkte aller Apps",
   "s_hub": "Benachrichtigungs-Zentrale",
-  "r_delivered": "Eine Nachricht für {name} zugestellt"
+  "r_delivered": "Eine Nachricht von {name} zugestellt"
 }

@@ -128,3 +128,24 @@ func (j *journal) names() []string {
 	defer j.mu.Unlock()
 	return append([]string(nil), j.delivered...)
 }
+
+func TestADeliveryKeepsAPathOnTheServerAndDropsAnyOtherLink(t *testing.T) {
+	for link, want := range map[string]string{
+		"/Settings/FireSquire":      "/Settings/FireSquire",
+		"//evil.example/x":          "",
+		"javascript:alert(1)":       "",
+		"https://tower.local/x?y=1": "https://tower.local/x?y=1",
+	} {
+		e := newEnv(t, Settings{TakeOver: true})
+		if err := run(t, e, `{"kind":"health.warn","title":"x","link":"`+link+`"}`); err != nil {
+			t.Fatal(err)
+		}
+		for end := time.Now().Add(2 * time.Second); len(e.ch.titles()) == 0 && time.Now().Before(end); time.Sleep(10 * time.Millisecond) {
+		}
+		e.ch.mu.Lock()
+		if len(e.ch.sent) != 1 || e.ch.sent[0].Link != want {
+			t.Errorf("%s: %+v", link, e.ch.sent)
+		}
+		e.ch.mu.Unlock()
+	}
+}

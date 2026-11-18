@@ -231,5 +231,5 @@
   "t_open_none": "Không có gì còn mở. Mọi ứng dụng đều ổn.",
   "t_open_title": "Các mục còn mở của mọi ứng dụng",
   "s_hub": "Trung tâm thông báo",
-  "r_delivered": "Đã chuyển một tin nhắn cho {name}"
+  "r_delivered": "Đã chuyển một tin nhắn từ {name}"
 }

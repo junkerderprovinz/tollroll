@@ -238,5 +238,5 @@
   "t_open_none": "Nothing is open. Every app is doing fine.",
   "t_open_title": "Open points of every app",
   "s_hub": "Notification hub",
-  "r_delivered": "Delivered a message for {name}"
+  "r_delivered": "Delivered a message from {name}"
 }

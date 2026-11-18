@@ -252,5 +252,5 @@
   "t_open_none": "Nic není otevřené. Všem aplikacím se daří dobře.",
   "t_open_title": "Otevřené body všech aplikací",
   "s_hub": "Centrum oznámení",
-  "r_delivered": "Doručil zprávu za {name}"
+  "r_delivered": "Doručil zprávu od {name}"
 }

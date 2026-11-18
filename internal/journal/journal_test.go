@@ -21,7 +21,7 @@ var words = map[string]map[string]string{
 		"r_told_need":   "Told you that {name} needs you",
 		"r_send_failed": "Could not send a notification through {channel}",
 		"r_removed":     "Took {app} on {device} out of the fortress",
-		"r_delivered":   "Delivered a message for {name}",
+		"r_delivered":   "Delivered a message from {name}",
 		"s_n_matrix":    "Matrix",
 	},
 	"de": {
@@ -164,7 +164,7 @@ func TestAMessageTheHubDeliversForAnAppShowsInTheTilesLog(t *testing.T) {
 	j, _ := newJournal()
 	j.Delivered("FireSquire")
 	lines := j.Lines("en")
-	if len(lines) != 1 || lines[0].App != "tollroll" || lines[0].Text != "Delivered a message for FireSquire" || lines[0].Level != "info" {
+	if len(lines) != 1 || lines[0].App != "tollroll" || lines[0].Text != "Delivered a message from FireSquire" || lines[0].Level != "info" {
 		t.Fatalf("%+v", lines)
 	}
 	rows := j.Rows("en")

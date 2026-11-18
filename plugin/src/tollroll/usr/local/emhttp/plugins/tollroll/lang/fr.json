@@ -245,5 +245,5 @@
   "t_open_none": "Rien n’est ouvert. Toutes les apps vont bien.",
   "t_open_title": "Points ouverts de toutes les apps",
   "s_hub": "Centre de notifications",
-  "r_delivered": "A transmis un message pour {name}"
+  "r_delivered": "A transmis un message de {name}"
 }

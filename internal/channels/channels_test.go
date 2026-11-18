@@ -175,3 +175,66 @@ func TestATestTakesTheSavedSecretOnlyToTheSavedAddress(t *testing.T) {
 		t.Errorf("authorization headers %q, want the secret only at the saved address", got)
 	}
 }
+
+func TestARelativeLinkStaysForUnraidAndLeadsToTheServerElsewhere(t *testing.T) {
+	var got string
+	hook := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var b struct{ Link string }
+		_ = json.NewDecoder(r.Body).Decode(&b)
+		got = b.Link
+	}))
+	defer hook.Close()
+	s, _, r := open(t, "")
+	s.Base = func() string { return "http://tower.local:81" }
+	if _, err := s.Replace([]notify.Channel{
+		{ID: "unraid", Kind: notify.KindUnraid, Enabled: true, On: notify.OnAlways},
+		{ID: "hook", Kind: notify.KindWebhook, Enabled: true, On: notify.OnAlways, Webhook: &notify.Webhook{URL: hook.URL, Method: "POST", Body: `{"link":"%%link%%"}`}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	for _, res := range s.Send(context.Background(), notify.Event{Title: "x", Link: "/Settings/FireSquire"}) {
+		if !res.OK() {
+			t.Fatalf("%+v", res)
+		}
+	}
+	if got != "http://tower.local:81/Settings/FireSquire" {
+		t.Errorf("the webhook got %q", got)
+	}
+	if len(r.calls) != 1 || !strings.Contains(strings.Join(r.calls[0], " "), "-l /Settings/FireSquire") {
+		t.Errorf("unraid %v", r.calls)
+	}
+}
+
+func TestWithoutTheServersAddressARelativeLinkGoesOnlyToUnraid(t *testing.T) {
+	var got = "unset"
+	hook := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var b struct{ Link string }
+		_ = json.NewDecoder(r.Body).Decode(&b)
+		got = b.Link
+	}))
+	defer hook.Close()
+	s, _, _ := open(t, "")
+	s.Base = func() string { return "" }
+	if _, err := s.Replace([]notify.Channel{
+		{ID: "hook", Kind: notify.KindWebhook, Enabled: true, On: notify.OnAlways, Webhook: &notify.Webhook{URL: hook.URL, Method: "POST", Body: `{"link":"%%link%%"}`}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	s.Send(context.Background(), notify.Event{Title: "x", Link: "/Settings/FireSquire"})
+	if got != "" {
+		t.Errorf("the webhook got %q", got)
+	}
+}
+
+func TestTheServersAddressComesFromNginxIni(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "nginx.ini")
+	if err := os.WriteFile(p, []byte("NGINX_LANIP=\"192.168.1.10\"\nNGINX_DEFAULTURL=\"https://tower.local:4443\"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if got := DefaultURL(p); got != "https://tower.local:4443" {
+		t.Errorf("%q", got)
+	}
+	if got := DefaultURL(filepath.Join(t.TempDir(), "none")); got != "" {
+		t.Errorf("missing file %q", got)
+	}
+}

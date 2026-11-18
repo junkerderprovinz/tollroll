@@ -231,5 +231,5 @@
   "t_open_none": "没有未解决的事项。所有应用都运行良好。",
   "t_open_title": "所有应用的未解决事项",
   "s_hub": "通知中心",
-  "r_delivered": "已替 {name} 送达一条消息"
+  "r_delivered": "已送达来自 {name} 的一条消息"
 }
