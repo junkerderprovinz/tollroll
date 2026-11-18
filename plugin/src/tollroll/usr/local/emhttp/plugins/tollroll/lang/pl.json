@@ -222,7 +222,6 @@
   "n_digest_line": "{name} ({n}): {title}",
   "n_digest_none": "Dziś żadna aplikacja nie miała nic do powiedzenia.",
   "n_digest_open": "Wciąż otwarte ({n}):",
-  "s_hub": "Godziny ciszy i podsumowanie",
   "s_quiet": "Godziny ciszy",
   "s_quiet_from": "Od",
   "s_quiet_to": "do",
@@ -251,5 +250,7 @@
   "h_advice": "Sugestia od TollRoll: {text}",
   "t_v_open": "Otwarte",
   "t_open_none": "Nic nie jest otwarte. Wszystkie aplikacje mają się dobrze.",
-  "t_open_title": "Otwarte sprawy wszystkich aplikacji"
+  "t_open_title": "Otwarte sprawy wszystkich aplikacji",
+  "s_hub": "Centrum powiadomień",
+  "r_delivered": "Dostarczył wiadomość od {name}"
 }

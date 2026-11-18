@@ -120,7 +120,7 @@ func run(ctx context.Context, cfg config) error {
 		},
 		Clear: func(kind string) { hb.Resolve(host.Unraid, kind) },
 	})
-	b.Local = unraid
+	b.Local = board.Locals{unraid, j}
 	// The host saves what it learned once ctx ends, which the service waits
 	// for before it exits.
 	hostCtx, stopHost := context.WithCancel(ctx)

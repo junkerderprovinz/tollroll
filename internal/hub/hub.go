@@ -62,9 +62,11 @@ type Sender interface {
 	Send(ctx context.Context, e notify.Event) []notify.Result
 }
 
-// Journal hears what the hub sent and how each channel took it.
+// Journal hears what the hub sent and how each channel took it, and which
+// app it took a message from.
 type Journal interface {
 	Told(e notify.Event, results []notify.Result)
+	Delivered(name string)
 }
 
 // Options set up a Hub. Texts names the language to write in and its
@@ -250,6 +252,9 @@ func (h *Hub) deliver(ctx context.Context, e notify.Event) []notify.Result {
 // no watcher waits for it.
 func (h *Hub) Deliver(ctx context.Context, m Message) {
 	e := m.Event
+	if h.o.Journal != nil && !m.Resolved {
+		h.o.Journal.Delivered(m.Name)
+	}
 	if r := h.Offer(ctx, m); r != nil && h.o.Journal != nil {
 		h.o.Journal.Told(e, r)
 	}

@@ -29,6 +29,10 @@ $trs_ver_link = function ($ver, $repo) use ($trs_e) {
   return '<a class="trs-ver" href="'.$trs_e($repo.'/releases/tag/v'.$v).'" target="_blank" rel="noopener noreferrer">'.$trs_e($v).'</a>';
 };
 $trs_marks = include '/usr/local/emhttp/plugins/tollroll/include/marks.php';
+/* An explanation sits in a bubble behind an (i), as on the fortress card, so the cards stay short. */
+$trs_info = function ($k) use ($h) {
+  return '<span class="trs-info" tabindex="0" role="img" aria-label="'.$h($k).'" data-tip="'.$h($k).'"><span class="trs-gl" data-glyph="IconInfo"></span></span>';
+};
 /* A button in the shape of the README's buttons, as on ShipLog's Info tab. */
 $trs_rbtn = function ($brand, $name, $href) use ($trs_marks, $trs_e) {
   $inner = $brand === 'coffee'
@@ -69,22 +73,20 @@ $trs_rbtn = function ($brand, $name, $href) use ($trs_marks, $trs_e) {
         </section>
 
         <section class="trs-card" aria-labelledby="trs-h-advice">
-          <h3 class="trs-h"><span id="trs-h-advice"><?=$h('a_title')?></span></h3>
-          <p class="trs-hint"><?=$h('a_hint')?></p>
+          <h3 class="trs-h"><span id="trs-h-advice"><?=$h('a_title')?></span><?=$trs_info('a_hint')?></h3>
           <div id="trs-advice"></div>
         </section>
 
         <section class="trs-card" aria-labelledby="trs-h-router">
-          <h3 class="trs-h"><span id="trs-h-router"><?=$h('s_router')?></span></h3>
-          <p class="trs-hint"><?=$h('s_router_hint')?></p>
+          <h3 class="trs-h"><span id="trs-h-router"><?=$h('s_router')?></span><?=$trs_info('s_router_hint')?></h3>
           <div id="trs-router" role="status"></div>
         </section>
       </div>
 
       <div class="trs-pane" role="tabpanel" id="trs-pane-notify" aria-labelledby="trs-tab-notify" hidden>
         <section class="trs-card" aria-labelledby="trs-h-notify">
-          <h3 class="trs-h"><span id="trs-h-notify"><?=$h('s_notify')?></span></h3>
-          <p class="trs-hint"><?=$h('s_notify_hint')?> <?=$h('s_live')?></p>
+          <h3 class="trs-h"><span id="trs-h-notify"><?=$h('s_notify')?></span><?=$trs_info('s_notify_hint')?></h3>
+          <p class="trs-sub"><?=$h('s_live')?></p>
           <div class="trs-grid">
             <div class="trs-switch-row">
               <label for="trs-n-unraid"><?=$h('s_n_unraid')?></label>
@@ -117,43 +119,31 @@ $trs_rbtn = function ($brand, $name, $href) use ($trs_marks, $trs_e) {
         </section>
 
         <section class="trs-card" aria-labelledby="trs-h-hub">
-          <h3 class="trs-h"><span id="trs-h-hub"><?=$h('s_hub')?></span></h3>
-          <div class="trs-grid">
-            <div class="trs-switch-row">
-              <label for="trs-q-on"><?=$h('s_quiet')?></label>
+          <h3 class="trs-h"><span id="trs-h-hub"><?=$h('s_hub')?></span><?=$trs_info('s_flood')?></h3>
+          <div class="trs-row">
+            <div class="trs-lbl"><span class="trs-name-i"><label class="trs-name" for="trs-take"><?=$h('s_takeover')?></label><?=$trs_info('s_takeover_hint')?></span></div>
+            <div class="trs-ctl"><input type="checkbox" role="switch" class="trs-switch" id="trs-take"></div>
+          </div>
+          <div class="trs-row">
+            <div class="trs-lbl"><span class="trs-name-i"><label class="trs-name" for="trs-q-on"><?=$h('s_quiet')?></label><?=$trs_info('s_quiet_hint')?></span></div>
+            <div class="trs-ctl">
+              <span class="trs-times">
+                <input type="time" class="trs-in trs-time" id="trs-q-from" aria-label="<?=$h('s_quiet_from')?>">
+                <span aria-hidden="true"><?=$h('s_quiet_to')?></span>
+                <input type="time" class="trs-in trs-time" id="trs-q-to" aria-label="<?=$h('s_quiet_to')?>">
+              </span>
               <input type="checkbox" role="switch" class="trs-switch" id="trs-q-on">
             </div>
-            <label for="trs-q-from"><?=$h('s_quiet_from')?></label>
-            <div>
-              <span class="trs-times">
-                <input type="time" class="trs-in trs-time" id="trs-q-from">
-                <label for="trs-q-to"><?=$h('s_quiet_to')?></label>
-                <input type="time" class="trs-in trs-time" id="trs-q-to">
-              </span>
-              <p class="trs-hint"><?=$h('s_quiet_hint')?></p>
-            </div>
-            <div class="trs-switch-row">
-              <label for="trs-d-on"><?=$h('s_digest')?></label>
+          </div>
+          <div class="trs-row">
+            <div class="trs-lbl"><span class="trs-name-i"><label class="trs-name" for="trs-d-on"><?=$h('s_digest')?></label><?=$trs_info('s_digest_hint')?></span></div>
+            <div class="trs-ctl">
+              <input type="time" class="trs-in trs-time" id="trs-d-at" aria-label="<?=$h('s_digest_at')?>">
               <input type="checkbox" role="switch" class="trs-switch" id="trs-d-on">
             </div>
-            <label for="trs-d-at"><?=$h('s_digest_at')?></label>
-            <div>
-              <input type="time" class="trs-in trs-time" id="trs-d-at">
-              <p class="trs-hint"><?=$h('s_digest_hint')?></p>
-            </div>
-            <div class="trs-switch-row">
-              <label for="trs-take"><?=$h('s_takeover')?></label>
-              <input type="checkbox" role="switch" class="trs-switch" id="trs-take">
-            </div>
-            <p class="trs-hint trs-wide"><?=$h('s_takeover_hint')?></p>
           </div>
-          <p class="trs-hint"><?=$h('s_flood')?></p>
-        </section>
-
-        <section class="trs-card" aria-labelledby="trs-h-levels">
-          <h3 class="trs-h"><span id="trs-h-levels"><?=$h('s_levels')?></span></h3>
-          <p class="trs-hint"><?=$h('s_levels_hint')?></p>
-          <div class="trs-grid" id="trs-levels"></div>
+          <h4 class="trs-subh"><span><?=$h('s_levels')?></span><?=$trs_info('s_levels_hint')?></h4>
+          <div id="trs-levels"></div>
         </section>
         <div class="trs-foot"><span id="trs-n-saved" class="trs-saved" role="status"></span></div>
       </div>

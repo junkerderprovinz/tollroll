@@ -367,9 +367,9 @@
   function drawLevels(apps) {
     levelsEl.textContent = '';
     var list = C.levelApps(apps, hub.apps);
-    if (!list.length) { levelsEl.appendChild(el('p', 'trs-hint trs-wide', L.s_levels_none)); return; }
+    if (!list.length) { levelsEl.appendChild(el('p', 'trs-sub', L.s_levels_none)); return; }
     list.forEach(function (a) {
-      var lbl = el('label', '', a.name);
+      var lbl = el('label', 'trs-name', a.name);
       lbl.htmlFor = 'trs-level-' + a.key.replace(/[^a-z0-9_-]/gi, '_');
       var sel = el('select', 'trs-in trs-select');
       sel.id = lbl.htmlFor;
@@ -383,10 +383,12 @@
         if (sel.value === 'info') delete hub.apps[a.key]; else hub.apps[a.key] = sel.value;
         saveHub();
       });
-      var box = el('div');
-      box.appendChild(sel);
-      levelsEl.appendChild(lbl);
-      levelsEl.appendChild(box);
+      var row = el('div', 'trs-row'), start = el('div', 'trs-lbl'), ctl = el('div', 'trs-ctl');
+      start.appendChild(lbl);
+      ctl.appendChild(sel);
+      row.appendChild(start);
+      row.appendChild(ctl);
+      levelsEl.appendChild(row);
     });
   }
 

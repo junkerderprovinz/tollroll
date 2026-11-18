@@ -215,7 +215,6 @@
   "n_digest_line": "{name} ({n}): {title}",
   "n_digest_none": "Hoje nenhuma aplicação tinha nada a contar.",
   "n_digest_open": "Ainda em aberto ({n}):",
-  "s_hub": "Horas de silêncio e resumo",
   "s_quiet": "Horas de silêncio",
   "s_quiet_from": "Das",
   "s_quiet_to": "às",
@@ -244,5 +243,7 @@
   "h_advice": "Uma sugestão do TollRoll: {text}",
   "t_v_open": "Abertos",
   "t_open_none": "Nada em aberto. Todas as aplicações estão bem.",
-  "t_open_title": "Pontos em aberto de todas as aplicações"
+  "t_open_title": "Pontos em aberto de todas as aplicações",
+  "s_hub": "Centro de notificações",
+  "r_delivered": "Entregou uma mensagem de {name}"
 }

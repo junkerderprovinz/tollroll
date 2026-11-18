@@ -208,7 +208,6 @@
   "n_digest_line": "{name} ({n}): {title}",
   "n_digest_none": "Millään sovelluksella ei ollut tänään kerrottavaa.",
   "n_digest_open": "Yhä avoinna ({n}):",
-  "s_hub": "Hiljaiset tunnit ja yhteenveto",
   "s_quiet": "Hiljaiset tunnit",
   "s_quiet_from": "Alkaa",
   "s_quiet_to": "päättyy",
@@ -237,5 +236,7 @@
   "h_advice": "TollRollin ehdotus: {text}",
   "t_v_open": "Avoimet",
   "t_open_none": "Mikään ei ole avoinna. Kaikki sovellukset voivat hyvin.",
-  "t_open_title": "Kaikkien sovellusten avoimet asiat"
+  "t_open_title": "Kaikkien sovellusten avoimet asiat",
+  "s_hub": "Ilmoituskeskus",
+  "r_delivered": "Toimitti viestin sovellukselta {name}"
 }

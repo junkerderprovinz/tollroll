@@ -449,3 +449,18 @@ func (f *fakeDoing) Report(context.Context, Source, string) (status.Report, erro
 func (f *fakeDoing) Log(_ context.Context, _ Source, after, _ string, _ int) (status.LogPage, error) {
 	return status.LogPage{Next: after}, nil
 }
+
+type oneLocal struct{ key string }
+
+func (l oneLocal) Rows(string) []App   { return []App{{Key: l.key, Local: true}} }
+func (l oneLocal) Lines(string) []Line { return []Line{{ID: l.key + ":1", App: l.key}} }
+
+func TestLocalsShowTheRowsAndLinesOfEach(t *testing.T) {
+	ls := Locals{oneLocal{"unraid"}, oneLocal{"tollroll"}}
+	if r := ls.Rows("en"); len(r) != 2 || r[0].Key != "unraid" || r[1].Key != "tollroll" {
+		t.Errorf("%+v", r)
+	}
+	if l := ls.Lines("en"); len(l) != 2 || l[1].App != "tollroll" {
+		t.Errorf("%+v", l)
+	}
+}

@@ -71,3 +71,15 @@ test('the tile fills at once when the page has already been parsed', () => {
   page.run('tile.js');
   assert.ok(root.children.length > 0, 'the tile stays empty');
 });
+
+test('no script of the plugin defines a function twice in one scope, where the second would quietly win', () => {
+  for (const f of fs.readdirSync(SCRIPTS).filter((n) => n.endsWith('.js'))) {
+    const src = fs.readFileSync(path.join(SCRIPTS, f), 'utf8');
+    const seen = {};
+    for (const m of src.matchAll(/^(\s*)function\s+([A-Za-z_$][\w$]*)\s*\(/gm)) {
+      const key = m[1].length + ':' + m[2];
+      assert.ok(!seen[key], f + ' defines ' + m[2] + ' twice at the same depth');
+      seen[key] = true;
+    }
+  }
+});

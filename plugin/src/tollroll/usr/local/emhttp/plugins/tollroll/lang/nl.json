@@ -208,7 +208,6 @@
   "n_digest_line": "{name} ({n}): {title}",
   "n_digest_none": "Geen enkele app had vandaag iets te melden.",
   "n_digest_open": "Nog open ({n}):",
-  "s_hub": "Stille uren en overzicht",
   "s_quiet": "Stille uren",
   "s_quiet_from": "Van",
   "s_quiet_to": "tot",
@@ -237,5 +236,7 @@
   "h_advice": "Een suggestie van TollRoll: {text}",
   "t_v_open": "Open",
   "t_open_none": "Niets staat open. Alle apps doen het prima.",
-  "t_open_title": "Openstaande punten van alle apps"
+  "t_open_title": "Openstaande punten van alle apps",
+  "s_hub": "Meldingencentrum",
+  "r_delivered": "Een bericht voor {name} afgeleverd"
 }

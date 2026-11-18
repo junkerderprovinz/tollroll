@@ -222,7 +222,6 @@
   "n_digest_line": "{name} ({n}): {title}",
   "n_digest_none": "Dnes žádná aplikace neměla co hlásit.",
   "n_digest_open": "Stále otevřené ({n}):",
-  "s_hub": "Doba klidu a shrnutí",
   "s_quiet": "Doba klidu",
   "s_quiet_from": "Od",
   "s_quiet_to": "do",
@@ -251,5 +250,7 @@
   "h_advice": "Návrh od TollRoll: {text}",
   "t_v_open": "Otevřené",
   "t_open_none": "Nic není otevřené. Všem aplikacím se daří dobře.",
-  "t_open_title": "Otevřené body všech aplikací"
+  "t_open_title": "Otevřené body všech aplikací",
+  "s_hub": "Centrum oznámení",
+  "r_delivered": "Doručil zprávu za {name}"
 }

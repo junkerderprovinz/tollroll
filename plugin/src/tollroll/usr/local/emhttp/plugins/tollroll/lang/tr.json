@@ -208,7 +208,6 @@
   "n_digest_line": "{name} ({n}): {title}",
   "n_digest_none": "Bugün hiçbir uygulamanın söyleyecek bir şeyi yoktu.",
   "n_digest_open": "Hâlâ açık ({n}):",
-  "s_hub": "Sessiz saatler ve özet",
   "s_quiet": "Sessiz saatler",
   "s_quiet_from": "Başlangıç",
   "s_quiet_to": "bitiş",
@@ -237,5 +236,7 @@
   "h_advice": "TollRoll'dan bir öneri: {text}",
   "t_v_open": "Açık",
   "t_open_none": "Açık bir şey yok. Tüm uygulamalar yolunda.",
-  "t_open_title": "Tüm uygulamaların açık konuları"
+  "t_open_title": "Tüm uygulamaların açık konuları",
+  "s_hub": "Bildirim merkezi",
+  "r_delivered": "{name} adına bir mesaj iletti"
 }

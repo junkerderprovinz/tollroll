@@ -208,7 +208,6 @@
   "n_digest_line": "{name} ({n}): {title}",
   "n_digest_none": "Ingen app hade något att berätta i dag.",
   "n_digest_open": "Fortfarande öppet ({n}):",
-  "s_hub": "Tysta timmar och sammanfattning",
   "s_quiet": "Tysta timmar",
   "s_quiet_from": "Från",
   "s_quiet_to": "till",
@@ -237,5 +236,7 @@
   "h_advice": "Ett förslag från TollRoll: {text}",
   "t_v_open": "Öppna",
   "t_open_none": "Inget är öppet. Alla appar mår bra.",
-  "t_open_title": "Öppna punkter från alla appar"
+  "t_open_title": "Öppna punkter från alla appar",
+  "s_hub": "Aviseringscentral",
+  "r_delivered": "Levererade ett meddelande åt {name}"
 }

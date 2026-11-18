@@ -201,7 +201,6 @@
   "n_digest_line": "{name} ({n}): {title}",
   "n_digest_none": "今天没有应用需要报告什么。",
   "n_digest_open": "仍未解决（{n}）：",
-  "s_hub": "免打扰时段和摘要",
   "s_quiet": "免打扰时段",
   "s_quiet_from": "从",
   "s_quiet_to": "到",
@@ -230,5 +229,7 @@
   "h_advice": "来自 TollRoll 的建议：{text}",
   "t_v_open": "未解决",
   "t_open_none": "没有未解决的事项。所有应用都运行良好。",
-  "t_open_title": "所有应用的未解决事项"
+  "t_open_title": "所有应用的未解决事项",
+  "s_hub": "通知中心",
+  "r_delivered": "已替 {name} 送达一条消息"
 }

@@ -201,7 +201,6 @@
   "n_digest_line": "{name} ({n}): {title}",
   "n_digest_none": "今日はどのアプリからもお知らせはありませんでした。",
   "n_digest_open": "未解決（{n}）：",
-  "s_hub": "静かな時間とまとめ",
   "s_quiet": "静かな時間",
   "s_quiet_from": "開始",
   "s_quiet_to": "終了",
@@ -230,5 +229,7 @@
   "h_advice": "TollRoll からの提案：{text}",
   "t_v_open": "未解決",
   "t_open_none": "未解決のものはありません。すべてのアプリが順調です。",
-  "t_open_title": "全アプリの未解決の項目"
+  "t_open_title": "全アプリの未解決の項目",
+  "s_hub": "通知センター",
+  "r_delivered": "{name} のメッセージを届けました"
 }

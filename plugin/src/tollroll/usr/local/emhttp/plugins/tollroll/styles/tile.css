@@ -17,7 +17,7 @@
 
 .trl-rows{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;margin:0;padding:0;list-style:none}
 @container (max-width:520px){.trl-rows{grid-template-columns:1fr}}
-.trl-row{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:center;gap:8px;
+.trl-row{display:grid;grid-template-columns:auto auto minmax(0,1fr) max-content;align-items:center;gap:8px;
   min-width:0;padding:6px 8px;border-radius:6px;cursor:pointer;outline:none}
 .trl-row:hover{background:var(--trl-hover)}
 .trl-row[aria-pressed="true"]{background:var(--trl-sel)}
@@ -25,7 +25,7 @@
 .trl-name{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:12em}
 .trl-state{display:inline-flex;align-items:center;gap:6px;min-width:0;font-size:12px}
 .trl-state span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.trl-ver{font-size:12px;opacity:.65;font-variant-numeric:tabular-nums;white-space:nowrap}
+.trl-ver{flex:none;min-width:max-content;font-size:12px;opacity:.65;font-variant-numeric:tabular-nums;white-space:nowrap}
 .trl-dim .trl-mark{filter:grayscale(1);opacity:.6}
 .trl-dim .trl-name,.trl-dim .trl-state{opacity:.55}
 
@@ -111,7 +111,9 @@
 .trl-hs button:focus-visible{outline:2px solid var(--tt-accent,#f4c63d);outline-offset:1px}
 .trl-hs svg{width:14px;height:14px}
 @media (prefers-reduced-motion:reduce){.trl-hs button{transition:none}}
-@container (max-width:720px){.trl-hs .trl-hs-word{display:none}.trl-hs button{padding:0 9px}}
+/* Five views with their words fit from about 860 pixels on. Below that the
+   glyphs stand alone, with the word in the title. */
+@container (max-width:860px){.trl-hs .trl-hs-word{display:none}.trl-hs button{padding:0 9px}}
 @container (max-width:400px){.trl-ico{display:none}}
 
 .trl [hidden]{display:none !important}
@@ -160,7 +162,7 @@
 .trl-tag i{display:inline-block;width:14px;height:0;border-top:2px solid currentColor}
 .trl-tag.trl-off i{border-top-style:dotted}
 .trl-dev ul{list-style:none;margin:0;padding:0}
-.trl-dev li{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:7px;padding:3px 4px;border-radius:5px;font-size:12.5px;cursor:pointer}
+.trl-dev li{display:grid;grid-template-columns:auto minmax(0,1fr) max-content auto;align-items:center;gap:7px;padding:3px 4px;border-radius:5px;font-size:12.5px;cursor:pointer}
 .trl-dev li:hover{background:var(--trl-hover)}
 .trl-dev li:focus-visible{outline:2px solid #f4c63d;outline-offset:1px}
 .trl-dev li .trl-ver{font-size:11.5px}

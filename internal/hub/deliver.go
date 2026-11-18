@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -23,13 +24,15 @@ const (
 
 // Delivery is what an app sends with DeliverAction: one notification in the
 // app's own words, or with Resolved and its Key alone the word that what the
-// key was about is over.
+// key was about is over. URL is another name for Link, the page of the app
+// the message leads to.
 type Delivery struct {
 	Kind     string          `json:"kind"`
 	Severity notify.Severity `json:"severity"`
 	Title    string          `json:"title"`
 	Body     string          `json:"body"`
 	Link     string          `json:"link"`
+	URL      string          `json:"url"`
 	Key      string          `json:"key"`
 	Resolved bool            `json:"resolved"`
 }
@@ -59,8 +62,8 @@ func (h *Hub) Action(name func(app string) string) kit.Action {
 		}
 		app := name(from.App)
 		e := notify.Event{Kind: d.Kind, Severity: d.Severity, Title: app + ": " + alert.Plain(d.Title), Body: alert.Plain(d.Body)}
-		if strings.HasPrefix(d.Link, "https://") || strings.HasPrefix(d.Link, "http://") {
-			e.Link = d.Link
+		if link := cmp.Or(d.Link, d.URL); strings.HasPrefix(link, "https://") || strings.HasPrefix(link, "http://") {
+			e.Link = link
 		}
 		// The app waits for the answer only to know that TollRoll took it,
 		// so the channels are not kept in its call.
@@ -70,7 +73,8 @@ func (h *Hub) Action(name func(app string) string) kit.Action {
 }
 
 func (d Delivery) valid() bool {
-	if len(d.Key) > maxKey || len(d.Link) > maxLink || !sevOK[d.Severity] || strings.ContainsAny(d.Link, " \"'<>\\") {
+	link := cmp.Or(d.Link, d.URL)
+	if len(d.Key) > maxKey || len(link) > maxLink || !sevOK[d.Severity] || strings.ContainsAny(link, " \"'<>\\") {
 		return false
 	}
 	if d.Resolved {

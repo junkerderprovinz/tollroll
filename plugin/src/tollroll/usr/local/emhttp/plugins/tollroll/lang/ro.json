@@ -215,7 +215,6 @@
   "n_digest_line": "{name} ({n}): {title}",
   "n_digest_none": "Azi nicio aplicație nu a avut nimic de spus.",
   "n_digest_open": "Încă deschise ({n}):",
-  "s_hub": "Ore de liniște și rezumat",
   "s_quiet": "Ore de liniște",
   "s_quiet_from": "De la",
   "s_quiet_to": "până la",
@@ -244,5 +243,7 @@
   "h_advice": "O sugestie de la TollRoll: {text}",
   "t_v_open": "Deschise",
   "t_open_none": "Nimic nu e deschis. Toate aplicațiile merg bine.",
-  "t_open_title": "Puncte deschise ale tuturor aplicațiilor"
+  "t_open_title": "Puncte deschise ale tuturor aplicațiilor",
+  "s_hub": "Centrul de notificări",
+  "r_delivered": "A livrat un mesaj pentru {name}"
 }

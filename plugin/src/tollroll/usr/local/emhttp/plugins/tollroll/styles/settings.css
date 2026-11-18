@@ -272,3 +272,22 @@ html.tt-popups-on .trs-page .trs-tab:not([aria-selected="true"]):hover { backgro
     outline: 2px solid var(--trs-focus) !important; outline-offset: 2px !important; filter: none !important;
   }
 }
+
+/* The (i) with its words in a bubble under the pointer and on keyboard
+   focus, drawn like the fortress card's. */
+.trs-name-i { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.trs-page .trs-h .trs-info { margin-inline-start: 0; }
+.trs-info { position: relative; display: inline-flex; flex: none; width: 15px; height: 15px; margin-inline-start: 6px; opacity: .8; cursor: help; vertical-align: middle; }
+.trs-name-i .trs-info { margin-inline-start: 0; }
+.trs-info:is(:hover, :focus-visible) { opacity: 1; }
+.trs-info svg { width: 15px; height: 15px; }
+.trs-info::after {
+  content: attr(data-tip); position: absolute; z-index: 10; top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+  width: max-content; max-width: min(320px, 70vw); padding: 7px 10px; border-radius: var(--trs-r-ctl);
+  background: var(--tt-surface-window, var(--mild-background-color, #262626)); color: var(--tt-text, var(--text-color, #f2f2f2));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .35); font-size: 12px; font-weight: 400; line-height: 1.45; letter-spacing: normal; text-transform: none; text-align: start; white-space: normal;
+  display: none; pointer-events: none;
+}
+.trs-info:is(:hover, :focus-visible)::after { display: block; }
+.trs-subh { display: flex; align-items: center; gap: 6px; margin: 14px 0 2px; font-size: 13px; font-weight: 600; }
+.trs-ctl .trs-times { flex-wrap: nowrap; }

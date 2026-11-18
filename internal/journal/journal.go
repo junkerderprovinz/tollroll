@@ -6,6 +6,8 @@ package journal
 import (
 	"cmp"
 	"context"
+	"maps"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -14,6 +16,7 @@ import (
 	"github.com/junkerderprovinz/parleyport/kit/notify"
 	"github.com/junkerderprovinz/parleyport/kit/status"
 
+	"github.com/junkerderprovinz/tollroll/internal/board"
 	"github.com/junkerderprovinz/tollroll/internal/hub"
 )
 
@@ -104,6 +107,41 @@ func (j *Journal) Told(e notify.Event, results []notify.Result) {
 	if t, ok := told[e.Kind]; ok && took {
 		j.add(t.level, t.key, map[string]string{"name": e.Fields["app"]})
 	}
+}
+
+// Delivered logs a message the hub took from the app called name.
+func (j *Journal) Delivered(name string) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	j.add(status.SeverityInfo, "r_delivered", map[string]string{"name": name})
+}
+
+// Rows gives the tile a row for TollRoll itself, so its lines get a chip of
+// their own. The tile lists no row of this server among the apps.
+func (j *Journal) Rows(lang string) []board.App {
+	tx := j.texts(lang)
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	row := board.App{Key: j.App.ID, Name: j.App.Name, Version: j.App.Version, State: string(status.StateOK), Instances: 1, Local: true}
+	for _, kind := range slices.Sorted(maps.Values(j.failing)) {
+		row.Needs = append(row.Needs, board.Need{Severity: string(status.SeverityWarn), Text: say(tx, "r_send_failed", map[string]string{"channel": kind})})
+	}
+	if len(row.Needs) > 0 {
+		row.State, row.Need = string(status.StateWarning), &row.Needs[0]
+	}
+	return []board.App{row}
+}
+
+// Lines gives the tile TollRoll's own log.
+func (j *Journal) Lines(lang string) []board.Line {
+	tx := j.texts(lang)
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	out := make([]board.Line, 0, len(j.log))
+	for _, e := range j.log {
+		out = append(out, board.Line{ID: j.App.ID + ":" + strconv.FormatInt(e.id, 10), At: e.at, App: j.App.ID, Level: string(e.level), Text: say(tx, e.key, e.args)})
+	}
+	return out
 }
 
 // Removed logs a member TollRoll took out of the fortress.

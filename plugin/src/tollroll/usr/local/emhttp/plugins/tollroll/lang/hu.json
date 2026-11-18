@@ -208,7 +208,6 @@
   "n_digest_line": "{name} ({n}): {title}",
   "n_digest_none": "Ma egyik alkalmazásnak sem volt mondanivalója.",
   "n_digest_open": "Még nyitott ({n}):",
-  "s_hub": "Csendes órák és összefoglaló",
   "s_quiet": "Csendes órák",
   "s_quiet_from": "Ettől",
   "s_quiet_to": "eddig",
@@ -237,5 +236,7 @@
   "h_advice": "Egy javaslat a TollRolltól: {text}",
   "t_v_open": "Nyitott",
   "t_open_none": "Nincs semmi nyitott. Minden alkalmazás jól van.",
-  "t_open_title": "Az összes alkalmazás nyitott pontjai"
+  "t_open_title": "Az összes alkalmazás nyitott pontjai",
+  "s_hub": "Értesítési központ",
+  "r_delivered": "Kézbesített egy üzenetet a(z) {name} nevében"
 }

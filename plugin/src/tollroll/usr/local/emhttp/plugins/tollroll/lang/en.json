@@ -208,7 +208,6 @@
   "n_digest_line": "{name} ({n}): {title}",
   "n_digest_none": "No app had anything to tell today.",
   "n_digest_open": "Still open ({n}):",
-  "s_hub": "Quiet hours and summary",
   "s_quiet": "Quiet hours",
   "s_quiet_from": "From",
   "s_quiet_to": "to",
@@ -237,5 +236,7 @@
   "h_advice": "A suggestion from TollRoll: {text}",
   "t_v_open": "Open",
   "t_open_none": "Nothing is open. Every app is doing fine.",
-  "t_open_title": "Open points of every app"
+  "t_open_title": "Open points of every app",
+  "s_hub": "Notification hub",
+  "r_delivered": "Delivered a message for {name}"
 }

@@ -208,7 +208,6 @@
   "n_digest_line": "{name} ({n}): {title}",
   "n_digest_none": "Ingen app havde noget at fortælle i dag.",
   "n_digest_open": "Stadig åbent ({n}):",
-  "s_hub": "Stille timer og opsummering",
   "s_quiet": "Stille timer",
   "s_quiet_from": "Fra",
   "s_quiet_to": "til",
@@ -237,5 +236,7 @@
   "h_advice": "Et forslag fra TollRoll: {text}",
   "t_v_open": "Åbne",
   "t_open_none": "Intet er åbent. Alle apps har det fint.",
-  "t_open_title": "Åbne punkter fra alle apps"
+  "t_open_title": "Åbne punkter fra alle apps",
+  "s_hub": "Notifikationscentral",
+  "r_delivered": "Leverede en besked for {name}"
 }

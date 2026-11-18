@@ -481,7 +481,7 @@
 
   // The open view: what needs you in every app, then what the advisor
   // suggests. A suggestion leads to its app's page.
-  function drawOpen() {
+  function drawOpenPoints() {
     openBox.textContent = '';
     openBox.appendChild(el('h4', 'trl-open-h', L.t_open_title));
     var groups = C.openPoints(view.apps, L);
@@ -651,7 +651,7 @@
     if (v === 'map') {
       drawMap();
     } else if (v === 'open') {
-      drawOpen();
+      drawOpenPoints();
     } else {
       var chosen = C.shown(view.apps, prefs.hidden);
       if (v === 'all') {
