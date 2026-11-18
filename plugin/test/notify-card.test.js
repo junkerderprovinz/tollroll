@@ -10,32 +10,61 @@ const marks = require(path.join(PLUGIN, 'scripts', 'notify-marks.js'));
 const en = JSON.parse(fs.readFileSync(path.join(PLUGIN, 'lang', 'en.json'), 'utf8'));
 const KINDS = ['unraid', 'discord', 'slack', 'ntfy', 'gotify', 'matrix', 'apprise', 'smtp', 'webhook'];
 
-// Just enough of a document for the card: elements with children, attributes,
-// values and events, found again by their class or their kind.
+// Just enough of a document for the card and its window: elements with
+// children, attributes, values, focus and events, found again by their class,
+// their kind or a plain selector.
 function dom() {
+  const doc = { activeElement: null, listeners: {} };
+  doc.addEventListener = (type, fn) => (doc.listeners[type] = doc.listeners[type] || []).push(fn);
+  doc.removeEventListener = (type, fn) => { doc.listeners[type] = (doc.listeners[type] || []).filter((f) => f !== fn); };
+  doc.key = (key, target) => {
+    const e = { key, target: target || doc.activeElement, shiftKey: false, used: false, preventDefault() { this.used = true; }, stopPropagation() {} };
+    for (const fn of doc.listeners.keydown || []) fn(e);
+    return e;
+  };
+  const matches = (n, sel) => sel.split(',').some((one) => {
+    const m = /^([a-z]*)((?:\.[\w-]+)*)(?:\[([\w-]+)="([^"]*)"\])?$/.exec(one.trim());
+    if (!m) throw new Error('selector ' + one);
+    const [, tag, classes, attr, value] = m;
+    if (tag && n.tagName !== tag.toUpperCase()) return false;
+    if (classes && !classes.slice(1).split('.').every((c) => (' ' + n.className + ' ').includes(' ' + c + ' '))) return false;
+    return !attr || n.getAttribute(attr) === value;
+  });
   class El {
-    constructor(tag) { this.tagName = tag.toUpperCase(); this.children = []; this.attrs = {}; this.listeners = {}; this.value = ''; this.className = ''; this.text = ''; this.disabled = false; this.checked = false; }
+    constructor(tag) { this.tagName = tag.toUpperCase(); this.children = []; this.attrs = {}; this.listeners = {}; this.value = ''; this.className = ''; this.text = ''; this.disabled = false; this.checked = false; this.style = {}; this.clientHeight = 0; this.offsetParent = {}; }
+    get id() { return this.attrs.id || ''; }
+    get isConnected() { let n = this; while (n.parent) n = n.parent; return n === doc.body || n === doc.root; }
     appendChild(c) { this.children.push(c); c.parent = this; return c; }
+    removeChild(c) { this.children = this.children.filter((x) => x !== c); c.parent = null; return c; }
+    get parentNode() { return this.parent || null; }
     setAttribute(k, v) { this.attrs[k] = String(v); }
     getAttribute(k) { return k in this.attrs ? this.attrs[k] : null; }
     addEventListener(type, fn) { (this.listeners[type] = this.listeners[type] || []).push(fn); }
-    fire(type) { for (const fn of this.listeners[type] || []) fn({}); }
+    fire(type, e) { for (const fn of this.listeners[type] || []) fn(Object.assign({ target: this, preventDefault() {} }, e)); }
+    click() { if (!this.disabled) this.fire('click'); }
+    focus() { doc.activeElement = this; }
+    getBoundingClientRect() { return { left: 0, top: 0, width: 10, height: 10 }; }
     set textContent(v) { this.text = String(v); this.children = []; }
     get textContent() { return this.text + this.children.map((c) => c.textContent).join(''); }
     set innerHTML(v) { this.html = v; }
     all(pred, out = []) { for (const c of this.children) { if (pred(c)) out.push(c); c.all(pred, out); } return out; }
     byClass(name) { return this.all((n) => (' ' + n.className + ' ').includes(' ' + name + ' ')); }
+    querySelectorAll(sel) { return this.all((n) => matches(n, sel)); }
+    querySelector(sel) { return this.querySelectorAll(sel)[0] || null; }
   }
-  const doc = { createElement: (tag) => new El(tag) };
-  const root = new El('div');
-  root.ownerDocument = doc;
-  return root;
+  doc.createElement = (tag) => new El(tag);
+  doc.getElementById = (id) => doc.body.all((n) => n.id === id)[0] || null;
+  doc.body = new El('body');
+  doc.root = new El('div');
+  doc.root.ownerDocument = doc;
+  return doc;
 }
 
 const settle = async () => { for (let i = 0; i < 20; i++) await new Promise((r) => setImmediate(r)); };
 
 function mounted(channels, answers = {}) {
-  const el = dom();
+  const doc = dom();
+  const el = doc.root;
   const saves = [], tests = [], saved = [];
   const adapter = {
     load: () => Promise.resolve(JSON.parse(JSON.stringify(channels))),
@@ -43,7 +72,11 @@ function mounted(channels, answers = {}) {
     test: (c) => { tests.push(c); return Promise.resolve(answers.test || { ok: true }); }
   };
   const view = card.mount(el, adapter, { t: en, lang: 'en', kinds: KINDS, marks, classes: { input: 'trs-in', button: 'trs-btn', switch: 'trs-switch' }, saved: (ok, text) => saved.push([ok, text]) });
-  return { el, view, saves, tests, saved };
+  const win = () => doc.body.byClass('glim-nc-win')[0] || null;
+  const foot = (label) => win().byClass('glim-nc-win-btn').find((b) => b.text === label);
+  const tile = (kind) => win().byClass('glim-nc-tile').find((b) => b.attrs['data-kind'] === kind);
+  const open = () => el.byClass('glim-nc-add')[0].click();
+  return { doc, el, view, saves, tests, saved, win, foot, tile, open };
 }
 
 test('the tiles show the services, then mail and webhooks, each in the order of their names', () => {
@@ -53,6 +86,31 @@ test('the tiles show the services, then mail and webhooks, each in the order of 
   assert.deepEqual(s[1].tiles.map((x) => x.name), [en.nc_smtp, en.nc_webhook]);
   assert.ok(s[0].tiles.every((x) => x.hint), 'every service explains itself');
   assert.equal(card.sections(KINDS, [{ id: 'unraid', kind: 'unraid' }], en, 'en')[0].tiles.find((x) => x.kind === 'unraid').off, true, 'Unraid once');
+});
+
+test('a search narrows the tiles by name or kind, accents and hyphens aside', () => {
+  const names = (q) => card.sections(KINDS, [], en, 'en', q).flatMap((s) => s.tiles.map((x) => x.kind));
+  assert.deepEqual(names('disc'), ['discord']);
+  assert.deepEqual(names('e-mail'), ['smtp']);
+  assert.deepEqual(names('SMTP'), ['smtp']);
+  assert.deepEqual(names('nothing like it'), []);
+  assert.equal(names('').length, KINDS.length);
+});
+
+test('the arrows move across the grid, and up from the first row is the search', () => {
+  // Three tiles to a row, two rows, the last one short.
+  const boxes = [0, 1, 2, 3, 4].map((i) => ({ left: (i % 3) * 100, top: Math.floor(i / 3) * 50, width: 90, height: 40 }));
+  assert.equal(card.pickKey('ArrowRight', 0, boxes, false), 1);
+  assert.equal(card.pickKey('ArrowRight', 4, boxes, false), 4);
+  assert.equal(card.pickKey('ArrowLeft', 1, boxes, true), 2, 'right to left');
+  assert.equal(card.pickKey('ArrowDown', 1, boxes, false), 4);
+  assert.equal(card.pickKey('ArrowDown', 2, boxes, false), 4, 'the nearest one in the short row');
+  assert.equal(card.pickKey('ArrowDown', 4, boxes, false), 4);
+  assert.equal(card.pickKey('ArrowUp', 4, boxes, false), 1);
+  assert.equal(card.pickKey('ArrowUp', 2, boxes, false), 'search');
+  assert.equal(card.pickKey('Home', 3, boxes, false), 0);
+  assert.equal(card.pickKey('End', 0, boxes, false), 4);
+  assert.equal(card.pickKey('a', 0, boxes, false), null);
 });
 
 test('every kind the card offers has its mark, and the services their own colours', () => {
@@ -77,22 +135,113 @@ test('a kept secret shows as an empty field, and an empty field keeps it', () =>
   assert.deepEqual(card.taken({ type: 'words' }, ' a://1  b://2 '), ['a://1', 'b://2']);
 });
 
-test('picking a tile adds its channel with its fields and saves the list at once', async () => {
+test('Add opens a window with the search and the tiles, which never stand on the page', async () => {
   const p = mounted([]);
   await settle();
-  assert.equal(p.el.byClass('glim-nc-tile').length, 0, 'the tiles wait for Add');
-  p.el.byClass('glim-nc-add')[0].fire('click');
-  const tiles = p.el.byClass('glim-nc-tile');
-  assert.equal(tiles.length, KINDS.length);
-  assert.match(tiles.find((b) => b.attrs['data-kind'] === 'discord').attrs.style, /--nc-tile:#5865f2/);
-  tiles.find((b) => b.attrs['data-kind'] === 'discord').fire('click');
+  assert.equal(p.el.byClass('glim-nc-tile').length, 0);
+  assert.equal(p.win(), null);
+  p.open();
+  const win = p.win();
+  assert.equal(win.attrs.role, 'dialog');
+  assert.equal(win.attrs['aria-modal'], 'true');
+  assert.equal(p.el.byClass('glim-nc-tile').length, 0, 'the window lives outside the card');
+  assert.equal(win.byClass('glim-nc-tile').length, KINDS.length);
+  assert.deepEqual(win.byClass('glim-nc-eyebrow').map((h) => h.text), [en.nc_services, en.nc_standards]);
+  assert.equal(p.doc.activeElement, win.byClass('glim-nc-search')[0], 'the search has the focus');
+  assert.deepEqual(win.byClass('glim-nc-win-btn').map((b) => b.text), [en.nc_close]);
+  const discord = p.tile('discord').parent;
+  assert.match(discord.attrs.style, /--nc-tile:#5865f2/);
+  assert.equal(p.tile('webhook').parent.attrs.style, undefined, 'a glyph of nobody lights in the accent');
+});
+
+test('a picked tile shows its fields in the window, and Save adds the channel at once', async () => {
+  const p = mounted([]);
+  await settle();
+  p.open();
+  p.tile('discord').click();
+  assert.equal(p.win().byClass('glim-nc-tile').length, 0);
+  assert.deepEqual(p.win().byClass('glim-nc-win-btn').map((b) => b.text), [en.nc_test, en.nc_cancel, en.nc_back, en.nc_save]);
+  const url = p.win().byClass('glim-nc-in').find((i) => i.attrs.placeholder === 'https://discord.com/api/webhooks/...');
+  url.value = 'https://discord.com/api/webhooks/1/x';
+  url.fire('input');
+  url.fire('change');
+  await settle();
+  assert.equal(p.saves.length, 0, 'nothing is saved before Save');
+  p.foot(en.nc_save).click();
   await settle();
   assert.equal(p.saves.length, 1);
-  assert.deepEqual(p.saves[0].map((c) => c.kind), ['discord']);
-  const ch = p.el.byClass('glim-nc-ch');
-  assert.equal(ch.length, 1);
-  assert.ok(ch[0].byClass('glim-nc-in').some((i) => i.attrs.placeholder === 'https://discord.com/api/webhooks/...'));
-  assert.equal(p.el.byClass('glim-nc-tile').length, 0, 'the tiles close again');
+  assert.deepEqual(p.saves[0].map((c) => [c.kind, c.discord.url]), [['discord', 'https://discord.com/api/webhooks/1/x']]);
+  assert.equal(p.win(), null, 'the window closes');
+  assert.equal(p.el.byClass('glim-nc-ch').length, 1);
+  assert.equal(p.doc.activeElement, p.el.byClass('glim-nc-add')[0], 'the focus is back on Add');
+});
+
+test('Cancel adds nothing, and Back keeps the search as it was', async () => {
+  const p = mounted([]);
+  await settle();
+  p.open();
+  const search = p.win().byClass('glim-nc-search')[0];
+  search.value = 'web';
+  search.fire('input');
+  assert.deepEqual(p.win().byClass('glim-nc-tile').map((b) => b.attrs['data-kind']), ['webhook']);
+  p.tile('webhook').click();
+  p.foot(en.nc_back).click();
+  assert.equal(p.win().byClass('glim-nc-search')[0].value, 'web');
+  assert.equal(p.win().byClass('glim-nc-tile').length, 1);
+  p.tile('webhook').click();
+  p.foot(en.nc_cancel).click();
+  await settle();
+  assert.equal(p.win(), null);
+  assert.equal(p.saves.length, 0);
+});
+
+test('in the search Enter picks the one tile left, Escape empties it first and then closes', async () => {
+  const p = mounted([]);
+  await settle();
+  p.open();
+  const search = p.win().byClass('glim-nc-search')[0];
+  search.value = 'go';
+  search.fire('input');
+  assert.equal(p.doc.key('Enter', search).used, true);
+  assert.ok(p.win().byClass('glim-nc-in').some((i) => i.attrs.placeholder === 'https://gotify.example.org'), 'Gotify picked');
+  p.foot(en.nc_back).click();
+  const again = p.win().byClass('glim-nc-search')[0];
+  p.doc.key('Escape', again);
+  assert.equal(again.value, '');
+  assert.ok(p.win(), 'the first Escape only empties the search');
+  p.doc.key('Escape', again);
+  assert.equal(p.win(), null);
+  assert.equal(p.doc.listeners.keydown.length, 0, 'the window stops listening once it is gone');
+});
+
+test('a choice in the window is a row of segments, and a method without a body hides the body', async () => {
+  const p = mounted([]);
+  await settle();
+  p.open();
+  p.tile('webhook').click();
+  const body = () => p.win().byClass('glim-nc-lines').filter((i) => i.id.endsWith('webhook-body'));
+  assert.equal(body().length, 1);
+  const get = p.win().byClass('glim-nc-seg-opt').find((b) => b.text === 'GET');
+  get.click();
+  assert.equal(body().length, 0);
+  assert.equal(p.win().byClass('glim-nc-seg-opt').find((b) => b.text === 'GET').attrs['aria-checked'], 'true');
+  p.foot(en.nc_save).click();
+  await settle();
+  assert.equal(p.saves[0][0].webhook.method, 'GET');
+});
+
+test('a channel the service refuses keeps the window open and says why', async () => {
+  const bad = (list) => Promise.reject({ code: 'invalid', problems: [{ index: list.length - 1, field: 'url', code: 'invalid' }] });
+  const p = mounted([{ id: 'unraid', kind: 'unraid', enabled: true, on: 'always' }], { save: bad });
+  await settle();
+  p.open();
+  assert.equal(p.tile('unraid').disabled, true, 'Unraid is there already');
+  p.tile('slack').click();
+  p.foot(en.nc_save).click();
+  await settle();
+  assert.ok(p.win());
+  assert.equal(p.win().byClass('glim-nc-err')[0].textContent, en.nc_not_saved + ': ' + en.nc_fail_invalid);
+  assert.deepEqual(p.view.list().map((c) => c.id), ['unraid'], 'the page keeps its list');
 });
 
 test('a channel switched off keeps its settings, hides its fields and saves', async () => {
@@ -112,7 +261,7 @@ test('a channel switched off keeps its settings, hides its fields and saves', as
 });
 
 test('a field the service refuses is said on its channel, and a test says how it went', async () => {
-  const bad = (list) => Promise.reject({ code: 'invalid', problems: [{ index: 0, field: 'url', code: 'invalid' }] });
+  const bad = () => Promise.reject({ code: 'invalid', problems: [{ index: 0, field: 'url', code: 'invalid' }] });
   const p = mounted([{ id: 'slack', kind: 'slack', enabled: true, on: 'always', slack: { url: '' } }], { save: bad, test: { ok: false, code: 'not_found' } });
   await settle();
   const url = p.el.byClass('glim-nc-in').find((i) => i.attrs.placeholder === 'https://hooks.slack.com/services/...');
@@ -121,7 +270,7 @@ test('a field the service refuses is said on its channel, and a test says how it
   await settle();
   assert.equal(p.el.byClass('glim-nc-err')[0].textContent, en.nc_fail_invalid);
   assert.deepEqual(p.saved[p.saved.length - 1], [false, en.nc_not_saved + ': ' + en.nc_fail_invalid]);
-  p.el.byClass('glim-nc-btn').find((b) => b.text === en.nc_test).fire('click');
+  p.el.byClass('glim-nc-btn').find((b) => b.text === en.nc_test).click();
   await settle();
   assert.equal(p.tests[0].slack.url, 'nope');
   assert.equal(p.el.byClass('glim-nc-res')[0].textContent, en.nc_test_failed + ': ' + en.nc_fail_not_found);
@@ -130,9 +279,20 @@ test('a field the service refuses is said on its channel, and a test says how it
 test('a channel is removed with its button', async () => {
   const p = mounted([{ id: 'unraid', kind: 'unraid', enabled: true, on: 'always' }, { id: 'ntfy', kind: 'ntfy', enabled: true, on: 'always', ntfy: { url: 'https://ntfy.sh/x' } }]);
   await settle();
-  p.el.byClass('glim-nc-ch')[0].byClass('glim-nc-btn').find((b) => b.text === en.nc_remove).fire('click');
+  p.el.byClass('glim-nc-ch')[0].byClass('glim-nc-btn').find((b) => b.text === en.nc_remove).click();
   await settle();
   assert.deepEqual(p.saves[0].map((c) => c.id), ['ntfy']);
+});
+
+test('a lit tile takes its brand colour before the accent, and nothing draws a line', () => {
+  const css = fs.readFileSync(path.join(PLUGIN, 'styles', 'notify-card.css'), 'utf8');
+  assert.match(css, /--nc-lit: var\(--nc-tile, var\(--nc-w-head\)\)/);
+  const layer = css.slice(css.indexOf('@layer glim-notify-card'));
+  assert.match(layer, /button\.glim-nc-tile \{\s*background-color: var\(--nc-lit\) !important/);
+  for (const file of ['notify-card.css', 'settings.css']) {
+    const sheet = fs.readFileSync(path.join(PLUGIN, 'styles', file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    assert.doesNotMatch(sheet, /(^|[;{\s])border(-(top|bottom|left|right|block|inline)(-(start|end))?)?:\s*\d[^;]*solid/m, file);
+  }
 });
 
 test('every string the card asks for is in every language', () => {
@@ -141,5 +301,6 @@ test('every string the card asks for is in every language', () => {
   for (const l of fs.readdirSync(path.join(PLUGIN, 'lang'))) {
     const tx = JSON.parse(fs.readFileSync(path.join(PLUGIN, 'lang', l), 'utf8'));
     for (const k of keys) assert.ok(tx[k], l + ' ' + k);
+    assert.match(tx.nc_none, /\{query\}/, l);
   }
 });

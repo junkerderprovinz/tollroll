@@ -19,8 +19,8 @@
   --trs-track: var(--checkbox-color, #8d8d8d);
   --trs-on: var(--link-text-color, #486dba);
   --trs-focus: var(--link-text-color, #486dba);
-  --trs-line: color-mix(in srgb, currentColor 16%, transparent);
-  --trs-field: color-mix(in srgb, currentColor 4%, transparent);
+  --trs-field: color-mix(in srgb, currentColor 8%, transparent);
+  --trs-field-focus: color-mix(in srgb, currentColor 14%, transparent);
   --trs-btn: color-mix(in srgb, currentColor 10%, transparent);
   --trs-btn-hover: color-mix(in srgb, currentColor 17%, transparent);
   --trs-ok: #3fae6a;
@@ -129,11 +129,13 @@ html:is(.Theme--white, .Theme--azure) .trs-hero { --trs-hero-sil: 30%; }
 .trs-ctl { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 12px; min-width: 0; max-width: 100%; margin-inline-start: auto; }
 .trs-hint { margin: 4px 0 8px; max-width: 680px; font-size: 13px; color: var(--trs-dim); }
 
+/* A field is a filled ground without a line, as in GlimStone, and takes a
+   step lighter while it has the focus. */
 .trs-in {
-  width: 100%; min-width: 0; margin: 0 !important; padding: 7px 10px; border: 1px solid var(--trs-line) !important; border-radius: var(--trs-r-ctl);
+  width: 100%; min-width: 0; margin: 0 !important; padding: 7px 10px; border: none !important; border-radius: var(--trs-r-ctl); box-shadow: none !important;
   background: var(--trs-field) !important; color: inherit !important; font: 13px/1.2 Consolas, 'Cascadia Mono', Menlo, monospace; outline: none;
 }
-.trs-in:focus { border-color: var(--trs-focus) !important; }
+.trs-in:focus { background: var(--trs-field-focus) !important; }
 .trs-in:disabled { opacity: .55; }
 
 /* Fixed colours with !important: themes and scripts on the box restyle
@@ -235,6 +237,8 @@ html.tt-popups-on .trs-page {
   --trs-card: var(--tt-fm-card, #222);
   --trs-tile: var(--tt-fm-btn, #353535);
   --trs-tile-ink: var(--tt-text-chip, #cfcfcf);
+  --trs-field: var(--tt-surface-3, #2e2e2e);
+  --trs-field-focus: color-mix(in srgb, var(--tt-surface-3, #2e2e2e), currentColor 10%);
   --trs-head: var(--tt-accent, #FCC419);
   --trs-head-ink: var(--tt-accent-text, #161616);
   --trs-dim: var(--tt-text-dim, #8a8a8a);
