@@ -322,6 +322,15 @@ test('a lit tile takes its brand colour before the accent, and nothing draws a l
   }
 });
 
+test("an open select lists plain rows with GlimStone's check on the chosen one, not chips", () => {
+  for (const [file, scope] of [['notify-card.css', '.glim-nc'], ['settings.css', '#trs-cfg']]) {
+    const css = fs.readFileSync(path.join(PLUGIN, 'styles', file), 'utf8');
+    const rule = (sel) => { const at = css.indexOf(sel + ' {'); return at < 0 ? '' : css.slice(at, css.indexOf('}', at)); };
+    assert.match(rule(scope + ' .tt-tsel-opt'), /background: transparent !important/, file);
+    assert.match(rule(scope + ' .tt-tsel-opt.is-selected::after'), /mask: url\("data:image\/svg\+xml,/, file);
+  }
+});
+
 test('every string the card asks for is in every language', () => {
   const src = fs.readFileSync(path.join(PLUGIN, 'scripts', 'notify-card.js'), 'utf8');
   const keys = [...new Set(src.match(/nc_[a-z_]+/g))].filter((k) => k !== 'nc_fail_' && k !== 'nc_');
