@@ -34,7 +34,7 @@ test('the field shows its value with the clock and says what it is', () => {
   const doc = { createElement: (tag) => { const n = { tag, attrs: {}, children: [], setAttribute(k, v) { this.attrs[k] = String(v); }, appendChild(c) { this.children.push(c); } }; made.push(n); return n; } };
   const fired = [];
   const b = {
-    ownerDocument: doc, attrs: {}, children: [], listeners: {},
+    ownerDocument: doc, attrs: {}, children: [], listeners: {}, classes: [], classList: { add(c) { b.classes.push(c); } },
     setAttribute(k, v) { this.attrs[k] = String(v); }, getAttribute(k) { return this.attrs[k]; },
     appendChild(c) { this.children.push(c); }, addEventListener(t, fn) { this.listeners[t] = fn; },
     dispatchEvent(e) { fired.push(e); }, set textContent(v) { this.children = []; }
@@ -46,5 +46,6 @@ test('the field shows its value with the clock and says what it is', () => {
   assert.equal(b.attrs.dir, 'ltr');
   assert.match(b.children[0].innerHTML, /^<svg viewBox="0 0 14 14"/);
   assert.equal(b.children[1].textContent, '22:00');
+  assert.deepEqual(b.classes, ['glim-tf-field']);
   assert.equal(fired.length, 0, 'setting the value is no change of the reader');
 });

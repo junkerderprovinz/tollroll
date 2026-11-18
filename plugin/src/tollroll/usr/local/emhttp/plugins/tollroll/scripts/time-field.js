@@ -6,7 +6,8 @@
  * enhance(button, opts) turns a <button> into the field. It keeps a value in
  * HH:MM and fires change on the button whenever a pick changes it, the way an
  * input would, so the page reads and listens to it like any other field.
- * opts.label names the field, opts.step the minutes between two rows (5). */
+ * opts.label names the field, opts.step the minutes between two rows (5).
+ * styles/time-field.css draws it, and both files serve every plugin as they are. */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.GlimTimeField = factory();
@@ -57,12 +58,13 @@
     opts = opts || {};
     var doc = button.ownerDocument;
     var label = opts.label || '', mins = minutes(opts.step || 5), value = '00:00';
+    button.classList.add('glim-tf-field');
     var text = doc.createElement('span');
     var glyph = doc.createElement('span');
-    glyph.className = 'trs-tp-g';
+    glyph.className = 'glim-tf-g';
     glyph.setAttribute('aria-hidden', 'true');
     glyph.innerHTML = CLOCK;
-    text.className = 'trs-tp-v';
+    text.className = 'glim-tf-v';
     button.textContent = '';
     button.appendChild(glyph);
     button.appendChild(text);
@@ -96,7 +98,7 @@
     function open() {
       if (current) current.close();
       var pop = doc.createElement('div');
-      pop.className = 'trs-tp';
+      pop.className = 'glim-tf';
       pop.setAttribute('role', 'dialog');
       pop.setAttribute('aria-label', label);
       pop.setAttribute('dir', 'ltr');
@@ -104,14 +106,14 @@
 
       function column(items, isHour) {
         var ul = doc.createElement('ul');
-        ul.className = 'trs-tp-col';
+        ul.className = 'glim-tf-col';
         ul.setAttribute('role', 'listbox');
         ul.setAttribute('aria-label', label);
         items.forEach(function (n) {
           var li = doc.createElement('li');
           var b = doc.createElement('button');
           b.type = 'button';
-          b.className = 'trs-tp-opt';
+          b.className = 'glim-tf-opt';
           b.setAttribute('role', 'option');
           b.textContent = pad(n);
           b.addEventListener('click', function () {
@@ -128,7 +130,7 @@
       }
 
       function options(col) {
-        return Array.prototype.slice.call(col.ul.querySelectorAll('.trs-tp-opt'));
+        return Array.prototype.slice.call(col.ul.querySelectorAll('.glim-tf-opt'));
       }
       function chosen(col) {
         var s = shown();
@@ -146,7 +148,7 @@
 
       pop.appendChild(column(Array.apply(null, Array(24)).map(function (_, i) { return i; }), true));
       var colon = doc.createElement('span');
-      colon.className = 'trs-tp-colon';
+      colon.className = 'glim-tf-colon';
       colon.setAttribute('aria-hidden', 'true');
       colon.textContent = ':';
       pop.appendChild(colon);

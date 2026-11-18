@@ -322,13 +322,18 @@ test('a lit tile takes its brand colour before the accent, and nothing draws a l
   }
 });
 
-test("an open select lists plain rows with GlimStone's check on the chosen one, not chips", () => {
-  for (const [file, scope] of [['notify-card.css', '.glim-nc'], ['settings.css', '#trs-cfg']]) {
-    const css = fs.readFileSync(path.join(PLUGIN, 'styles', file), 'utf8');
-    const rule = (sel) => { const at = css.indexOf(sel + ' {'); return at < 0 ? '' : css.slice(at, css.indexOf('}', at)); };
-    assert.match(rule(scope + ' .tt-tsel-opt'), /background: transparent !important/, file);
-    assert.match(rule(scope + ' .tt-tsel-opt.is-selected::after'), /mask: url\("data:image\/svg\+xml,/, file);
-  }
+test("an open select of the page lists plain rows with GlimStone's check on the chosen one, not chips", () => {
+  const css = fs.readFileSync(path.join(PLUGIN, 'styles', 'notify-card.css'), 'utf8');
+  const rule = (sel) => { const at = css.indexOf(sel + ' {'); return at < 0 ? '' : css.slice(at, css.indexOf('}', at)); };
+  assert.match(rule('html.tt-popups-on #displaybox .tt-tsel-opt'), /background: transparent !important/);
+  assert.match(rule('html.tt-popups-on #displaybox .tt-tsel-opt.is-selected::after'), /mask: url\("data:image\/svg\+xml,/);
+});
+
+test('a mark at rest wears the ink alone, and a row keeps its controls at its end', () => {
+  const css = fs.readFileSync(path.join(PLUGIN, 'styles', 'notify-card.css'), 'utf8');
+  assert.match(css, /\.glim-nc-wins button\.glim-nc-tile \{\s*--mark-ink: var\(--nc-w-ink\)/);
+  assert.match(css, /\.glim-nc-ctl \{ display: flex; justify-content: flex-end;/);
+  assert.match(css, /\.glim-nc-tools \{[^}]*justify-content: flex-end/);
 });
 
 test('every string the card asks for is in every language', () => {

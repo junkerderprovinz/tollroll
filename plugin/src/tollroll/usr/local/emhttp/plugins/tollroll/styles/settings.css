@@ -160,53 +160,6 @@ html:is(.Theme--white, .Theme--azure) .trs-hero { --trs-hero-sil: 30%; }
 .trs-grid .trs-hint { margin: 6px 0 0; }
 .trs-matrix { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .trs-select { width: auto; font-family: inherit; }
-/* GlimStone's time field (time-field.js): a filled field-button with the
-   clock and HH:MM, and the popover with its hour and minute columns, which
-   lives in <body> and so carries its own colours. */
-.trs-page button.trs-time {
-  display: inline-flex; align-items: center; gap: 8px; width: auto; min-width: 0; height: 32px; padding: 0 12px;
-  font-family: inherit; font-size: 13px; font-variant-numeric: tabular-nums; letter-spacing: normal; text-transform: none; cursor: pointer;
-}
-.trs-page button.trs-time:hover { background: var(--trs-field-focus) !important; }
-.trs-tp-g { display: inline-flex; line-height: 0; color: var(--trs-dim); }
-.trs-tp-g svg { width: 14px; height: 14px; display: block; }
-.trs-tp {
-  --trs-tp-ground: var(--background-color, #1c1b1b);
-  --trs-tp-ink: var(--text-color, #f2f2f2);
-  --trs-tp-dim: var(--alt-text-color, #8d8d8d);
-  --trs-tp-on: var(--link-text-color, #486dba);
-  --trs-tp-on-ink: #fff;
-  --trs-tp-r: 4px;
-  position: fixed; z-index: 1000002; transform: translateX(-50%);
-  display: flex; align-items: stretch; width: max-content; padding: 4px;
-  border-radius: var(--trs-tp-r); background: var(--trs-tp-ground); color: var(--trs-tp-ink);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, .45); font-size: 13px; line-height: 1.2;
-}
-html.tt-popups-on .trs-tp {
-  --trs-tp-ground: var(--tt-surface-3, #2e2e2e);
-  --trs-tp-ink: var(--tt-text, #e6e6e6);
-  --trs-tp-dim: var(--tt-text-dim, #8a8a8a);
-  --trs-tp-on: var(--tt-accent, #FCC419);
-  --trs-tp-on-ink: var(--tt-accent-text, #161616);
-  --trs-tp-r: var(--tt-radius-card, 20px);
-  box-shadow: var(--tt-elev-3, 0 12px 30px rgba(0, 0, 0, .6));
-}
-.trs-tp *, .trs-tp *::before, .trs-tp *::after { box-sizing: border-box; }
-.trs-tp-col { display: flex; flex-direction: column; gap: 2px; max-height: 176px; margin: 0; padding: 4px; overflow-y: auto; overscroll-behavior: contain; list-style: none; }
-.trs-tp-col li { margin: 0; }
-.trs-tp-colon { display: flex; align-items: center; padding: 0 2px; color: var(--trs-tp-dim); }
-.trs-tp button.trs-tp-opt {
-  display: block; width: 100%; min-width: 44px; margin: 0; padding: 5px 12px; border: none; border-radius: calc(var(--trs-tp-r) * .6);
-  box-shadow: none; background: transparent; color: var(--trs-tp-dim);
-  font: inherit; font-variant-numeric: tabular-nums; letter-spacing: normal; text-transform: none; text-align: center; cursor: pointer;
-}
-.trs-tp button.trs-tp-opt:hover { background: color-mix(in srgb, currentColor 14%, transparent); color: var(--trs-tp-ink); }
-.trs-tp button.trs-tp-opt[aria-selected="true"] { background: var(--trs-tp-on); color: var(--trs-tp-on-ink); }
-.trs-tp button.trs-tp-opt:focus-visible { outline: 2px solid var(--trs-tp-on); outline-offset: -2px; }
-@media (prefers-reduced-motion: no-preference) {
-  html:not([data-tt-motion="off"]) .trs-tp { animation: trs-tp-in var(--tt-motion-fade-dur, 110ms) ease both; }
-}
-@keyframes trs-tp-in { from { opacity: 0; } }
 .trs-times { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .trs-times label { margin: 0; font-size: 14px; font-weight: 400; }
 .trs-grid > .trs-wide { grid-column: 1 / -1; margin: 0; }
@@ -312,33 +265,13 @@ html.tt-popups-on .trs-page .trs-tab:not([aria-selected="true"]):hover { backgro
    TowerTorch gives every link, a visible focus ring, and the title strip the
    banner replaces. */
 @layer tollroll-settings {
-  /* The theme plugin's select lists its options as filled chips. In
-     GlimStone they are plain rows: the hover colour under the pointer or the
-     keys, the chosen one in bold with GlimStone's check at its end. */
-  #trs-cfg .tt-tsel-panel { gap: 2px !important; padding: 4px !important; }
-  #trs-cfg .tt-tsel-opt {
-    justify-content: space-between !important; padding: 8px 12px !important; border-radius: var(--tt-radius-control, 12px) !important;
-    background: transparent !important; color: #e4e4e4 !important; font-weight: 400 !important; box-shadow: none !important; filter: none !important;
-  }
-  #trs-cfg .tt-tsel-opt:is(:hover, :focus) { background: rgba(255, 255, 255, .08) !important; outline: none !important; }
-  #trs-cfg .tt-tsel-opt.is-selected { font-weight: 600 !important; }
-  #trs-cfg .tt-tsel-opt.is-selected::after {
-    content: ""; flex: none; width: 14px; height: 14px; margin-inline-start: 12px;
-    background: var(--tt-rb-c, var(--tt-rbaccent, var(--tt-accent, #FCC419)));
-    -webkit-mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0.3 0.549 13.399 13.399'><path d='M4.381 12.219 L4.574 12.378 L4.793 12.497 L5.032 12.572 L5.155 12.592 L5.405 12.596 L5.651 12.552 L5.884 12.461 L6.096 12.328 L6.278 12.157 L13.457 3.957 L13.584 3.736 L13.666 3.495 L13.699 3.242 L13.683 2.988 L13.656 2.863 L13.566 2.625 L13.431 2.408 L13.257 2.222 L13.05 2.074 L12.936 2.016 L12.695 1.934 L12.442 1.901 L12.188 1.917 L11.942 1.983 L11.713 2.096 L11.511 2.251 L5.238 9.399 L2.519 6.681 L2.425 6.595 L2.213 6.454 L1.977 6.356 L1.854 6.325 L1.6 6.3 L1.346 6.325 L1.223 6.356 L0.987 6.454 L0.775 6.595 L0.595 6.775 L0.454 6.987 L0.399 7.103 L0.325 7.346 L0.3 7.6 L0.306 7.727 L0.356 7.977 L0.399 8.097 L0.519 8.322 L0.681 8.519Z'/></svg>") center / contain no-repeat; mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0.3 0.549 13.399 13.399'><path d='M4.381 12.219 L4.574 12.378 L4.793 12.497 L5.032 12.572 L5.155 12.592 L5.405 12.596 L5.651 12.552 L5.884 12.461 L6.096 12.328 L6.278 12.157 L13.457 3.957 L13.584 3.736 L13.666 3.495 L13.699 3.242 L13.683 2.988 L13.656 2.863 L13.566 2.625 L13.431 2.408 L13.257 2.222 L13.05 2.074 L12.936 2.016 L12.695 1.934 L12.442 1.901 L12.188 1.917 L11.942 1.983 L11.713 2.096 L11.511 2.251 L5.238 9.399 L2.519 6.681 L2.425 6.595 L2.213 6.454 L1.977 6.356 L1.854 6.325 L1.6 6.3 L1.346 6.325 L1.223 6.356 L0.987 6.454 L0.775 6.595 L0.595 6.775 L0.454 6.987 L0.399 7.103 L0.325 7.346 L0.3 7.6 L0.306 7.727 L0.356 7.977 L0.399 8.097 L0.519 8.322 L0.681 8.519Z'/></svg>") center / contain no-repeat;
-  }
-  /* The theme plugin dresses every button as a button; the time field stays a field. */
-  #trs-cfg button.trs-time {
-    border: none !important; box-shadow: none !important; background-color: var(--trs-field) !important; color: inherit !important; filter: none !important;
-  }
-  #trs-cfg button.trs-time:is(:hover, [aria-expanded="true"]) { background-color: var(--trs-field-focus) !important; }
   #trs-cfg input.trs-switch { margin: 0 !important; }
   #trs-cfg a.trs-rbtn { color: var(--tt-text, #e6e6e6) !important; filter: none !important; }
   @media (hover: hover) {
     #trs-cfg .trs-rbtn-unit:hover a.trs-rbtn { color: var(--trs-give-ink) !important; }
   }
   .content:has(#trs-cfg) > div.title { display: none !important; }
-  #trs-cfg :is(.trs-tab, .trs-btn, .trs-switch, .trs-time):focus-visible {
+  #trs-cfg :is(.trs-tab, .trs-btn, .trs-switch):focus-visible {
     outline: 2px solid var(--trs-focus) !important; outline-offset: 2px !important; filter: none !important;
   }
 }
