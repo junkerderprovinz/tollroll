@@ -329,9 +329,10 @@ test("an open select of the page lists plain rows with GlimStone's check on the 
   assert.match(rule('html.tt-popups-on #displaybox .tt-tsel-opt.is-selected::after'), /mask: url\("data:image\/svg\+xml,/);
 });
 
-test('a mark at rest wears the ink alone, and a row keeps its controls at its end', () => {
+test('a mark at rest keeps its colours, Matrix aside, and a row keeps its controls at its end', () => {
   const css = fs.readFileSync(path.join(PLUGIN, 'styles', 'notify-card.css'), 'utf8');
-  assert.match(css, /\.glim-nc-wins button\.glim-nc-tile \{\s*--mark-ink: var\(--nc-w-ink\)/);
+  assert.doesNotMatch(css, /\.glim-nc-wins button\.glim-nc-tile \{\s*--mark-ink/);
+  assert.match(css, /\.glim-nc-wins button\.glim-nc-tile\[data-kind="matrix"\] \{ --mark-ink: var\(--nc-w-ink\); \}/);
   assert.match(css, /\.glim-nc-ctl \{ display: flex; justify-content: flex-end;/);
   assert.match(css, /\.glim-nc-tools \{[^}]*justify-content: flex-end/);
 });
