@@ -3,6 +3,10 @@ package hub
 import (
 	"context"
 	"errors"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -147,5 +151,83 @@ func TestADeliveryKeepsAPathOnTheServerAndDropsAnyOtherLink(t *testing.T) {
 			t.Errorf("%s: %+v", link, e.ch.sent)
 		}
 		e.ch.mu.Unlock()
+	}
+}
+
+// dispatched sends through the kit's own dispatcher, which decides which
+// channel takes an event.
+type dispatched struct{ d *notify.Dispatcher }
+
+func (d dispatched) Enabled() bool { return true }
+
+func (d dispatched) Send(ctx context.Context, e notify.Event) []notify.Result {
+	return d.d.Send(ctx, e)
+}
+
+func TestAnAllClearReachesAChannelForProblemsThroughTheHub(t *testing.T) {
+	hits := make(chan string, 4)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		hits <- string(b)
+	}))
+	defer srv.Close()
+	d, err := notify.NewDispatcher([]notify.Channel{{ID: "problems", Kind: notify.KindWebhook, Enabled: true, On: notify.OnFailure,
+		Webhook: &notify.Webhook{URL: srv.URL, Body: "%%title%%"}}}, notify.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	e := newEnv(t, Settings{TakeOver: true})
+	e.h = New(Options{Channels: dispatched{d}, Settings: e.st, State: filepath.Join(t.TempDir(), "state.json"),
+		Texts: func() (string, map[string]string) { return "en", texts },
+		Now:   func() time.Time { return e.now }})
+
+	if err := run(t, e, `{"kind":"check.go","severity":"success","title":"Back to normal","key":"verdict"}`); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case got := <-hits:
+		t.Fatalf("a plain success reached the channel for problems: %q", got)
+	case <-time.After(300 * time.Millisecond):
+	}
+	if err := run(t, e, `{"kind":"check.go","severity":"success","title":"All clear","key":"verdict-2","recovery":true}`); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case got := <-hits:
+		if got != "BombVault: All clear" {
+			t.Errorf("the channel got %q", got)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("the all-clear never reached the channel for problems")
+	}
+}
+
+func TestAnAllClearPassesAnAppsLevelAndAWaitAsTheProblemDid(t *testing.T) {
+	e := newEnv(t, Settings{TakeOver: true, Apps: map[string]string{"bombvault": LevelFailure}})
+	ok := `{"kind":"check.go","severity":"success","title":"Fine again"}`
+	back := `{"kind":"check.go","severity":"success","title":"All clear","recovery":true}`
+	for _, body := range []string{ok, back} {
+		if err := run(t, e, body); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for end := time.Now().Add(2 * time.Second); len(e.ch.titles()) == 0 && time.Now().Before(end); time.Sleep(10 * time.Millisecond) {
+	}
+	time.Sleep(100 * time.Millisecond)
+	e.ch.mu.Lock()
+	if len(e.ch.sent) != 1 || e.ch.sent[0].Title != "BombVault: All clear" || !e.ch.sent[0].Recovery {
+		t.Errorf("an app on failures got %+v", e.ch.sent)
+	}
+	e.ch.sent = nil
+	e.ch.mu.Unlock()
+
+	e.at("23:00")
+	e.h.Offer(context.Background(), Message{App: "bombvault", Name: "BombVault", Event: notify.Event{Kind: "check.go", Severity: notify.SeveritySuccess, Title: "Clear at night", Recovery: true}})
+	e.at("07:30")
+	e.h.Tick(context.Background())
+	e.ch.mu.Lock()
+	defer e.ch.mu.Unlock()
+	if len(e.ch.sent) != 1 || !e.ch.sent[0].Recovery {
+		t.Errorf("what waited through the night: %+v", e.ch.sent)
 	}
 }

@@ -105,11 +105,12 @@ type stamp struct {
 
 // kept is a message the hub keeps for later or for the summary.
 type kept struct {
-	App   string          `json:"app"`
-	Name  string          `json:"name"`
-	At    time.Time       `json:"at"`
-	Title string          `json:"title"`
-	Sev   notify.Severity `json:"severity"`
+	App      string          `json:"app"`
+	Name     string          `json:"name"`
+	At       time.Time       `json:"at"`
+	Title    string          `json:"title"`
+	Sev      notify.Severity `json:"severity"`
+	Recovery bool            `json:"recovery,omitempty"`
 }
 
 type state struct {
@@ -186,12 +187,13 @@ func (h *Hub) Offer(ctx context.Context, m Message) []notify.Result {
 	if e.Severity != notify.SeveritySuccess {
 		h.told[key] = now
 	}
-	k := kept{App: m.App, Name: m.Name, At: now, Title: e.Title, Sev: e.Severity}
+	k := kept{App: m.App, Name: m.Name, At: now, Title: e.Title, Sev: e.Severity, Recovery: e.Recovery}
 	h.day = last(append(h.day, k), keepDay)
 	alert := e.Severity == notify.SeverityCritical
 	switch {
 	case alert:
-	case levels[severityLevel(e.Severity)] < levels[cmp.Or(s.Apps[m.App], LevelInfo)]:
+	// The end of a problem goes wherever the problem went.
+	case !e.Recovery && levels[severityLevel(e.Severity)] < levels[cmp.Or(s.Apps[m.App], LevelInfo)]:
 		h.mu.Unlock()
 		return nil
 	case s.Quiet.quiet(now) || !h.room(m.App, now):
@@ -325,7 +327,8 @@ func collected(tx map[string]string, held []kept) notify.Event {
 	if n := len(held) - listed; n > 0 {
 		lines = append(lines, strings.ReplaceAll(tx["n_held_more"], "{n}", strconv.Itoa(n)))
 	}
-	return notify.Event{Kind: "tollroll.held", Severity: worst(held), Title: tx["n_held_title"], Body: strings.Join(lines, "\n")}
+	back := slices.ContainsFunc(held, func(k kept) bool { return k.Recovery })
+	return notify.Event{Kind: "tollroll.held", Severity: worst(held), Recovery: back, Title: tx["n_held_title"], Body: strings.Join(lines, "\n")}
 }
 
 // summary is the daily message: what each app said in the last day, most

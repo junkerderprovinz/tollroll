@@ -24,8 +24,9 @@ const (
 
 // Delivery is what an app sends with DeliverAction: one notification in the
 // app's own words, or with Resolved and its Key alone the word that what the
-// key was about is over. URL is another name for Link, the page of the app
-// the message leads to.
+// key was about is over. Recovery marks the news that a problem is over,
+// which reaches the channels that only take problems too. URL is another name
+// for Link, the page of the app the message leads to.
 type Delivery struct {
 	Kind     string          `json:"kind"`
 	Severity notify.Severity `json:"severity"`
@@ -35,6 +36,7 @@ type Delivery struct {
 	URL      string          `json:"url"`
 	Key      string          `json:"key"`
 	Resolved bool            `json:"resolved"`
+	Recovery bool            `json:"recovery"`
 }
 
 const (
@@ -61,7 +63,7 @@ func (h *Hub) Action(name func(app string) string) kit.Action {
 			return nil, &kit.Refusal{Status: http.StatusConflict, Code: "hub_off"}
 		}
 		app := name(from.App)
-		e := notify.Event{Kind: d.Kind, Severity: d.Severity, Title: app + ": " + alert.Plain(d.Title), Body: alert.Plain(d.Body)}
+		e := notify.Event{Kind: d.Kind, Severity: d.Severity, Recovery: d.Recovery, Title: app + ": " + alert.Plain(d.Title), Body: alert.Plain(d.Body)}
 		if link := cmp.Or(d.Link, d.URL); linkOK(link) {
 			e.Link = link
 		}
