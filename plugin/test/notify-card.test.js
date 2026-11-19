@@ -199,6 +199,20 @@ test('Cancel adds nothing, and Back keeps the search as it was', async () => {
   assert.equal(p.saves.length, 0);
 });
 
+test('Back marks the tile picked before and gives it the focus', async () => {
+  const p = mounted([]);
+  await settle();
+  p.open();
+  assert.equal(p.win().byClass('glim-nc-tile').filter((b) => b.getAttribute('aria-current') === 'true').length, 0);
+  p.tile('ntfy').click();
+  p.foot(en.nc_back).click();
+  const marked = p.win().byClass('glim-nc-tile').filter((b) => b.getAttribute('aria-current') === 'true');
+  assert.deepEqual(marked.map((b) => b.attrs['data-kind']), ['ntfy']);
+  assert.equal(p.doc.activeElement, p.tile('ntfy'));
+  const css = fs.readFileSync(path.join(PLUGIN, 'styles', 'notify-card.css'), 'utf8');
+  assert.match(css, /button\.glim-nc-tile\[aria-current="true"\] \{[^}]*outline: 2px solid var\(--nc-lit\)/);
+});
+
 test('in the search Enter picks the one tile left, Escape empties it first and then closes', async () => {
   const p = mounted([]);
   await settle();
@@ -326,11 +340,11 @@ test('a lit tile takes its brand colour before the accent, and nothing draws a l
   }
 });
 
-test("an open select of the page lists plain rows with GlimStone's check on the chosen one, not chips", () => {
-  const css = fs.readFileSync(path.join(PLUGIN, 'styles', 'notify-card.css'), 'utf8');
-  const rule = (sel) => { const at = css.indexOf(sel + ' {'); return at < 0 ? '' : css.slice(at, css.indexOf('}', at)); };
-  assert.match(rule('html.tt-popups-on #displaybox .tt-tsel-opt'), /background: transparent !important/);
-  assert.match(rule('html.tt-popups-on #displaybox .tt-tsel-opt.is-selected::after'), /mask: url\("data:image\/svg\+xml,/);
+test("an open select of the page keeps TowerTorch's own plain rows", () => {
+  // TowerTorch 1.5.2 lists the options as GlimStone's rows itself, and an
+  // important rule in the card's layer would outrank its tint and its check.
+  const css = fs.readFileSync(path.join(PLUGIN, 'styles', 'notify-card.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.doesNotMatch(css, /\.tt-tsel-(opt|panel)/);
 });
 
 test('a mark at rest keeps its colours, Matrix aside, and a row keeps its controls at its end', () => {
