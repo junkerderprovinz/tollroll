@@ -98,10 +98,15 @@ type Disk struct {
 	Last   string    `json:"last,omitempty"`
 }
 
-// Need is the most urgent thing an app asks the user to look at.
+// Need is the most urgent thing an app asks the user to look at. ID names a
+// finding of the server's watch, which the user can take as known or keep as
+// a real incident, and Note and Until belong to such an incident.
 type Need struct {
-	Severity string `json:"severity"`
-	Text     string `json:"text"`
+	Severity string    `json:"severity"`
+	Text     string    `json:"text"`
+	ID       string    `json:"id,omitempty"`
+	Note     string    `json:"note,omitempty"`
+	Until    time.Time `json:"until,omitzero"`
 }
 
 // Work is a task an app is running.
@@ -415,6 +420,35 @@ func first[T any](l []T) []T {
 		return l[:listed]
 	}
 	return l
+}
+
+// Mentions reports whether the log of an app on the board holds name. It
+// reads the apps first, as a view does.
+func (b *Board) Mentions(ctx context.Context, name string) bool {
+	if name == "" {
+		return false
+	}
+	b.View(ctx, "")
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	for _, s := range b.state {
+		for _, buf := range s.logs {
+			for _, e := range buf.entries {
+				if strings.Contains(e.Text, name) {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+// Stale drops the views kept for a few seconds, so the next one is read
+// fresh.
+func (b *Board) Stale() {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	clear(b.cached)
 }
 
 // Icons returns the logos of the apps on the board by the ID their rows carry,

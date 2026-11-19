@@ -77,6 +77,11 @@ type Options struct {
 	// Own names the server's addresses and host name, whose own lines come
 	// back through Unraid's syslog server when it sends its log to itself.
 	Own func() []string
+	// Snaps lists the snapshots of the pools it is given by their file
+	// system, and Claimed reports whether an app of the fortress logged
+	// removing a snapshot of that name.
+	Snaps   func(pools map[string]string) map[string][]string
+	Claimed func(name string) bool
 }
 
 // Host is safe for concurrent use.
@@ -113,14 +118,20 @@ type Host struct {
 	lines       []entry
 	quiet       []entry
 	needs       []entry
+	alarms      []notify.Event
 	seq         int64
 	slowAt      time.Time
+	snapAt      time.Time
+	feeds       map[string]*feed
+	feedLogs    map[string]*feedLog
+	pluginLogs  map[string]string
 	savedAt     time.Time
 	dirty       bool
 }
 
 // entry is a line of the log as a key and its values, so it reads in the
-// language of each reader. raw is the syslog line it came from.
+// language of each reader. raw is the syslog line it came from, and subs say
+// what a finding of the watch is about.
 type entry struct {
 	id    int64
 	at    time.Time
@@ -130,6 +141,7 @@ type entry struct {
 	key   string
 	args  map[string]string
 	raw   string
+	subs  []string
 }
 
 type lastWake struct {
@@ -138,11 +150,14 @@ type lastWake struct {
 	Who string    `json:"who,omitempty"`
 }
 
-// box is a container as its config file last said.
+// box is a container as its config files last said: whether it runs, the
+// special rights it holds and where Docker writes its log.
 type box struct {
 	name    string
 	running bool
 	mod     time.Time
+	rights  []string
+	log     string
 }
 
 type saved struct {
@@ -166,6 +181,12 @@ func New(o Options) *Host {
 	}
 	if o.Own == nil {
 		o.Own = ownAddrs
+	}
+	if o.Snaps == nil {
+		o.Snaps = listSnaps
+	}
+	if o.Claimed == nil {
+		o.Claimed = func(string) bool { return false }
 	}
 	return &Host{o: o, probe: probe{root: o.Root}, syslog: tail{path: filepath.Join(o.Root, "/var/log/syslog")},
 		silent: map[string]bool{}, routerFails: map[string][]time.Time{}, routerTold: map[string]time.Time{}, idsTold: map[string]time.Time{}}
@@ -196,7 +217,9 @@ func (h *Host) step(ctx context.Context) {
 	tell := h.look()
 	cleared := h.cleared
 	h.cleared = nil
+	pools := h.snapDue()
 	h.mu.Unlock()
+	tell = append(tell, h.vanished(pools)...)
 	for _, kind := range cleared {
 		if h.o.Clear != nil {
 			h.o.Clear(kind)
@@ -238,10 +261,17 @@ func (h *Host) look() []notify.Event {
 	}
 	h.readRouters(now)
 	h.boxesAndVMs(now)
+	h.readFeeds(now, slow)
 	var tell []notify.Event
 	if slow {
 		h.slowAt = now
 		tell = h.slow(now)
+	}
+	tell = append(tell, h.alarms...)
+	h.alarms = nil
+	h.watch.expire(now)
+	if h.watch.changed {
+		h.watch.changed, h.dirty = false, true
 	}
 	h.needs = slices.DeleteFunc(h.needs, func(e entry) bool { return now.Sub(e.at) >= needFor })
 	h.wakes.prune(now)
@@ -347,6 +377,10 @@ func (h *Host) ingest(l line, now time.Time) {
 			c.Quiet = true
 		}
 	}
+	if p, ok := h.plugin(l.Prog); ok && c.Key == "" {
+		h.feedAdd(entry{at: l.At, app: Plugins, level: c.Level, quiet: c.Level == info, raw: p + ": " + l.Msg})
+		return
+	}
 	e := entry{at: l.At, app: Unraid, level: c.Level, quiet: c.Quiet, key: c.Key, args: c.Args, raw: l.raw()}
 	h.add(e)
 	if c.Level == fault && c.Key != "" && now.Sub(l.At) < needFor {
@@ -367,8 +401,8 @@ func (h *Host) byDevice(dev string) (disk, bool) {
 }
 
 // add appends e to the log, the routine lines apart so they cannot push the
-// others out.
-func (h *Host) add(e entry) {
+// others out, and returns it with its ID.
+func (h *Host) add(e entry) entry {
 	h.seq++
 	e.id = h.seq
 	if e.quiet {
@@ -376,6 +410,7 @@ func (h *Host) add(e entry) {
 	} else {
 		h.lines = keep(append(h.lines, e), keepLines)
 	}
+	return e
 }
 
 func keep(l []entry, n int) []entry {
@@ -392,9 +427,7 @@ func (h *Host) need(e entry) {
 }
 
 func (h *Host) found(app string, f finding, at time.Time) {
-	e := entry{at: at, app: app, level: f.Level, key: f.Key, args: f.Args}
-	h.add(e)
-	h.need(e)
+	h.watched(entry{at: at, app: app, level: f.Level, key: f.Key, args: f.Args})
 }
 
 // woke counts a wake of d at at. What has files open now says nothing about
@@ -433,14 +466,20 @@ func (h *Host) boxesAndVMs(now time.Time) {
 			continue
 		}
 		var c struct {
-			Name  string
-			State struct{ Running bool }
+			Name        string
+			LogPath     string
+			State       struct{ Running bool }
+			MountPoints map[string]struct{ Source string }
 		}
 		b, err := os.ReadFile(f)
 		if err != nil || json.Unmarshal(b, &c) != nil {
 			continue
 		}
-		bx := box{name: strings.TrimPrefix(c.Name, "/"), running: c.State.Running, mod: fi.ModTime()}
+		var mounts []string
+		for _, m := range c.MountPoints {
+			mounts = append(mounts, m.Source)
+		}
+		bx := box{name: strings.TrimPrefix(c.Name, "/"), running: c.State.Running, mod: fi.ModTime(), rights: rights(filepath.Dir(f), mounts), log: c.LogPath}
 		next[id] = bx
 		if h.boxes != nil && seen && bx.running != old.running {
 			key := "h_s_container_down"
@@ -513,6 +552,14 @@ func (h *Host) slow(now time.Time) []notify.Event {
 	fs = append(fs, w.cron(readCron(h.o.Root))...)
 	fs = append(fs, w.flash(readFlash(h.o.Root))...)
 	fs = append(fs, w.guests(readGuests(h.o.Root))...)
+	fs = append(fs, w.at(readAt(h.o.Root))...)
+	var held []string
+	for _, b := range h.boxes {
+		for _, r := range b.rights {
+			held = append(held, b.name+"|"+r)
+		}
+	}
+	fs = append(fs, w.privileged(held)...)
 	used := map[string]uint64{}
 	for mnt := range h.probe.mounts() {
 		name, ok := strings.CutPrefix(mnt, "/mnt/")
@@ -523,7 +570,9 @@ func (h *Host) slow(now time.Time) []notify.Event {
 			used[name] = sp.Files - sp.FilesFree
 		}
 	}
-	fs = append(fs, w.deletes(used, h.moving || h.probe.moverRunning())...)
+	busy := h.moving || h.probe.moverRunning()
+	fs = append(fs, w.deletes(used, busy)...)
+	fs = append(fs, w.io(now, readIO(h.o.Root), busy || h.probe.parityRunning())...)
 	for _, f := range fs {
 		h.found(Unraid, f, now)
 	}
@@ -653,7 +702,7 @@ func (h *Host) Rows(lang string) []board.App {
 		rows = append(rows, rt)
 	}
 	if len(h.disks) == 0 {
-		return rows
+		return append(rows, h.feedRows(tx)...)
 	}
 	now := h.o.Now()
 	ds := board.App{Key: Disks, Name: cmp.Or(tx["h_disks"], "Disks"), State: string(status.StateOK), Instances: 1, Local: true}
@@ -672,7 +721,7 @@ func (h *Host) Rows(lang string) []board.App {
 	if total > 0 {
 		ds.Note = strings.ReplaceAll(tx["h_wakes_today"], "{n}", strconv.Itoa(total))
 	}
-	return append(rows, ds)
+	return append(append(rows, ds), h.feedRows(tx)...)
 }
 
 // needsOn lists on row what needs you of its app, the worst and newest first.
@@ -690,9 +739,21 @@ func (h *Host) needsOn(row *board.App, tx map[string]string) {
 		return cmp.Or(severity[b.level]-severity[a.level], b.at.Compare(a.at))
 	})
 	for _, n := range needs[:min(len(needs), listedNeed)] {
-		row.Needs = append(row.Needs, board.Need{Severity: string(n.level), Text: say(tx, n)})
+		need := board.Need{Severity: string(n.level), Text: say(tx, n)}
+		if len(n.subs) > 0 {
+			need.ID = needID(n)
+		}
+		row.Needs = append(row.Needs, need)
 	}
-	if len(row.Needs) > 0 {
+	// An incident on record stays listed, but it is nothing new to look at.
+	open := len(row.Needs)
+	for _, inc := range slices.Backward(h.watch.base.Incidents) {
+		if inc.App == row.Key {
+			row.Needs = append(row.Needs, board.Need{Severity: string(warn), Text: say(tx, entry{key: inc.Key, args: inc.Args}),
+				ID: inc.id(), Note: inc.Note, Until: inc.At.Add(incidentFor)})
+		}
+	}
+	if open > 0 {
 		row.State = string(status.StateWarning)
 		row.Need = &row.Needs[0]
 	}
@@ -706,7 +767,11 @@ func (h *Host) Lines(lang string) []board.Line {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	out := make([]board.Line, 0, len(h.lines)+len(h.quiet))
-	for _, l := range [][]entry{h.lines, h.quiet} {
+	sources := [][]entry{h.lines, h.quiet}
+	for _, fl := range h.feedLogs {
+		sources = append(sources, fl.lines, fl.quiet)
+	}
+	for _, l := range sources {
 		for _, e := range l {
 			out = append(out, board.Line{ID: e.app + ":" + strconv.FormatInt(e.id, 10), At: e.at, App: e.app, Level: string(e.level), Text: say(tx, e), Raw: e.raw, Quiet: e.quiet})
 		}

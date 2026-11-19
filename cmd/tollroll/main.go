@@ -115,13 +115,14 @@ func run(ctx context.Context, cfg config) error {
 		Texts: func(lang string) map[string]string { return alert.LoadTexts(cfg.LangDir, lang) },
 		Lang:  func() string { return alert.Language(cfg.Dynamix) },
 		Notify: func(ctx context.Context, e notify.Event) {
-			for _, r := range hb.Offer(ctx, hub.Message{App: host.Unraid, Name: "Unraid", Key: e.Kind, Unraid: true, Event: e}) {
+			for _, r := range hb.Offer(ctx, hub.Message{App: host.Unraid, Name: "Unraid", Key: cmp.Or(e.Fields["key"], e.Kind), Unraid: true, Event: e}) {
 				if !r.OK() {
 					slog.Warn("notification failed", "channel", r.Channel, "code", r.Code, "err", r.Err)
 				}
 			}
 		},
-		Clear: func(kind string) { hb.Resolve(host.Unraid, kind) },
+		Clear:   func(kind string) { hb.Resolve(host.Unraid, kind) },
+		Claimed: func(name string) bool { return b.Mentions(ctx, name) },
 	})
 	b.Local = board.Locals{unraid, j}
 	// The host saves what it learned once ctx ends, which the service waits
@@ -164,7 +165,7 @@ func run(ctx context.Context, cfg config) error {
 		return err
 	}
 	srv := &http.Server{
-		Handler: api.New(api.Deps{Board: b, Channels: ch, Texts: alertTexts, Fortress: fort, Prefs: prefs.Open(cfg.Tile), Router: unraid.RouterLog, Hub: hb.Settings(),
+		Handler: api.New(api.Deps{Board: b, Channels: ch, Texts: alertTexts, Fortress: fort, Prefs: prefs.Open(cfg.Tile), Router: unraid.RouterLog, Watch: unraid.Mark, Hub: hb.Settings(),
 			Advice: adv, Facts: facts}),
 		ReadHeaderTimeout: 5 * time.Second,
 	}

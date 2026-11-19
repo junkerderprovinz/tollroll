@@ -463,13 +463,15 @@ func (h *Host) routerLine(rl *routerLog, at time.Time, name, msg string, live bo
 		}
 	case "nat", "filter", "config":
 		if live && recent {
-			h.need(e)
+			h.watched(e)
+			return
 		}
 	case "ids":
 		sig := c.Args["sig"]
 		if live && recent && at.Sub(h.idsTold[sig]) >= idsQuiet {
 			h.idsTold[sig] = at
-			h.need(e)
+			h.watched(e)
+			return
 		}
 	}
 	h.add(e)

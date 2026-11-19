@@ -2,6 +2,7 @@ package host
 
 import (
 	"bufio"
+	"cmp"
 	"io"
 	"os"
 	"regexp"
@@ -62,11 +63,14 @@ const firstRead = 2 << 20
 
 // tail reads a log file on from where it stopped, through rotation: when the
 // file at path is a new one, the rest of the old one is read from path.1
-// first.
+// first. first bounds the first read like firstRead, and most, when set,
+// skips ahead to that much before the end once a read falls further behind.
 type tail struct {
-	path string
-	fi   os.FileInfo
-	off  int64
+	path  string
+	fi    os.FileInfo
+	off   int64
+	first int64
+	most  int64
 }
 
 func (t *tail) read(each func(string)) {
@@ -74,11 +78,12 @@ func (t *tail) read(each func(string)) {
 	if err != nil {
 		return
 	}
+	first := cmp.Or(t.first, firstRead)
 	if t.fi == nil {
-		if old, err := os.Stat(t.path + ".1"); err == nil {
-			readFrom(t.path+".1", max(0, old.Size()-firstRead), each)
+		if old, err := os.Stat(t.path + ".1"); err == nil && t.first == 0 {
+			readFrom(t.path+".1", max(0, old.Size()-first), each)
 		}
-		t.fi, t.off = fi, readFrom(t.path, max(0, fi.Size()-firstRead), each)
+		t.fi, t.off = fi, readFrom(t.path, max(0, fi.Size()-first), each)
 		return
 	}
 	if !os.SameFile(t.fi, fi) {
@@ -88,6 +93,9 @@ func (t *tail) read(each func(string)) {
 		t.off = 0
 	} else if fi.Size() < t.off {
 		t.off = 0
+	}
+	if t.most > 0 && fi.Size()-t.off > t.most {
+		t.off = fi.Size() - t.most
 	}
 	t.fi, t.off = fi, readFrom(t.path, t.off, each)
 }

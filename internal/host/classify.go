@@ -143,14 +143,7 @@ func classify(l line) class {
 		}
 		return c
 	}
-	c := class{Level: info}
-	switch {
-	case worse.MatchString(l.Msg):
-		c.Level = fault
-	case bad.MatchString(l.Msg):
-		c.Level = warn
-	}
-	return c
+	return class{Level: levelOf(l.Msg)}
 }
 
 var mdDev = regexp.MustCompile(`^md(\d+)(p\d+)?$`)

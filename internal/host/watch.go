@@ -34,6 +34,15 @@ type baseline struct {
 	Routers map[string]time.Time `json:"routers,omitempty"`
 	Admins  map[string]time.Time `json:"admins,omitempty"`
 	Devices map[string]time.Time `json:"devices,omitempty"`
+	// Known holds what the user took as normal, by the key of a finding and
+	// what it is about, and Incidents what they kept as real.
+	Known     map[string]time.Time `json:"known,omitempty"`
+	Incidents []incident           `json:"incidents,omitempty"`
+	// Priv holds the special rights of the containers as name|right, At
+	// the jobs of the at queue and IO what each disk usually moves.
+	Priv map[string]bool `json:"priv,omitempty"`
+	At   map[string]bool `json:"at,omitempty"`
+	IO   map[string]norm `json:"io,omitempty"`
 }
 
 const (
@@ -56,6 +65,13 @@ type watch struct {
 	told    map[string]time.Time
 	inodes  map[string]uint64
 	changed bool
+
+	ioLast  map[string]uint64
+	ioRing  map[string][]uint64
+	ioTold  map[string]time.Time
+	ioAt    time.Time
+	ioSaved time.Time
+	snaps   map[string]map[string]bool
 }
 
 func newWatch(b baseline) *watch {
@@ -173,6 +189,10 @@ func (w *watch) flash(stamps map[string]string) []finding {
 		return nil
 	}
 	w.base.Flash, w.changed = stamps, true
+	files = slices.DeleteFunc(files, func(f string) bool { return w.known("h_w_flash", f) })
+	if len(files) == 0 {
+		return nil
+	}
 	slices.Sort(files)
 	level := info
 	for _, f := range files {

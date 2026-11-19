@@ -51,6 +51,7 @@ type env struct {
 	h      http.Handler
 	runner *runner
 	fort   *fakeFortress
+	marks  [][3]string
 
 	mu   sync.Mutex
 	srcs []board.Source
@@ -72,6 +73,13 @@ func newEnv(t *testing.T) *env {
 		Hub:    hub.OpenStore(filepath.Join(dir, "hub.json")),
 		Advice: advisor.Open(filepath.Join(dir, "advice.json")),
 		Facts:  func() advisor.Facts { return advisor.Facts{Unraid: true, Containers: []string{"jellyfin"}} },
+		Watch: func(id, as, note string) error {
+			if id == "gone" {
+				return host.ErrNoEntry
+			}
+			e.marks = append(e.marks, [3]string{id, as, note})
+			return nil
+		},
 		Router: func() host.RouterLog { return host.RouterLog{Server: true, Senders: []host.Sender{{Name: "gw"}}} }})
 	return e
 }

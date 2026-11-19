@@ -27,7 +27,9 @@ const maxBody = 64 << 10
 var langTag = regexp.MustCompile(`^[a-zA-Z]{2,3}([-_][a-zA-Z0-9]{2,8})?$`)
 
 // Deps are what the handler serves. Texts gives the words of a channel's
-// test message, Router what Unraid's syslog server keeps of the router.
+// test message, Router what Unraid's syslog server keeps of the router, and
+// Watch marks a finding of the server's watch as known or as a real
+// incident.
 type Deps struct {
 	Board    *board.Board
 	Channels *channels.Store
@@ -35,6 +37,7 @@ type Deps struct {
 	Fortress Fortress
 	Prefs    *prefs.Store
 	Router   func() host.RouterLog
+	Watch    func(id, as, note string) error
 	Hub      *hub.Store
 	Advice   *advisor.Store
 	Facts    func() advisor.Facts
@@ -47,6 +50,7 @@ type handler struct {
 	fortress Fortress
 	prefs    *prefs.Store
 	router   func() host.RouterLog
+	watch    func(id, as, note string) error
 	hub      *hub.Store
 	advice   *advisor.Store
 	facts    func() advisor.Facts
@@ -63,7 +67,7 @@ type Fortress interface {
 
 // New returns the handler.
 func New(d Deps) http.Handler {
-	h := &handler{board: d.Board, channels: d.Channels, texts: d.Texts, fortress: d.Fortress, prefs: d.Prefs, router: d.Router, hub: d.Hub, advice: d.Advice, facts: d.Facts}
+	h := &handler{board: d.Board, channels: d.Channels, texts: d.Texts, fortress: d.Fortress, prefs: d.Prefs, router: d.Router, watch: d.Watch, hub: d.Hub, advice: d.Advice, facts: d.Facts}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/board", h.view)
 	mux.HandleFunc("GET /api/icons", h.icons)
@@ -78,6 +82,7 @@ func New(d Deps) http.Handler {
 	mux.HandleFunc("GET /api/tile", h.tile)
 	mux.HandleFunc("PUT /api/tile", h.setTile)
 	mux.HandleFunc("GET /api/router", h.routerLog)
+	mux.HandleFunc("POST /api/watch", h.mark)
 	mux.HandleFunc("GET /api/hub", h.hubSettings)
 	mux.HandleFunc("PUT /api/hub", h.setHub)
 	mux.HandleFunc("GET /api/advice", h.suggestions)
@@ -126,6 +131,29 @@ func (h *handler) setHub(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "save_failed"})
 	default:
 		writeJSON(w, http.StatusOK, h.hub.Get())
+	}
+}
+
+// mark takes a finding of the watch as known or keeps it as a real incident.
+// The board drops the view it keeps, so the tile sees the change at once.
+func (h *handler) mark(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		ID   string `json:"id"`
+		As   string `json:"as"`
+		Note string `json:"note"`
+	}
+	if !readJSON(w, r, &body) {
+		return
+	}
+	err := h.watch(body.ID, body.As, body.Note)
+	switch {
+	case errors.Is(err, host.ErrNoEntry):
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "no_entry"})
+	case err != nil:
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "save_failed"})
+	default:
+		h.board.Stale()
+		writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 	}
 }
 
