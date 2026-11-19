@@ -123,6 +123,8 @@
   "t_v_all": "Alt",
   "t_v_apps": "Apps",
   "t_v_log": "Log",
+  "t_v_all_hint": "Alt: apps øverst og loggen under dem.",
+  "t_v_log_hint": "Log: kun loggen i hele flisens højde. Listen øverst i loggen bestemmer, hvilke apps den viser.",
   "t_v_map": "Kort",
   "t_all_apps": "Alle apps",
   "t_pick": "Vælg apps",

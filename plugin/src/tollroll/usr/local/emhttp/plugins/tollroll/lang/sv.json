@@ -123,6 +123,8 @@
   "t_v_all": "Allt",
   "t_v_apps": "Appar",
   "t_v_log": "Logg",
+  "t_v_all_hint": "Allt: apparna överst och loggen under dem.",
+  "t_v_log_hint": "Logg: bara loggen, över hela panelens höjd. Listan överst i loggen avgör vilka appar den visar.",
   "t_v_map": "Karta",
   "t_all_apps": "Alla appar",
   "t_pick": "Välj appar",

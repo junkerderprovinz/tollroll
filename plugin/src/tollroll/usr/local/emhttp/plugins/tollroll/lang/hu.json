@@ -123,6 +123,8 @@
   "t_v_all": "Minden",
   "t_v_apps": "Alkalmazások",
   "t_v_log": "Napló",
+  "t_v_all_hint": "Minden: fent az alkalmazások, alattuk a napló.",
+  "t_v_log_hint": "Napló: csak a napló, a csempe teljes magasságában. A napló tetején lévő lista dönti el, mely alkalmazásokat mutatja.",
   "t_v_map": "Térkép",
   "t_all_apps": "Minden alkalmazás",
   "t_pick": "Alkalmazások kiválasztása",

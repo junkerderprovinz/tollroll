@@ -119,6 +119,8 @@
   "t_v_all": "Tất cả",
   "t_v_apps": "Ứng dụng",
   "t_v_log": "Nhật ký",
+  "t_v_all_hint": "Tất cả: ứng dụng ở trên, nhật ký ở dưới.",
+  "t_v_log_hint": "Nhật ký: chỉ nhật ký, chiếm toàn bộ chiều cao ô. Danh sách ở đầu nhật ký quyết định ứng dụng nào được hiện.",
   "t_v_map": "Bản đồ",
   "t_all_apps": "Tất cả ứng dụng",
   "t_pick": "Chọn ứng dụng",

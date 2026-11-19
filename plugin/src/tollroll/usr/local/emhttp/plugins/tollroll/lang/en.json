@@ -123,6 +123,8 @@
   "t_v_all": "Everything",
   "t_v_apps": "Apps",
   "t_v_log": "Log",
+  "t_v_all_hint": "Everything: the apps on top, the log below them.",
+  "t_v_log_hint": "Log: only the log, over the whole height of the tile. The list at its top picks which apps it shows.",
   "t_v_map": "Map",
   "t_all_apps": "All apps",
   "t_pick": "Choose apps",

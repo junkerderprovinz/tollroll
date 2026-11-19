@@ -131,6 +131,8 @@
   "t_v_all": "Vše",
   "t_v_apps": "Aplikace",
   "t_v_log": "Log",
+  "t_v_all_hint": "Vše: nahoře aplikace, pod nimi log.",
+  "t_v_log_hint": "Log: jen log přes celou výšku dlaždice. Seznam v jeho záhlaví určuje, které aplikace ukazuje.",
   "t_v_map": "Mapa",
   "t_all_apps": "Všechny aplikace",
   "t_pick": "Vyberte aplikace",

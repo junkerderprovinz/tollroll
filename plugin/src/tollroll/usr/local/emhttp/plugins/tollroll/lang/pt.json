@@ -127,6 +127,8 @@
   "t_v_all": "Tudo",
   "t_v_apps": "Aplicações",
   "t_v_log": "Registo",
+  "t_v_all_hint": "Tudo: as aplicações em cima e o registo por baixo.",
+  "t_v_log_hint": "Registo: apenas o registo, em toda a altura do mosaico. A lista no topo do registo define que aplicações mostra.",
   "t_v_map": "Mapa",
   "t_all_apps": "Todas as aplicações",
   "t_pick": "Escolha aplicações",

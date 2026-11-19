@@ -127,6 +127,8 @@
   "t_v_all": "Tutto",
   "t_v_apps": "App",
   "t_v_log": "Registro",
+  "t_v_all_hint": "Tutto: le app in alto e il registro sotto.",
+  "t_v_log_hint": "Registro: solo il registro, per tutta l'altezza del riquadro. L'elenco in cima al registro decide quali app mostra.",
   "t_v_map": "Mappa",
   "t_all_apps": "Tutte le app",
   "t_pick": "Scegli le app",

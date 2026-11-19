@@ -350,3 +350,10 @@ test('a finding of the watch can be marked, and a real incident says until when 
   const w = core.statusWindow(unraid, { members: [] }, [], en, 'en');
   assert.deepEqual(w.needs.map((n) => n.id || ''), ['unraid:4', '', 'i:ab']);
 });
+
+test('the views everything and log say in their tooltip what sets them apart', () => {
+  assert.equal(core.viewTitle(en, 't_v_all'), en.t_v_all_hint);
+  assert.equal(core.viewTitle(en, 't_v_log'), en.t_v_log_hint);
+  assert.equal(core.viewTitle(en, 't_v_map'), en.t_v_map);
+  assert.notEqual(en.t_v_all_hint, en.t_v_log_hint);
+});

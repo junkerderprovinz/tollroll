@@ -123,6 +123,8 @@
   "t_v_all": "Kaikki",
   "t_v_apps": "Sovellukset",
   "t_v_log": "Loki",
+  "t_v_all_hint": "Kaikki: sovellukset ylhäällä ja loki niiden alla.",
+  "t_v_log_hint": "Loki: pelkkä loki koko ruudun korkeudella. Lokin yläreunan lista valitsee, mitkä sovellukset se näyttää.",
   "t_v_map": "Kartta",
   "t_all_apps": "Kaikki sovellukset",
   "t_pick": "Valitse sovellukset",

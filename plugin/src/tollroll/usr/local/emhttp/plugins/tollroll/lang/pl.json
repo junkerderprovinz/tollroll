@@ -131,6 +131,8 @@
   "t_v_all": "Wszystko",
   "t_v_apps": "Aplikacje",
   "t_v_log": "Dziennik",
+  "t_v_all_hint": "Wszystko: aplikacje na górze, a pod nimi dziennik.",
+  "t_v_log_hint": "Dziennik: tylko dziennik na całą wysokość kafelka. Lista u góry dziennika określa, które aplikacje pokazuje.",
   "t_v_map": "Mapa",
   "t_all_apps": "Wszystkie aplikacje",
   "t_pick": "Wybierz aplikacje",

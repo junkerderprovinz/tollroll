@@ -123,6 +123,8 @@
   "t_v_all": "Alles",
   "t_v_apps": "Apps",
   "t_v_log": "Log",
+  "t_v_all_hint": "Alles: bovenaan de apps, daaronder het log.",
+  "t_v_log_hint": "Log: alleen het log, over de hele hoogte van de tegel. De lijst bovenaan het log bepaalt welke apps het toont.",
   "t_v_map": "Kaart",
   "t_all_apps": "Alle apps",
   "t_pick": "Kies apps",

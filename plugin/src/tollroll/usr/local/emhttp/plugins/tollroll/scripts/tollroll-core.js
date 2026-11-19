@@ -207,6 +207,12 @@
     return out.sort(function (x, y) { return worst(x) - worst(y) || x.app.name.localeCompare(y.app.name); });
   }
 
+  // viewTitle is the tooltip of a view, a sentence where the name alone
+  // leaves its difference to another view open.
+  function viewTitle(L, key) {
+    return L[key + '_hint'] || L[key];
+  }
+
   function shown(apps, hidden) {
     return (apps || []).filter(function (a) { return (hidden || []).indexOf(a.key) < 0; });
   }
@@ -358,5 +364,5 @@
   return { fmt: fmt, plural: plural, rowStatus: rowStatus, foldQuiet: foldQuiet, filterLog: filterLog, chips: chips, validFilter: validFilter,
     hue: hue, mark: mark, timeLabel: timeLabel, subtitle: subtitle, needsYou: needsYou, lang: lang,
     safeIcon: safeIcon, markColors: markColors,
-    layout: layout, shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, statusWindow: statusWindow, ago: ago, routerStatus: routerStatus, hubSettings: hubSettings, muteState: muteState, levelApps: levelApps, openPoints: openPoints, needItem: needItem };
+    layout: layout, viewTitle: viewTitle, shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, statusWindow: statusWindow, ago: ago, routerStatus: routerStatus, hubSettings: hubSettings, muteState: muteState, levelApps: levelApps, openPoints: openPoints, needItem: needItem };
 });

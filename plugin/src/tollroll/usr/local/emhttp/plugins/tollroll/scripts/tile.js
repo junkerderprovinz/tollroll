@@ -179,7 +179,7 @@
       b.setAttribute('role', 'radio');
       b.setAttribute('aria-checked', String(on));
       b.tabIndex = on ? 0 : -1;
-      b.title = L[v[1]];
+      b.title = C.viewTitle(L, v[1]);
       b.setAttribute('aria-label', L[v[1]]);
       b.dataset.focus = 'view:' + v[0];
       b.appendChild(glyph(v[2]));

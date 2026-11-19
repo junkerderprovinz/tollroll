@@ -127,6 +127,8 @@
   "t_v_all": "Tout",
   "t_v_apps": "Apps",
   "t_v_log": "Journal",
+  "t_v_all_hint": "Tout : les apps en haut, le journal en dessous.",
+  "t_v_log_hint": "Journal : seulement le journal, sur toute la hauteur de la tuile. La liste en haut du journal choisit les apps qu'il affiche.",
   "t_v_map": "Carte",
   "t_all_apps": "Toutes les apps",
   "t_pick": "Choisis des apps",

@@ -123,6 +123,8 @@
   "t_v_all": "Tümü",
   "t_v_apps": "Uygulamalar",
   "t_v_log": "Günlük",
+  "t_v_all_hint": "Tümü: üstte uygulamalar, altında günlük.",
+  "t_v_log_hint": "Günlük: yalnızca günlük, kutucuğun tüm yüksekliğinde. Günlüğün üstündeki liste hangi uygulamaları göstereceğini belirler.",
   "t_v_map": "Harita",
   "t_all_apps": "Tüm uygulamalar",
   "t_pick": "Uygulamaları seçin",

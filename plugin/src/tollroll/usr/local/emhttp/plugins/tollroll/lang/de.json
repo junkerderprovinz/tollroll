@@ -123,6 +123,8 @@
   "t_v_all": "Alles",
   "t_v_apps": "Apps",
   "t_v_log": "Log",
+  "t_v_all_hint": "Alles: oben die Apps, darunter das Log.",
+  "t_v_log_hint": "Log: nur das Log, über die ganze Höhe der Kachel. Die Liste oben im Log legt fest, welche Apps es zeigt.",
   "t_v_map": "Karte",
   "t_all_apps": "Alle Apps",
   "t_pick": "Apps wählen",
