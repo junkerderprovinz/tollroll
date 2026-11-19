@@ -123,6 +123,9 @@ html:is(.Theme--white, .Theme--azure) .trs-hero { --trs-hero-sil: 30%; }
 
 /* A row: the name and the line under it at the start, the control at the end. */
 .trs-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; min-height: 44px; padding: 6px 0; }
+/* Each suggestion stands on a surface of its own, the step a field takes. */
+#trs-advice .trs-row { background: var(--trs-field); border-radius: var(--trs-r-ctl); padding: 8px 12px; }
+#trs-advice .trs-row + .trs-row { margin-top: 6px; }
 .trs-lbl { display: flex; flex-direction: column; flex: 1 1 160px; min-width: 0; }
 .trs-sub { color: var(--trs-dim); font-size: 13px; }
 .trs-sub:empty { display: none; }

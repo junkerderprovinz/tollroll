@@ -498,7 +498,7 @@
    * first. done runs once the service took the mark. */
   function needLine(li, it, done) {
     li.textContent = '';
-    li.className = it.id ? 'trl-w-item' : '';
+    li.className = 'trl-item' + (it.id ? ' trl-w-item' : '');
     li.appendChild(el('span', 'trl-dot trl-' + it.tone));
     var body = el('span', 'trl-dlg-text', it.text);
     if (it.incident) {

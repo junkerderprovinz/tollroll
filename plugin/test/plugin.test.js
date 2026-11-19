@@ -212,3 +212,16 @@ test("with TowerTorch every row, chip, view, option and tab lights in its hover"
   assert.match(settings, /html\.tt-popups-on \.trs-page \.trs-tab:not\(\[aria-selected="true"\]\):hover \{ background: var\(--tt-hover, var\(--trs-tile\)\); box-shadow: none; \}/);
   assert.doesNotMatch(settings, /--tt-hover-wash/);
 });
+
+test('every point that needs you stands on a surface of its own, with no line round it', () => {
+  const css = read('styles', 'tile.css');
+  const rule = (sel) => (new RegExp(sel.replace(/[.[\]]/g, '\\$&') + '\\s*\\{([^}]*)\\}').exec(css) || [])[1] || '';
+  const item = rule('.trl-dlg-list li.trl-item');
+  assert.match(item, /background:\s*var\(--tt-surface-3,/, 'the item takes the step above the card');
+  assert.match(item, /border-radius:\s*var\(--tt-radius-control,/);
+  assert.doesNotMatch(item, /border:\s*(?!0|none)/);
+  assert.match(rule('.trl-w-btn'), /border:\s*0/, 'a button in an item draws no line');
+  assert.match(read('scripts', 'tile.js'), /li\.className = 'trl-item' \+/);
+  const settings = read('styles', 'settings.css');
+  assert.match(settings, /#trs-advice \.trs-row\s*\{[^}]*background:\s*var\(--trs-field\)[^}]*border-radius:\s*var\(--trs-r-ctl\)/);
+});
