@@ -40,8 +40,8 @@ type baseline struct {
 	Incidents []incident           `json:"incidents,omitempty"`
 	// Priv holds the special rights of the containers as name|right, At
 	// the jobs of the at queue and IO what each disk usually moves.
-	Priv map[string]bool `json:"priv,omitempty"`
-	At   map[string]bool `json:"at,omitempty"`
+	Priv map[string]bool `json:"priv"`
+	At   map[string]bool `json:"at"`
 	IO   map[string]norm `json:"io,omitempty"`
 }
 

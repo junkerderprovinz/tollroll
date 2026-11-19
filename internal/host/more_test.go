@@ -185,3 +185,19 @@ func TestAnUnknownJobInTheAtQueueIsReportedOnce(t *testing.T) {
 		t.Errorf("%q", again)
 	}
 }
+
+func TestAnEmptyAtQueueIsRememberedOverARestart(t *testing.T) {
+	s := newServer(t)
+	h := s.host(t)
+	s.look(h)
+	s.look(h)
+	h.mu.Lock()
+	h.save()
+	h.mu.Unlock()
+	h2 := s.host(t)
+	write(t, s.root, "/var/spool/atjobs/a0000201b2c3e0", atJob)
+	s.look(h2)
+	if got := needs(h2.Rows("en"), Unraid); len(got) != 1 {
+		t.Errorf("a job after a restart: %q", got)
+	}
+}

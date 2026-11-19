@@ -25,7 +25,10 @@ const (
 	ttl       = 10 * time.Second
 	perSource = 100
 	maxLines  = 300
-	maxLangs  = 4
+	// keepEach is how many of its newest lines every app keeps in the log,
+	// however much another one writes.
+	keepEach = 20
+	maxLangs = 4
 	// firstPages bounds the paging through an app's whole log on the first
 	// read; later reads pick up from the cursor and need far fewer.
 	firstPages = 10
@@ -349,10 +352,34 @@ func (b *Board) build(srcs []Source, lang string, now time.Time) View {
 		}
 	}
 	slices.SortStableFunc(v.Log, func(a, b Line) int { return a.At.Compare(b.At) })
-	if len(v.Log) > maxLines {
-		v.Log = v.Log[len(v.Log)-maxLines:]
-	}
+	v.Log = newest(v.Log)
+
 	return v
+}
+
+// newest keeps the latest maxLines of log, and of every app at least its
+// latest keepEach.
+func newest(log []Line) []Line {
+	if len(log) <= maxLines {
+		return log
+	}
+	per := map[string]int{}
+	kept := make([]bool, len(log))
+	n := 0
+	for i := len(log) - 1; i >= 0; i-- {
+		if n < maxLines || per[log[i].App] < keepEach {
+			kept[i] = true
+			per[log[i].App]++
+			n++
+		}
+	}
+	out := make([]Line, 0, n)
+	for i, l := range log {
+		if kept[i] {
+			out = append(out, l)
+		}
+	}
+	return out
 }
 
 func row(k string, ins []instance) App {
