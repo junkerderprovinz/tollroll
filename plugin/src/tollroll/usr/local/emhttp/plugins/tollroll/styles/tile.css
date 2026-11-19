@@ -6,9 +6,6 @@
 .trl{
   --trl-ok:#2f9e5b;--trl-warn:#d97a1c;--trl-fail:#d64545;--trl-idle:#4a8fd9;--trl-off:#8a8a8a;
   --trl-hover:color-mix(in srgb,currentColor 7%,transparent);
-  --trl-sel:color-mix(in srgb,currentColor 11%,transparent);
-  --trl-chip:color-mix(in srgb,currentColor 9%,transparent);
-  --trl-chip-hover:color-mix(in srgb,currentColor 15%,transparent);
   container-type:inline-size;width:100%;padding:2px 0 4px;text-align:left}
 .Theme--white .trl,.Theme--azure .trl{--trl-ok:#1f7a43;--trl-warn:#b55d0c;--trl-fail:#b8322f;--trl-idle:#2a6fbd;--trl-off:#767676}
 
@@ -20,14 +17,11 @@
 .trl-row{display:grid;grid-template-columns:auto auto minmax(0,1fr) max-content;align-items:center;gap:8px;
   min-width:0;padding:6px 8px;border-radius:6px;cursor:pointer;outline:none}
 .trl-row:hover{background:var(--trl-hover)}
-.trl-row[aria-pressed="true"]{background:var(--trl-sel)}
-.trl-row:focus-visible,.trl-chip:focus-visible,.trl-log:focus-visible{outline:2px solid #f4c63d;outline-offset:1px}
+.trl-row:focus-visible,.trl-log:focus-visible{outline:2px solid #f4c63d;outline-offset:1px}
 .trl-name{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:12em}
 .trl-state{display:inline-flex;align-items:center;gap:6px;min-width:0;font-size:12px}
 .trl-state span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .trl-ver{flex:none;min-width:max-content;font-size:12px;opacity:.65;font-variant-numeric:tabular-nums;white-space:nowrap}
-.trl-dim .trl-mark{filter:grayscale(1);opacity:.6}
-.trl-dim .trl-name,.trl-dim .trl-state{opacity:.55}
 
 .trl-dot{width:8px;height:8px;border-radius:50%;flex:none;background:currentColor}
 .trl-ok{color:var(--trl-ok)}.trl-warn{color:var(--trl-warn)}.trl-fail{color:var(--trl-fail)}
@@ -43,16 +37,6 @@
 .trl-mark.trl-logo{background:none;border-radius:0}
 .trl-mark img{display:block;width:100%;height:100%;max-width:20px;max-height:20px;object-fit:contain;pointer-events:none}
 
-.trl-chips{display:flex;flex-wrap:wrap;gap:6px;padding:12px 0 10px}
-.trl-chips:empty{display:none}
-.trl-chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border:none !important;border-radius:999px;
-  background:var(--trl-chip) !important;color:inherit !important;font:500 12.5px/1 inherit;white-space:nowrap;cursor:pointer;margin:0 !important;min-width:0 !important}
-.trl-chip:hover{background:var(--trl-chip-hover) !important}
-.trl-chip .trl-n{opacity:.65;font-size:11.5px;font-variant-numeric:tabular-nums}
-/* The picked chip takes the accent like the chosen view. The !important
-   holds against themes and scripts that restyle generic buttons. */
-.trl-chip[aria-pressed="true"]{background:var(--tt-accent,#f4c63d) !important;color:var(--tt-accent-text,#161616) !important}
-.trl-chip[aria-pressed="true"] .trl-n{opacity:.8}
 
 /* The log brings its own dark background, like a terminal, so it reads the
    same on every Unraid theme. */
@@ -218,10 +202,10 @@
   background:transparent;color:inherit;font:inherit;cursor:pointer}
 .trl-dlg-btn:hover{background:color-mix(in srgb,currentColor 8%,transparent)}
 
-/* With TowerTorch a row, a chip, a control, a view and an option light in its
+/* With TowerTorch a row, a control, a view and an option light in its
    hover, the one colour its own rows and buttons take. The list of apps stays
    dark on every theme, so it takes the dark one. */
-html.tt-popups-on .trl{--trl-hover:var(--tt-hover,color-mix(in srgb,currentColor 7%,transparent));--trl-chip-hover:var(--tt-hover,color-mix(in srgb,currentColor 15%,transparent))}
+html.tt-popups-on .trl{--trl-hover:var(--tt-hover,color-mix(in srgb,currentColor 7%,transparent))}
 html.tt-popups-on :is(.trl-control:not(.tt-dash-btn),.trl-dlg-btn):hover{background:var(--tt-hover,color-mix(in srgb,currentColor 9%,transparent))}
 html.tt-popups-on .trl-hs button:not([aria-checked="true"]):hover{background:var(--tt-hover,color-mix(in srgb,currentColor 9%,transparent)) !important}
 html.tt-popups-on :is(.trl-pick,.trl-pick-top button):hover{background:var(--tt-hover-dark,#333) !important}
@@ -243,8 +227,7 @@ html.tt-popups-on .trl-pick-item:hover{background:var(--tt-hover-dark,#353535)}
 .trl-dlg li.trl-item { background: color-mix(in srgb, currentColor 8%, transparent); }
 
 /* A finding of the watch carries its two buttons, or the note being written,
-   under its text. Unraid's own button and field styles are held off here as
-   on the chips. */
+   under its text. Unraid's own button and field styles are held off here. */
 li.trl-w-item { flex-wrap: wrap; row-gap: 4px; }
 li.trl-w-item > .trl-dlg-text { flex: 1 1 200px; display: flex; flex-direction: column; white-space: normal; }
 .trl-w-sub { font-size: 12px; opacity: .75; }

@@ -9,10 +9,27 @@ import (
 	"testing"
 )
 
-func TestTheTileStartsWithEverything(t *testing.T) {
+func TestTheTileStartsWithTheLog(t *testing.T) {
 	s := Open(filepath.Join(t.TempDir(), "tile.json"))
-	if got := s.Get(); got.View != ViewAll {
-		t.Errorf("view %q, want %q", got.View, ViewAll)
+	if got := s.Get(); got.View != ViewLog {
+		t.Errorf("view %q, want %q", got.View, ViewLog)
+	}
+}
+
+func TestAViewOfEverythingSavedBeforeBecomesTheLog(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "tile.json")
+	if err := os.WriteFile(path, []byte(`{"view":"all","hidden":["bravo"]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	s := Open(path)
+	if got := s.Get(); got.View != ViewLog || len(got.Hidden) != 1 {
+		t.Errorf("%+v", got)
+	}
+	if err := s.Set(Prefs{View: "all"}); err != nil || s.Get().View != ViewLog {
+		t.Errorf("a page from before asks for everything: %v, view %q", err, s.Get().View)
+	}
+	if got := Open(path).Get(); got.View != ViewLog {
+		t.Errorf("saved as %q", got.View)
 	}
 }
 
@@ -28,7 +45,7 @@ func TestTheChosenViewOutlivesARestart(t *testing.T) {
 
 func TestEveryViewOfTheTileIsKept(t *testing.T) {
 	s := Open(filepath.Join(t.TempDir(), "tile.json"))
-	for _, v := range []string{ViewAll, ViewApps, ViewLog, ViewMap, ViewOpen} {
+	for _, v := range []string{ViewApps, ViewLog, ViewMap, ViewOpen} {
 		if err := s.Set(Prefs{View: v}); err != nil || s.Get().View != v {
 			t.Errorf("Set(%q) = %v, view %q", v, err, s.Get().View)
 		}
@@ -51,13 +68,13 @@ func TestAnUnknownViewIsRefusedAndNothingChanges(t *testing.T) {
 	}
 }
 
-func TestADamagedFileFallsBackToEverything(t *testing.T) {
+func TestADamagedFileFallsBackToTheLog(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "tile.json")
 	for _, raw := range []string{"{", `{"view":"sideways"}`} {
 		if err := os.WriteFile(path, []byte(raw), 0o600); err != nil {
 			t.Fatal(err)
 		}
-		if got := Open(path).Get(); got.View != ViewAll {
+		if got := Open(path).Get(); got.View != ViewLog {
 			t.Errorf("%s gives view %q", raw, got.View)
 		}
 	}
@@ -84,7 +101,7 @@ func TestAnOverlongListOfAppsIsRefused(t *testing.T) {
 		many[i] = strconv.Itoa(i)
 	}
 	for _, hidden := range [][]string{many, {strings.Repeat("a", maxID+1)}, {""}} {
-		if err := s.Set(Prefs{View: ViewAll, Hidden: hidden}); !errors.Is(err, ErrHidden) {
+		if err := s.Set(Prefs{View: ViewLog, Hidden: hidden}); !errors.Is(err, ErrHidden) {
 			t.Errorf("Set(%d apps) = %v, want ErrHidden", len(hidden), err)
 		}
 	}

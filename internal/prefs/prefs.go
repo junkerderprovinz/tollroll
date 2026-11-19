@@ -11,15 +11,18 @@ import (
 	"sync"
 )
 
-// The views of the tile: rows and log, the rows alone, the log alone, the
-// map of the fortress, or what is open across the apps.
+// The views of the tile: the log, the rows of the apps, the map of the
+// fortress, or what is open across the apps.
 const (
-	ViewAll  = "all"
 	ViewApps = "apps"
 	ViewLog  = "log"
 	ViewMap  = "map"
 	ViewOpen = "open"
 )
+
+// everything is a view of rows and log together that the tile does not
+// offer. A saved file or an open page may still name it, and gets the log.
+const everything = "all"
 
 // maxHidden and maxID bound the apps left out to what a tile can show: the
 // board cuts an app's ID at 60 bytes.
@@ -50,10 +53,10 @@ type Store struct {
 	p  Prefs
 }
 
-// Open reads the prefs from path. A missing or damaged file gives the tile
-// with everything on it, since a lost view is no reason to stop the service.
+// Open reads the prefs from path. A missing or damaged file gives the log,
+// since a lost view is no reason to stop the service.
 func Open(path string) *Store {
-	s := &Store{path: path, p: Prefs{View: ViewAll, Hidden: []string{}}}
+	s := &Store{path: path, p: Prefs{View: ViewLog, Hidden: []string{}}}
 	var p Prefs
 	if b, err := os.ReadFile(path); err == nil && json.Unmarshal(b, &p) == nil && check(p) == nil {
 		s.p = tidy(p)
@@ -95,7 +98,7 @@ func (s *Store) Set(p Prefs) error {
 }
 
 func check(p Prefs) error {
-	if p.View != ViewAll && p.View != ViewApps && p.View != ViewLog && p.View != ViewMap && p.View != ViewOpen {
+	if p.View != everything && p.View != ViewApps && p.View != ViewLog && p.View != ViewMap && p.View != ViewOpen {
 		return ErrView
 	}
 	if len(p.Hidden) > maxHidden {
@@ -109,8 +112,11 @@ func check(p Prefs) error {
 	return nil
 }
 
-// tidy keeps each app once, in a stable order.
+// tidy keeps each app once, in a stable order, and the log for everything.
 func tidy(p Prefs) Prefs {
+	if p.View == everything {
+		p.View = ViewLog
+	}
 	p.Hidden = slices.Compact(slices.Sorted(slices.Values(p.Hidden)))
 	if p.Hidden == nil {
 		p.Hidden = []string{}

@@ -1,6 +1,6 @@
 /* What the pages show, worked out without the DOM: row texts and tones, the
- * log filter, the chips above the log, the apps chosen for the log view, the
- * map of the fortress, the labels, an app's mark and the members. tile.js and
+ * routine lines folded away, the apps chosen for the log view, the map of the
+ * fortress, the labels, an app's mark and the members. tile.js and
  * settings.js draw it, plugin/test/core.test.js checks it under node. */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
@@ -76,24 +76,6 @@
     return out;
   }
 
-  function filterLog(log, key) {
-    if (key === 'all') return log.slice();
-    return log.filter(function (l) { return l.app === key; });
-  }
-
-  function chips(view) {
-    var counts = {};
-    (view.log || []).forEach(function (l) { counts[l.app] = (counts[l.app] || 0) + 1; });
-    var out = [{ key: 'all', name: null, count: (view.log || []).length }];
-    (view.apps || []).forEach(function (a) {
-      if (counts[a.key]) out.push({ key: a.key, name: a.name, count: counts[a.key] });
-    });
-    return out;
-  }
-
-  function validFilter(view, key) {
-    return (view.apps || []).some(function (a) { return a.key === key; }) ? key : 'all';
-  }
 
   function hue(key) {
     var h = 2166136261;
@@ -157,20 +139,19 @@
     return n ? s + ', ' + plural(L, 't_attn', n, lang) : s;
   }
 
-  /* layout says what the tile shows: the view chosen in the header. The
-   * server gets no row: its state is in its own lines of the log. Out of a
-   * fortress that leaves the log window, with the prompt to join below, and
-   * nothing to choose in the header. */
+  /* layout says what the tile shows: the view chosen in the header, the log
+   * unless another one is. The server gets no row: its state is in its own
+   * lines of the log. Out of a fortress that leaves the log window, with the
+   * prompt to join below, and nothing to choose in the header. */
   function layout(view, fort, chosen) {
     var joined = !!(fort && fort.joined);
-    var views = joined ? ['all', 'apps', 'open', 'log', 'map'] : ['all'];
-    var v = views.indexOf(chosen) >= 0 ? chosen : 'all';
+    var views = joined ? ['log', 'apps', 'open', 'map'] : ['log'];
+    var v = views.indexOf(chosen) >= 0 ? chosen : 'log';
     var apps = joined ? view.apps.filter(function (a) { return !a.local; }) : [];
     return {
       view: v, views: views, selector: views.length > 1, apps: apps, join: !joined,
-      rows: (v === 'all' || v === 'apps') && apps.length > 0,
-      chips: v === 'all',
-      log: v === 'all' || v === 'log',
+      rows: v === 'apps' && apps.length > 0,
+      log: v === 'log',
       map: v === 'map',
       open: v === 'open'
     };
@@ -361,7 +342,7 @@
     return m ? m[1].toLowerCase() : 'en';
   }
 
-  return { fmt: fmt, plural: plural, rowStatus: rowStatus, foldQuiet: foldQuiet, filterLog: filterLog, chips: chips, validFilter: validFilter,
+  return { fmt: fmt, plural: plural, rowStatus: rowStatus, foldQuiet: foldQuiet,
     hue: hue, mark: mark, timeLabel: timeLabel, subtitle: subtitle, needsYou: needsYou, lang: lang,
     safeIcon: safeIcon, markColors: markColors,
     layout: layout, viewTitle: viewTitle, shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, statusWindow: statusWindow, ago: ago, routerStatus: routerStatus, hubSettings: hubSettings, muteState: muteState, levelApps: levelApps, openPoints: openPoints, needItem: needItem };

@@ -19,17 +19,17 @@
     error: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
     caret: '<svg class="trl-caret" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
   });
-  var VIEWS = [['all', 't_v_all', 'IconDashboard'], ['apps', 't_v_apps', 'IconTabApps'], ['open', 't_v_open', 'IconWarning'],
-    ['log', 't_v_log', 'IconLog'], ['map', 't_v_map', 'IconFleet']];
-  var STORE = 'tollroll.filter', QUIET = 'tollroll.quiet';
+  var VIEWS = [['log', 't_v_log', 'IconLog'], ['apps', 't_v_apps', 'IconTabApps'], ['open', 't_v_open', 'IconWarning'],
+    ['map', 't_v_map', 'IconFleet']];
+  var QUIET = 'tollroll.quiet';
 
   var tile = root.closest('tbody') || document.body;
   var subEl = document.getElementById('trl-sub');
   var openEl = document.getElementById('trl-open');
   var hsEl = document.getElementById('trl-hs');
 
-  var view = null, fort = null, prefs = { view: 'all', hidden: [] }, openApp = null, views = VIEWS;
-  var filter = 'all', follow = true, timer = null, picking = null, showQuiet = false;
+  var view = null, fort = null, prefs = { view: 'log', hidden: [] }, openApp = null, views = VIEWS;
+  var follow = true, timer = null, picking = null, showQuiet = false;
   // noting is the finding whose note is being written in the open view, kept
   // over the redraw of every poll.
   var noting = null;
@@ -37,7 +37,6 @@
   // only when a row names one not seen yet, so a poll stays small.
   var icons = {}, iconsAsked = {};
   try {
-    filter = localStorage.getItem(STORE) || 'all';
     showQuiet = localStorage.getItem(QUIET) === '1';
   } catch (e) { /* private window */ }
 
@@ -70,9 +69,6 @@
   }
 
   var rowsEl = el('ul', 'trl-rows');
-  var chipsEl = el('div', 'trl-chips');
-  chipsEl.setAttribute('role', 'group');
-  chipsEl.setAttribute('aria-label', L.t_filter);
   var logBox = el('div', 'trl-logbox');
   var logHead = el('div', 'trl-loghd');
   var logCount = el('span', 'trl-n');
@@ -84,7 +80,7 @@
   var mapBox = el('div', 'trl-mapbox');
   var openBox = el('div', 'trl-openbox');
   var emptyEl = el('div', 'trl-empty');
-  [rowsEl, chipsEl, logBox, mapBox, openBox, emptyEl].forEach(function (n) { root.appendChild(n); });
+  [rowsEl, logBox, mapBox, openBox, emptyEl].forEach(function (n) { root.appendChild(n); });
   var advice = [];
 
   // A logo goes in as an img only, never into the DOM as markup, so nothing
@@ -155,13 +151,6 @@
     draw();
   }
 
-  function setFilter(key) {
-    filter = key;
-    try { localStorage.setItem(STORE, key); } catch (e) { /* private window */ }
-    follow = true;
-    draw();
-  }
-
   // A click on an app in the apps view or on the map shows its log alone.
   function showLog(key) {
     setHidden(view.apps.map(function (a) { return a.key; }).filter(function (k) { return k !== key; }));
@@ -199,17 +188,14 @@
     if (b) b.focus();
   });
 
-  function drawRows(apps, onlyChosen) {
+  function drawRows(apps) {
     rowsEl.textContent = '';
     apps.forEach(function (app) {
       var st = C.rowStatus(app, L, lang);
-      var on = !onlyChosen && filter === app.key;
-      var li = el('li', 'trl-row' + (!onlyChosen && filter !== 'all' && !on ? ' trl-dim' : ''));
+      var li = el('li', 'trl-row');
       li.setAttribute('role', 'button');
       li.tabIndex = 0;
-      if (!onlyChosen) li.setAttribute('aria-pressed', String(on));
-      var does = onlyChosen ? C.fmt(L.t_show_log, { name: app.name }) : on ? L.t_row_all : C.fmt(L.t_row_only, { name: app.name });
-      li.setAttribute('aria-label', app.name + ', ' + st.text + '. ' + does);
+      li.setAttribute('aria-label', app.name + ', ' + st.text + '. ' + C.fmt(L.t_show_log, { name: app.name }));
       li.dataset.focus = 'row:' + app.key;
       li.appendChild(mark(app));
       li.appendChild(el('span', 'trl-name', app.name));
@@ -219,31 +205,11 @@
       state.title = st.text;
       li.appendChild(state);
       li.appendChild(el('span', 'trl-ver', app.version || ''));
-      function act() { if (onlyChosen) showLog(app.key); else setFilter(on ? 'all' : app.key); }
-      li.addEventListener('click', act);
+      li.addEventListener('click', function () { showLog(app.key); });
       li.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act(); }
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showLog(app.key); }
       });
       rowsEl.appendChild(li);
-    });
-  }
-
-  // A single app needs no filter, so the chips start at two apps with lines.
-  function drawChips() {
-    chipsEl.textContent = '';
-    var list = C.chips(view);
-    if (list.length < 3) return;
-    var apps = byKey();
-    list.forEach(function (c) {
-      var b = el('button', 'trl-chip');
-      b.type = 'button';
-      b.setAttribute('aria-pressed', String(filter === c.key));
-      b.dataset.focus = 'chip:' + c.key;
-      if (c.name) b.appendChild(mark(apps[c.key], true));
-      b.appendChild(el('span', '', c.name || L.t_all));
-      b.appendChild(el('span', 'trl-n', String(c.count)));
-      b.addEventListener('click', function () { setFilter(c.key); });
-      chipsEl.appendChild(b);
     });
   }
 
@@ -381,15 +347,15 @@
     return row;
   }
 
-  // The log view keeps the height the tile has with everything on it, so the
-  // dashboard does not jump when the view changes.
+  // The log is as tall as the log window and the rows of the apps together,
+  // so the dashboard does not jump when the view changes.
   function fillHeight(apps) {
-    drawRows(apps, false);
-    drawChips();
-    var probe = [rowsEl, chipsEl];
-    probe.forEach(function (n) { n.hidden = false; n.style.cssText = 'visibility:hidden;position:absolute;width:' + root.clientWidth + 'px'; });
-    var extra = rowsEl.offsetHeight + chipsEl.offsetHeight + 12;
-    probe.forEach(function (n) { n.hidden = true; n.style.cssText = ''; });
+    drawRows(apps);
+    rowsEl.hidden = false;
+    rowsEl.style.cssText = 'visibility:hidden;position:absolute;width:' + root.clientWidth + 'px';
+    var extra = apps.length ? rowsEl.offsetHeight + 12 : 0;
+    rowsEl.hidden = true;
+    rowsEl.style.cssText = '';
     logEl.style.height = Math.max(260, 260 + extra - logHead.offsetHeight) + 'px';
   }
 
@@ -611,7 +577,7 @@
   // place while hidden, so the selector does not move.
   function drawOpen(v) {
     var chosen = C.shown(view.apps, prefs.hidden);
-    openApp = v === 'all' ? byKey()[filter] || null : v === 'log' && chosen.length === 1 ? chosen[0] : null;
+    openApp = v === 'log' && chosen.length === 1 ? chosen[0] : null;
     openEl.style.visibility = openApp ? '' : 'hidden';
     openEl.tabIndex = openApp ? 0 : -1;
     if (openApp) {
@@ -712,14 +678,12 @@
     var keep = active && tile.contains(active) && active.dataset ? active.dataset.focus : null;
     var joined = fort.joined;
     var lay = C.layout(view, fort, prefs.view), v = lay.view;
-    filter = C.validFilter(view, filter);
     var devices = C.mapDevices(fort, view.apps).length;
     subEl.textContent = !joined ? '' : v === 'map' ? C.plural(L, 't_map', devices, lang) : C.subtitle(view, L, lang, devices);
     drawHS(lay);
 
     show(emptyEl, lay.join);
     show(rowsEl, lay.rows);
-    show(chipsEl, lay.chips);
     show(logBox, lay.log);
     show(logHead, v === 'log');
     show(mapBox, lay.map);
@@ -735,13 +699,8 @@
       if (!(noting && openBox.contains(document.activeElement))) drawOpenPoints();
     } else {
       var chosen = C.shown(view.apps, prefs.hidden);
-      if (v === 'all') {
-        drawRows(lay.apps, false);
-        drawChips();
-        var apps = byKey();
-        drawLog(C.filterLog(view.log, filter), filter === 'all' ? null : apps[filter]);
-      } else if (v === 'apps') {
-        drawRows(lay.apps, true);
+      if (v === 'apps') {
+        drawRows(lay.apps);
       } else {
         var keys = chosen.map(function (a) { return a.key; });
         var lines = view.log.filter(function (l) { return keys.indexOf(l.app) >= 0; });
@@ -750,7 +709,7 @@
         logCount.textContent = C.plural(L, 't_lines', lines.length, lang);
         logHead.appendChild(logCount);
         drawLog(lines, chosen.length === 1 ? chosen[0] : null);
-        fillHeight(C.layout(view, fort, 'all').apps);
+        fillHeight(C.layout(view, fort, 'apps').apps);
       }
     }
     drawOpen(v);
@@ -793,7 +752,7 @@
 
   document.querySelectorAll('[data-glyph]').forEach(function (n) { n.innerHTML = GLYPH[n.dataset.glyph] || ''; });
   hsEl.setAttribute('aria-label', L.t_view);
-  get('tile').then(function (p) { prefs = { view: p.view || 'all', hidden: p.hidden || [] }; }, function () { /* everything */ })
+  get('tile').then(function (p) { prefs = { view: p.view || 'log', hidden: p.hidden || [] }; }, function () { /* the log */ })
     .then(function () {
       document.addEventListener('visibilitychange', schedule);
       schedule();

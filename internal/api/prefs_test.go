@@ -4,7 +4,7 @@ import "testing"
 
 func TestTheTileKeepsItsView(t *testing.T) {
 	e := newEnv(t)
-	if code, out := e.do("GET", "/api/tile", ""); code != 200 || out["view"] != "all" {
+	if code, out := e.do("GET", "/api/tile", ""); code != 200 || out["view"] != "log" {
 		t.Fatalf("%d %v", code, out)
 	}
 	if code, out := e.do("PUT", "/api/tile", `{"view":"log"}`); code != 200 || out["view"] != "log" {

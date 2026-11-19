@@ -59,24 +59,6 @@ test('an unknown state reads as not reachable rather than running', () => {
   assert.equal(core.rowStatus(app({ state: 'exploded' }), en, 'en').tone, 'off');
 });
 
-test('the log filter keeps the lines of one app', () => {
-  const log = [{ app: 'a', text: '1' }, { app: 'b', text: '2' }, { app: 'a', text: '3' }];
-  assert.deepEqual(core.filterLog(log, 'all').map((l) => l.text), ['1', '2', '3']);
-  assert.deepEqual(core.filterLog(log, 'a').map((l) => l.text), ['1', '3']);
-});
-
-test('chips list every app with lines, in row order, with counts', () => {
-  const view = { apps: [app({ key: 'a', name: 'A' }), app({ key: 'b', name: 'B' }), app({ key: 'c', name: 'C' })], log: [{ app: 'c' }, { app: 'a' }, { app: 'c' }] };
-  assert.deepEqual(core.chips(view), [{ key: 'all', name: null, count: 3 }, { key: 'a', name: 'A', count: 1 }, { key: 'c', name: 'C', count: 2 }]);
-});
-
-test('a filter for an app that is gone falls back to all', () => {
-  const view = { apps: [app({ key: 'a' })], log: [] };
-  assert.equal(core.validFilter(view, 'a'), 'a');
-  assert.equal(core.validFilter(view, 'gone'), 'all');
-  assert.equal(core.validFilter(view, null), 'all');
-});
-
 test('the status window lists what the app reports and leads to no address', () => {
   const row = app({
     state: 'warning', ui: 'https://alpha.lan/',
@@ -264,29 +246,30 @@ test('the status window of the disks lists each disk with its wake-ups', () => {
 
 test('out of a fortress the tile is the log window above the prompt to join, with no row of the server', () => {
   const view = { apps: [app({ key: 'unraid', name: 'Unraid', local: true }), app({ key: 'disks', name: 'Disks', local: true }), app()], log: [] };
-  const all = core.layout(view, { joined: false }, 'all');
-  assert.deepEqual(all.apps, []);
-  assert.deepEqual([all.view, all.rows, all.chips, all.log, all.map, all.join], ['all', false, true, true, false, true]);
-  for (const v of ['apps', 'open', 'log', 'map']) assert.equal(core.layout(view, { joined: false }, v).view, 'all', v);
+  const l = core.layout(view, { joined: false }, 'log');
+  assert.deepEqual(l.apps, []);
+  assert.deepEqual([l.view, l.rows, l.log, l.map, l.join], ['log', false, true, false, true]);
+  for (const v of ['apps', 'open', 'map', 'all']) assert.equal(core.layout(view, { joined: false }, v).view, 'log', v);
 });
 
-test('out of a fortress the header offers no views, since every one would look the same', () => {
-  const l = core.layout({ apps: [app({ key: 'unraid', name: 'Unraid', local: true })], log: [] }, { joined: false }, 'all');
-  assert.deepEqual([l.views, l.selector], [['all'], false]);
+test('out of a fortress the header offers no views, since there is only the log', () => {
+  const l = core.layout({ apps: [app({ key: 'unraid', name: 'Unraid', local: true })], log: [] }, { joined: false }, 'log');
+  assert.deepEqual([l.views, l.selector], [['log'], false]);
 });
 
 test('out of a fortress with nothing from the server the tile keeps its log above the prompt to join', () => {
-  const off = core.layout({ apps: [], log: [] }, { joined: false }, 'all');
+  const off = core.layout({ apps: [], log: [] }, { joined: false }, 'log');
   assert.deepEqual([off.rows, off.log, off.join], [false, true, true]);
 });
 
-test('in a fortress the tile shows the chosen view with a row for every app and none for the server', () => {
+test('in a fortress the views start with the log, and a view of everything saved before shows the log', () => {
   const view = { apps: [app(), app({ key: 'unraid', name: 'Unraid', local: true }), app({ key: 'disks', name: 'Disks', local: true })], log: [] };
-  const all = core.layout(view, { joined: true }, 'all');
-  assert.deepEqual(all.apps.map((a) => a.key), ['alpha']);
-  assert.deepEqual([all.view, all.rows, all.chips, all.log, all.map, all.join], ['all', true, true, true, false, false]);
-  assert.deepEqual([all.views, all.selector], [['all', 'apps', 'open', 'log', 'map'], true]);
-  assert.deepEqual(core.layout(view, { joined: true }, 'apps').apps.map((a) => a.key), ['alpha']);
+  const l = core.layout(view, { joined: true }, 'all');
+  assert.deepEqual([l.view, l.rows, l.log, l.map, l.join], ['log', false, true, false, false]);
+  assert.deepEqual([l.views, l.selector], [['log', 'apps', 'open', 'map'], true]);
+  assert.equal('chips' in l, false);
+  const apps = core.layout(view, { joined: true }, 'apps');
+  assert.deepEqual([apps.rows, apps.log, apps.apps.map((a) => a.key)], [true, false, ['alpha']]);
   const map = core.layout(view, { joined: true }, 'map');
   assert.deepEqual([map.rows, map.log, map.map], [false, false, true]);
 });
@@ -351,9 +334,8 @@ test('a finding of the watch can be marked, and a real incident says until when 
   assert.deepEqual(w.needs.map((n) => n.id || ''), ['unraid:4', '', 'i:ab']);
 });
 
-test('the views everything and log say in their tooltip what sets them apart', () => {
-  assert.equal(core.viewTitle(en, 't_v_all'), en.t_v_all_hint);
+test('the log view says in its tooltip that its list picks the apps', () => {
   assert.equal(core.viewTitle(en, 't_v_log'), en.t_v_log_hint);
   assert.equal(core.viewTitle(en, 't_v_map'), en.t_v_map);
-  assert.notEqual(en.t_v_all_hint, en.t_v_log_hint);
+  assert.equal(en.t_v_all, undefined);
 });
