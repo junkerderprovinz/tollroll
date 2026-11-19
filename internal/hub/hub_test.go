@@ -48,6 +48,10 @@ var texts = map[string]string{
 	"n_digest_line":  "{name} ({n}): {title}",
 	"n_digest_none":  "Nothing",
 	"n_digest_open":  "Open: {n}",
+	"n_mute_title":   "Mute is over",
+	"n_mute_none":    "Nothing came",
+	"n_calm_title":   "All quiet",
+	"n_calm_body":    "Nothing happened",
 }
 
 type env struct {

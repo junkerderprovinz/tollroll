@@ -95,6 +95,7 @@ type Hub struct {
 	held    []kept
 	day     []kept
 	digest  string
+	muted   time.Time
 	changed bool
 }
 
@@ -119,6 +120,7 @@ type state struct {
 	Held   []kept               `json:"held"`
 	Day    []kept               `json:"day"`
 	Digest string               `json:"digest"`
+	Muted  time.Time            `json:"muted,omitzero"`
 }
 
 // New returns a hub with what it kept before its last stop.
@@ -129,7 +131,7 @@ func New(o Options) *Hub {
 	h := &Hub{o: o, told: map[string]time.Time{}}
 	var s state
 	if b, err := os.ReadFile(o.State); err == nil && json.Unmarshal(b, &s) == nil {
-		h.sent, h.held, h.day, h.digest = s.Sent, s.Held, s.Day, s.Digest
+		h.sent, h.held, h.day, h.digest, h.muted = s.Sent, s.Held, s.Day, s.Digest, s.Muted
 		if s.Told != nil {
 			h.told = s.Told
 		}
@@ -196,7 +198,7 @@ func (h *Hub) Offer(ctx context.Context, m Message) []notify.Result {
 	case !e.Recovery && levels[severityLevel(e.Severity)] < levels[cmp.Or(s.Apps[m.App], LevelInfo)]:
 		h.mu.Unlock()
 		return nil
-	case s.Quiet.quiet(now) || !h.room(m.App, now):
+	case h.quiet(s, now) || !h.room(m.App, now):
 		h.held = last(append(h.held, k), keepHeld)
 		h.mu.Unlock()
 		return nil
@@ -295,13 +297,23 @@ func (h *Hub) Tick(ctx context.Context) {
 			delete(h.told, key)
 		}
 	}
-	quiet := s.Quiet.quiet(now)
+	quiet := h.quiet(s, now)
 	today := now.Format(time.DateOnly)
-	due := s.Digest.On && !quiet && h.digest != today && now.Hour()*60+now.Minute() >= minutes(s.Digest.At)
+	due := (s.Digest.On || s.Calm) && !quiet && h.digest != today && now.Hour()*60+now.Minute() >= minutes(s.Digest.At)
 	if due {
 		h.digest = today
-		out = append(out, h.summary(tx, lang))
-		h.held = nil
+		h.changed = true
+		switch {
+		case s.Digest.On:
+			out = append(out, h.summary(tx, lang))
+			h.held, h.muted = nil, time.Time{}
+		case len(h.day) == 0 && (h.o.Open == nil || len(h.o.Open(lang)) == 0):
+			out = append(out, notify.Event{Kind: "tollroll.calm", Severity: notify.SeverityInfo, Title: tx["n_calm_title"], Body: tx["n_calm_body"]})
+		}
+	}
+	if !h.muted.IsZero() && !quiet {
+		out = append(out, afterMute(tx, h.held))
+		h.held, h.muted = nil, time.Time{}
 		h.changed = true
 	} else if len(h.held) > 0 && !quiet && h.room("", now) {
 		out = append(out, collected(tx, h.held))
@@ -316,6 +328,30 @@ func (h *Hub) Tick(ctx context.Context) {
 			h.o.Journal.Told(e, r)
 		}
 	}
+}
+
+// quiet reports whether the hub holds messages now: in the quiet hours or
+// while muted. A mute is remembered, so its end is told even after a
+// restart. Called with mu held.
+func (h *Hub) quiet(s Settings, now time.Time) bool {
+	if now.Before(s.Mute) {
+		if !h.muted.Equal(s.Mute) {
+			h.muted, h.changed = s.Mute, true
+		}
+		return true
+	}
+	return s.Quiet.quiet(now)
+}
+
+// afterMute is the message at the end of a mute: what waited, or that
+// nothing did.
+func afterMute(tx map[string]string, held []kept) notify.Event {
+	if len(held) == 0 {
+		return notify.Event{Kind: "tollroll.unmuted", Severity: notify.SeverityInfo, Title: tx["n_mute_title"], Body: tx["n_mute_none"]}
+	}
+	e := collected(tx, held)
+	e.Kind, e.Title = "tollroll.unmuted", tx["n_mute_title"]
+	return e
 }
 
 // collected is one message for the messages that waited, the latest last.
@@ -392,7 +428,7 @@ func (h *Hub) Save() {
 	if !h.changed || h.o.State == "" {
 		return
 	}
-	b, err := json.Marshal(state{Told: h.told, Sent: h.sent, Held: h.held, Day: h.day, Digest: h.digest})
+	b, err := json.Marshal(state{Told: h.told, Sent: h.sent, Held: h.held, Day: h.day, Digest: h.digest, Muted: h.muted})
 	if err == nil {
 		err = os.MkdirAll(filepath.Dir(h.o.State), 0o700)
 	}

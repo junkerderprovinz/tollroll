@@ -25,6 +25,13 @@ func run(t *testing.T, e *env, body string) error {
 	return err
 }
 
+// offered counts the messages the hub has taken a decision on.
+func (e *env) offered() int {
+	e.h.mu.Lock()
+	defer e.h.mu.Unlock()
+	return len(e.h.day)
+}
+
 func code(err error) string {
 	var no *kit.Refusal
 	if errors.As(err, &no) {
@@ -211,9 +218,9 @@ func TestAnAllClearPassesAnAppsLevelAndAWaitAsTheProblemDid(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	for end := time.Now().Add(2 * time.Second); len(e.ch.titles()) == 0 && time.Now().Before(end); time.Sleep(10 * time.Millisecond) {
+	// Both deliveries run on their own, so the clock moves only once both read it.
+	for end := time.Now().Add(2 * time.Second); (len(e.ch.titles()) == 0 || e.offered() < 2) && time.Now().Before(end); time.Sleep(10 * time.Millisecond) {
 	}
-	time.Sleep(100 * time.Millisecond)
 	e.ch.mu.Lock()
 	if len(e.ch.sent) != 1 || e.ch.sent[0].Title != "BombVault: All clear" || !e.ch.sent[0].Recovery {
 		t.Errorf("an app on failures got %+v", e.ch.sent)

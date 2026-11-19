@@ -21,12 +21,16 @@ const (
 
 // Settings are what the hub does with a message. Apps holds the level of each
 // app by its ID; an app without one sends everything. TakeOver offers the
-// apps of the fortress to send their notifications through TollRoll.
+// apps of the fortress to send their notifications through TollRoll. Mute
+// holds everything but alerts once, until that time. Calm says at the time of
+// the daily summary that nothing happened, on a day when nothing did.
 type Settings struct {
 	Quiet    Window            `json:"quiet"`
 	Digest   Daily             `json:"digest"`
 	Apps     map[string]string `json:"apps"`
 	TakeOver bool              `json:"takeOver"`
+	Mute     time.Time         `json:"mute,omitzero"`
+	Calm     bool              `json:"calm"`
 }
 
 // Window is a span of the day in the server's time, which may run past
@@ -49,6 +53,8 @@ var ErrSettings = errors.New("hub: invalid settings")
 const (
 	maxApps = 64
 	maxID   = 60
+	// maxMute bounds a mute, which is meant for a night or a day away.
+	maxMute = 48 * time.Hour
 )
 
 var clock = regexp.MustCompile(`^([01]\d|2[0-3]):[0-5]\d$`)
@@ -60,7 +66,8 @@ func defaults() Settings {
 }
 
 func (s Settings) check() error {
-	if !clock.MatchString(s.Quiet.From) || !clock.MatchString(s.Quiet.To) || !clock.MatchString(s.Digest.At) || len(s.Apps) > maxApps {
+	if !clock.MatchString(s.Quiet.From) || !clock.MatchString(s.Quiet.To) || !clock.MatchString(s.Digest.At) || len(s.Apps) > maxApps ||
+		s.Mute.After(time.Now().Add(maxMute)) {
 		return ErrSettings
 	}
 	for id, l := range s.Apps {
