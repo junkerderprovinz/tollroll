@@ -33,6 +33,16 @@ One dashboard tile for the apps of your fortress: a row per app with how it is
 doing, and one log with the lines of all of them, filtered by a click. It joins
 the fortress with its phrase and reads the status report every member serves.
 
+### 1.2.1
+Names in the channel window and on the buttons in Info keep their descenders.
+
+🐛 **Fixed**
+- **Tile names keep their descenders.** The bottom of a g, p or y in a tile's name in the channel window is no longer cut off.
+- **GlimStone 4.7.0.** The buttons under Help and About in Info keep their descenders too.
+
+🌐 **Translations**
+- **Dutch says inloggen and login for signing in,** as the other apps do.
+
 ### 1.2.0
 The watch learns from you: mark a finding as known, or keep it as a real incident with a note. It also looks at more of your server, and the logs of your containers, plugins and user scripts get rows of their own on the tile. Thanks to @Revan335, whose questions in [#3](https://github.com/junkerderprovinz/tollroll/issues/3) started it.
 
