@@ -234,3 +234,22 @@ html.tt-popups-on .trl-pick-item:hover{background:var(--tt-hover-dark,#353535)}
 .trl-open-h:first-child { margin-top: 2px; }
 .trl-open-app { display: flex; align-items: center; gap: 6px; margin: 8px 0 2px; font-weight: 600; }
 .trl-open-more { margin-left: 8px; white-space: nowrap; }
+
+/* A finding of the watch carries its two buttons, or the note being written,
+   under its text. Unraid's own button and field styles are held off here as
+   on the chips. */
+li.trl-w-item { flex-wrap: wrap; row-gap: 4px; }
+li.trl-w-item > .trl-dlg-text { flex: 1 1 200px; display: flex; flex-direction: column; white-space: normal; }
+.trl-w-sub { font-size: 12px; opacity: .75; }
+.trl-w-note { font-style: italic; }
+.trl-w-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex: 1 1 100%; padding-left: 16px; }
+.trl-w-btn { margin: 0 !important; padding: 3px 10px !important; min-width: 0 !important; font: 500 12px/1.4 inherit !important; text-transform: none !important;
+  letter-spacing: normal !important; background: transparent !important; color: inherit !important; box-shadow: none !important; }
+.trl-w-btn:hover { background: color-mix(in srgb, currentColor 8%, transparent) !important; }
+html.tt-popups-on .trl-w-btn:hover { background: var(--tt-hover, color-mix(in srgb, currentColor 9%, transparent)) !important; }
+.trl-w-btn:disabled { opacity: .5; cursor: default; }
+.trl-w-btn .trl-gl svg { width: 12px; height: 12px; }
+.trl-w-input { flex: 1 1 180px; min-width: 0 !important; width: auto !important; margin: 0 !important; padding: 5px 9px !important; border: 0 !important; border-radius: 6px;
+  background: color-mix(in srgb, currentColor 9%, transparent) !important; color: inherit !important; font: 13px/1.4 inherit !important; }
+.trl-w-input:focus-visible { outline: 2px solid #f4c63d; outline-offset: 1px; }
+.trl-w-err { font-size: 12px; }

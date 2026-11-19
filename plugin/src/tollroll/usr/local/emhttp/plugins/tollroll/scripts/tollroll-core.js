@@ -176,13 +176,30 @@
     };
   }
 
+  /* needItem is one point that needs you. A finding of the server's watch
+   * carries its ID, so it can be taken as known or kept as a real incident,
+   * and an incident says until when it is told at once. */
+  function needItem(n, L, lang) {
+    var it = { tone: n.severity === 'error' ? 'fail' : 'warn', text: n.text };
+    if (n.id) it.id = n.id;
+    if (n.until) {
+      var d = new Date(n.until), day;
+      try { day = d.toLocaleDateString(lang, { day: 'numeric', month: 'long' }); } catch (e) { day = d.toISOString().slice(0, 10); }
+      it.tone = 'idle';
+      it.incident = true;
+      it.until = fmt(L.t_w_until, { date: day });
+      it.note = n.note || '';
+    }
+    return it;
+  }
+
   /* openPoints is everything open across the apps for the view of that
    * name: each app with what needs it, the server's rows among them, the
    * apps with an error first. An app that does not answer is open too. */
-  function openPoints(apps, L) {
+  function openPoints(apps, L, lang) {
     var out = [];
     (apps || []).forEach(function (a) {
-      var items = (a.needs || []).map(function (n) { return { tone: n.severity === 'error' ? 'fail' : 'warn', text: n.text }; });
+      var items = (a.needs || []).map(function (n) { return needItem(n, L, lang); });
       if (!items.length && a.state === 'unreachable') items.push({ tone: 'off', text: L.t_st_unreachable });
       if (items.length) out.push({ app: a, items: items });
     });
@@ -248,7 +265,7 @@
       title: app.name,
       state: { tone: s[0], text: L[s[1]] },
       devices: mine.map(function (m) { return memberName(L, m); }),
-      needs: (app.needs || []).map(function (n) { return { tone: n.severity === 'error' ? 'fail' : 'warn', text: n.text }; }),
+      needs: (app.needs || []).map(function (n) { return needItem(n, L, lang); }),
       tasks: (app.tasks || []).map(function (t) { return typeof t.progress === 'number' ? t.title + ', ' + percent(t.progress, lang) : t.title; }),
       next: (app.next || []).map(function (n) { return { title: n.title, at: timeLabel(n.at, lang) }; }),
       log: (log || []).filter(function (l) { return l.app === app.key; })
@@ -287,16 +304,40 @@
 
   var CLOCK = /^([01]\d|2[0-3]):[0-5]\d$/;
 
+  // nextAt is the next time the clock shows hhmm after now.
+  function nextAt(hhmm, now) {
+    var p = hhmm.split(':');
+    var d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), +p[0], +p[1]);
+    if (d <= now) d.setDate(d.getDate() + 1);
+    return d;
+  }
+
+  function hhmm(d) {
+    return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  }
+
   /* hubSettings is the hub's settings with the form's values. A time left
-   * empty keeps the saved one. */
-  function hubSettings(saved, f) {
+   * empty keeps the saved one, and a mute runs to the next time its field
+   * names. */
+  function hubSettings(saved, f, now) {
     function time(v, old) { return CLOCK.test(v) ? v : old; }
+    var until = time(f.until, muteState(saved, now || new Date()).at);
     return {
       quiet: { on: !!f.quiet, from: time(f.from, saved.quiet.from), to: time(f.to, saved.quiet.to) },
       digest: { on: !!f.digest, at: time(f.at, saved.digest.at) },
       apps: Object.assign({}, saved.apps),
-      takeOver: !!f.take
+      takeOver: !!f.take,
+      mute: f.mute ? nextAt(until, now || new Date()).toISOString() : null,
+      calm: !!f.calm
     };
+  }
+
+  // muteState says whether the hub is muted now and the time of day the mute
+  // field shows: the end of the last mute, or seven in the morning.
+  function muteState(hub, now) {
+    var end = hub.mute ? new Date(hub.mute) : null;
+    if (!end || isNaN(end)) return { on: false, at: '07:00' };
+    return { on: end > now, at: hhmm(end) };
   }
 
   // levelApps lists the apps a level can be set for: every app of the
@@ -317,5 +358,5 @@
   return { fmt: fmt, plural: plural, rowStatus: rowStatus, foldQuiet: foldQuiet, filterLog: filterLog, chips: chips, validFilter: validFilter,
     hue: hue, mark: mark, timeLabel: timeLabel, subtitle: subtitle, needsYou: needsYou, lang: lang,
     safeIcon: safeIcon, markColors: markColors,
-    layout: layout, shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, statusWindow: statusWindow, ago: ago, routerStatus: routerStatus, hubSettings: hubSettings, levelApps: levelApps, openPoints: openPoints };
+    layout: layout, shown: shown, selLabel: selLabel, mapDevices: mapDevices, memberName: memberName, statusWindow: statusWindow, ago: ago, routerStatus: routerStatus, hubSettings: hubSettings, muteState: muteState, levelApps: levelApps, openPoints: openPoints, needItem: needItem };
 });

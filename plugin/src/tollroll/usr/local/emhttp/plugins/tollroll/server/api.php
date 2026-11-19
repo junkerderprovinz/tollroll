@@ -21,6 +21,7 @@
  *   POST api.php  path=tile        data=JSON  -> PUT  /api/tile
  *   POST api.php  path=hub         data=JSON  -> PUT  /api/hub
  *   POST api.php  path=advice_dismiss data=JSON -> POST /api/advice/dismiss
+ *   POST api.php  path=watch       data=JSON  -> POST /api/watch
  *
  * Notification secrets and the phrase go in through a POST and never come
  * back out: the service answers with channels whose tokens, passwords and
@@ -35,7 +36,7 @@ $writes = ['notify' => ['PUT', '/api/notify'], 'notify_test' => ['POST', '/api/n
            'join' => ['POST', '/api/fortress/join'], 'leave' => ['POST', '/api/fortress/leave'],
            'remove' => ['POST', '/api/fortress/remove'],
            'tile' => ['PUT', '/api/tile'], 'hub' => ['PUT', '/api/hub'],
-           'advice_dismiss' => ['POST', '/api/advice/dismiss']];
+           'advice_dismiss' => ['POST', '/api/advice/dismiss'], 'watch' => ['POST', '/api/watch']];
 
 $fail = function ($code, $error) {
     http_response_code($code);

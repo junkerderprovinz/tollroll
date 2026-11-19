@@ -249,7 +249,7 @@ test('the channels card gets every kind TollRoll sends to and reaches the servic
   await assert.rejects(refused.notifyCard.adapter.save(list), (e) => e.code === 'invalid' && e.problems.length === 1);
 });
 
-test("the hub's three times are GlimStone's time fields, each named for the reader", () => {
+test("the hub's times are GlimStone's time fields, each named for the reader", () => {
   const p = page({});
-  assert.deepEqual(p.timeFields.map(([b, label]) => [b, label]), [[p.byId['trs-q-from'], en.s_quiet_from], [p.byId['trs-q-to'], en.s_quiet_to], [p.byId['trs-d-at'], en.s_digest_at]]);
+  assert.deepEqual(p.timeFields.map(([b, label]) => [b, label]), [[p.byId['trs-q-from'], en.s_quiet_from], [p.byId['trs-q-to'], en.s_quiet_to], [p.byId['trs-d-at'], en.s_digest_at], [p.byId['trs-m-at'], en.s_mute]]);
 });

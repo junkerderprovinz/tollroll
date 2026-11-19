@@ -249,15 +249,17 @@
     }
   }, { t: L, lang: lang, kinds: KINDS, marks: window.GlimNotifyMarks, classes: { input: 'trs-in', button: 'trs-btn', switch: 'trs-switch' }, saved: saved });
 
-  /* The hub: quiet hours, the daily summary, taking over the apps'
-   * notifications and the level of each app, all saved at once. */
+  /* The hub: quiet hours, a mute until a time, the daily summary and all
+   * quiet, taking over the apps' notifications and the level of each app,
+   * all saved at once. */
   var H = {
     quiet: document.getElementById('trs-q-on'), from: document.getElementById('trs-q-from'), to: document.getElementById('trs-q-to'),
-    digest: document.getElementById('trs-d-on'), at: document.getElementById('trs-d-at'), take: document.getElementById('trs-take')
+    digest: document.getElementById('trs-d-on'), at: document.getElementById('trs-d-at'), take: document.getElementById('trs-take'),
+    mute: document.getElementById('trs-m-on'), until: document.getElementById('trs-m-at'), calm: document.getElementById('trs-calm')
   };
   var levelsEl = document.getElementById('trs-levels');
   var hub = null;
-  [[H.from, 's_quiet_from'], [H.to, 's_quiet_to'], [H.at, 's_digest_at']].forEach(function (f) {
+  [[H.from, 's_quiet_from'], [H.to, 's_quiet_to'], [H.at, 's_digest_at'], [H.until, 's_mute']].forEach(function (f) {
     window.GlimTimeField.enhance(f[0], { label: L[f[1]] });
   });
 
@@ -268,13 +270,18 @@
     H.digest.checked = hub.digest.on;
     H.at.value = hub.digest.at;
     H.take.checked = hub.takeOver;
+    var m = C.muteState(hub, new Date());
+    H.mute.checked = m.on;
+    H.until.value = m.at;
+    H.calm.checked = !!hub.calm;
   }
 
   function saveHub() {
     if (!hub) return;
     var next = C.hubSettings(hub, {
-      quiet: H.quiet.checked, from: H.from.value, to: H.to.value, digest: H.digest.checked, at: H.at.value, take: H.take.checked
-    });
+      quiet: H.quiet.checked, from: H.from.value, to: H.to.value, digest: H.digest.checked, at: H.at.value, take: H.take.checked,
+      mute: H.mute.checked, until: H.until.value, calm: H.calm.checked
+    }, new Date());
     post('hub', next).then(function (r) {
       if (!r.quiet) { saved(false, L.s_not_saved + ': ' + errorText(r.error)); return; }
       hub = r;
@@ -311,7 +318,7 @@
     });
   }
 
-  [H.quiet, H.digest, H.take, H.from, H.to, H.at].forEach(function (n) { n.addEventListener('change', saveHub); });
+  [H.quiet, H.digest, H.take, H.from, H.to, H.at, H.mute, H.until, H.calm].forEach(function (n) { n.addEventListener('change', saveHub); });
   get('hub').then(function (r) {
     if (!r.quiet) return;
     hub = r;

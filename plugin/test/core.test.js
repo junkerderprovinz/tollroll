@@ -301,7 +301,7 @@ test('the settings say whether the router log arrives and from whom', () => {
 test('the hub form keeps a saved time for a field left empty and every app level', () => {
   const saved = { quiet: { on: false, from: '22:00', to: '07:00' }, digest: { on: false, at: '08:00' }, apps: { shiplog: 'failure' }, takeOver: false };
   const next = core.hubSettings(saved, { quiet: true, from: '23:30', to: '', digest: true, at: '7:5', take: true });
-  assert.deepEqual(next, { quiet: { on: true, from: '23:30', to: '07:00' }, digest: { on: true, at: '08:00' }, apps: { shiplog: 'failure' }, takeOver: true });
+  assert.deepEqual(next, { quiet: { on: true, from: '23:30', to: '07:00' }, digest: { on: true, at: '08:00' }, apps: { shiplog: 'failure' }, takeOver: true, mute: null, calm: false });
   next.apps.bombvault = 'warning';
   assert.deepEqual(saved.apps, { shiplog: 'failure' });
 });
@@ -320,4 +320,33 @@ test('the open view lists every app with what needs it, errors first, and an app
   ];
   const got = core.openPoints(apps, en).map((g) => g.app.name + ':' + g.items.map((i) => i.tone + ' ' + i.text).join('|'));
   assert.deepEqual(got, ['Gamma:fail broke|warn and this', 'Alpha:warn look', 'Delta:off ' + en.t_st_unreachable]);
+});
+
+test('a mute runs to the next time of the day it names, and all quiet is a switch', () => {
+  const saved = { quiet: { on: false, from: '22:00', to: '07:00' }, digest: { on: false, at: '08:00' }, apps: {}, takeOver: false };
+  const now = new Date(2026, 10, 19, 23, 10);
+  const next = core.hubSettings(saved, { mute: true, until: '07:30', calm: true }, now);
+  assert.equal(new Date(next.mute).getTime(), new Date(2026, 10, 20, 7, 30).getTime());
+  assert.equal(next.calm, true);
+  const soon = core.hubSettings(saved, { mute: true, until: '23:45' }, now);
+  assert.equal(new Date(soon.mute).getTime(), new Date(2026, 10, 19, 23, 45).getTime());
+  assert.deepEqual(core.muteState({ mute: next.mute }, now), { on: true, at: '07:30' });
+  assert.deepEqual(core.muteState({ mute: next.mute }, new Date(2026, 10, 20, 8, 0)), { on: false, at: '07:30' });
+  assert.deepEqual(core.muteState({}, now), { on: false, at: '07:00' });
+});
+
+test('a finding of the watch can be marked, and a real incident says until when it is told at once', () => {
+  const until = new Date(2026, 11, 19, 12, 0).toISOString();
+  const unraid = app({ key: 'unraid', name: 'Unraid', local: true, needs: [
+    { severity: 'warn', text: 'A new plugin', id: 'unraid:4' },
+    { severity: 'error', text: 'Disk 2 read error' },
+    { severity: 'warn', text: 'A sign-in', id: 'i:ab', note: 'not me', until },
+  ] });
+  const [g] = core.openPoints([unraid], en);
+  assert.deepEqual(g.items.map((i) => [i.tone, i.id || '', !!i.incident]), [['warn', 'unraid:4', false], ['fail', '', false], ['idle', 'i:ab', true]]);
+  assert.equal(g.items[2].note, 'not me');
+  assert.match(g.items[2].until, /^Real incident, reported right away until /);
+  assert.ok(g.items[2].until.includes('19'));
+  const w = core.statusWindow(unraid, { members: [] }, [], en, 'en');
+  assert.deepEqual(w.needs.map((n) => n.id || ''), ['unraid:4', '', 'i:ab']);
 });

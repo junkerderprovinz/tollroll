@@ -30,6 +30,9 @@
 
   var view = null, fort = null, prefs = { view: 'all', hidden: [] }, openApp = null, views = VIEWS;
   var filter = 'all', follow = true, timer = null, picking = null, showQuiet = false;
+  // noting is the finding whose note is being written in the open view, kept
+  // over the redraw of every poll.
+  var noting = null;
   // Logos by the ID a row carries. They come in a request of their own, made
   // only when a row names one not seen yet, so a poll stays small.
   var icons = {}, iconsAsked = {};
@@ -479,12 +482,84 @@
   }
   if (window.ResizeObserver) new ResizeObserver(function () { if (prefs.view === 'map') drawWires(); }).observe(root);
 
+  function small(name, label, hint, focus) {
+    var b = el('button', 'trl-dlg-btn trl-w-btn');
+    b.type = 'button';
+    if (hint) b.title = hint;
+    if (focus) b.dataset.focus = focus;
+    b.appendChild(glyph(name));
+    b.appendChild(el('span', '', label));
+    return b;
+  }
+
+  /* needLine fills li with one point that needs you. A finding of the
+   * server's watch gets two buttons: Is known takes it as normal, Real
+   * incident keeps it with a note. An incident on record keeps only the
+   * first. done runs once the service took the mark. */
+  function needLine(li, it, done) {
+    li.textContent = '';
+    li.className = it.id ? 'trl-w-item' : '';
+    li.appendChild(el('span', 'trl-dot trl-' + it.tone));
+    var body = el('span', 'trl-dlg-text', it.text);
+    if (it.incident) {
+      body.appendChild(el('span', 'trl-w-sub', it.until));
+      if (it.note) body.appendChild(el('span', 'trl-w-sub trl-w-note', it.note));
+    }
+    li.appendChild(body);
+    if (!it.id) return;
+    var acts = el('span', 'trl-w-acts');
+    li.appendChild(acts);
+    function mark(as, note) {
+      acts.querySelectorAll('button,input').forEach(function (n) { n.disabled = true; });
+      return post('watch', { id: it.id, as: as, note: note || '' }).then(function () {
+        noting = null;
+        done();
+      }, function () {
+        acts.querySelectorAll('button,input').forEach(function (n) { n.disabled = false; });
+        var err = acts.querySelector('.trl-w-err') || acts.appendChild(el('span', 'trl-w-err trl-fail'));
+        err.textContent = L.t_w_failed;
+      });
+    }
+    function editor() {
+      acts.textContent = '';
+      var input = el('input', 'trl-w-input');
+      input.type = 'text';
+      input.maxLength = 300;
+      input.placeholder = L.t_w_note;
+      input.setAttribute('aria-label', L.t_w_note);
+      input.value = noting && noting.id === it.id ? noting.text : (it.note || '');
+      input.dataset.focus = 'note:' + it.id;
+      input.addEventListener('input', function () { noting = { id: it.id, text: input.value }; });
+      var keep = small('IconSave', L.t_w_keep, '', 'keep:' + it.id);
+      var cancel = small('IconClose', L.nc_cancel, '', 'cancel:' + it.id);
+      keep.addEventListener('click', function () { mark('incident', input.value); });
+      cancel.addEventListener('click', function () { noting = null; needLine(li, it, done); });
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); mark('incident', input.value); }
+        if (e.key === 'Escape') { e.stopPropagation(); noting = null; needLine(li, it, done); }
+      });
+      [input, keep, cancel].forEach(function (n) { acts.appendChild(n); });
+      return input;
+    }
+    if (noting && noting.id === it.id) { editor(); return; }
+    var known = small('IconConfirm', L.t_w_known, L.t_w_known_hint, 'known:' + it.id);
+    known.addEventListener('click', function () { mark('known'); });
+    acts.appendChild(known);
+    if (it.incident) return;
+    var real = small('IconPriority', L.t_w_incident, L.t_w_incident_hint, 'incident:' + it.id);
+    real.addEventListener('click', function () {
+      noting = { id: it.id, text: it.note || '' };
+      editor().focus();
+    });
+    acts.appendChild(real);
+  }
+
   // The open view: what needs you in every app, then what the advisor
   // suggests. A suggestion leads to its app's page.
   function drawOpenPoints() {
     openBox.textContent = '';
     openBox.appendChild(el('h4', 'trl-open-h', L.t_open_title));
-    var groups = C.openPoints(view.apps, L);
+    var groups = C.openPoints(view.apps, L, lang);
     if (!groups.length) openBox.appendChild(el('p', 'trl-note', L.t_open_none));
     groups.forEach(function (g) {
       var hd = el('div', 'trl-open-app');
@@ -494,8 +569,7 @@
       var ul = el('ul', 'trl-dlg-list');
       g.items.forEach(function (it) {
         var li = el('li');
-        li.appendChild(el('span', 'trl-dot trl-' + it.tone));
-        li.appendChild(el('span', 'trl-dlg-text', it.text));
+        needLine(li, it, load);
         ul.appendChild(li);
       });
       openBox.appendChild(ul);
@@ -579,9 +653,15 @@
       items.forEach(function (it) { var li = el('li'); fill(li, it); ul.appendChild(li); });
       box.appendChild(ul);
     }
+    // A mark reads the board again and opens the window anew with it.
     section(L.t_win_needs, w.needs, function (li, n) {
-      li.appendChild(el('span', 'trl-dot trl-' + n.tone));
-      li.appendChild(el('span', 'trl-dlg-text', n.text));
+      needLine(li, n, function () {
+        load().then(function () {
+          var again = byKey()[app.key];
+          close();
+          if (again) showStatus(again);
+        });
+      });
     });
     section(L.t_win_work, w.tasks, function (li, t) { li.appendChild(el('span', 'trl-dlg-text', t)); });
     section(L.t_win_next, w.next, function (li, n) {
@@ -651,7 +731,8 @@
     if (v === 'map') {
       drawMap();
     } else if (v === 'open') {
-      drawOpenPoints();
+      // A note being written stays as it is until it is kept or left.
+      if (!(noting && openBox.contains(document.activeElement))) drawOpenPoints();
     } else {
       var chosen = C.shown(view.apps, prefs.hidden);
       if (v === 'all') {
@@ -686,7 +767,7 @@
   });
 
   function load() {
-    Promise.all([get('board&lang=' + encodeURIComponent(lang)), get('fortress')])
+    return Promise.all([get('board&lang=' + encodeURIComponent(lang)), get('fortress')])
       .then(function (r) {
         view = { apps: r[0].apps || [], log: r[0].log || [] };
         fort = r[1];
