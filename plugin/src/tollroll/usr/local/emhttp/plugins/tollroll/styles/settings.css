@@ -213,7 +213,8 @@ html:is(.Theme--white, .Theme--azure) .trs-hero { --trs-hero-sil: 30%; }
 #trs-cfg :is(.trs-rbtn-mark, .trs-rbtn-art) svg { display: block; width: 100%; height: 100%; }
 #trs-cfg .trs-rbtn-art { position: absolute; inset: 0; }
 #trs-cfg .trs-rbtn-text { position: absolute; top: 0; bottom: 0; left: 53px; right: 10px; display: flex; flex-direction: column; justify-content: center; line-height: 1.15; }
-#trs-cfg .trs-rbtn-name { max-width: 100%; overflow: hidden; white-space: nowrap; font-size: var(--tt-text-body, 14px); font-weight: 700; }
+/* As on the channel tiles, the name's clip reaches past its line so the descenders stay whole. */
+#trs-cfg .trs-rbtn-name { max-width: 100%; overflow: hidden; white-space: nowrap; padding-block: .15em; margin-block: -.15em; font-size: var(--tt-text-body, 14px); font-weight: 700; }
 #trs-cfg .trs-paypal-mark { color: var(--trs-brand-paypal); }
 #trs-cfg .trs-bitcoin-mark { color: var(--trs-brand-bitcoin); }
 #trs-cfg .trs-github-mark { color: #fff; }

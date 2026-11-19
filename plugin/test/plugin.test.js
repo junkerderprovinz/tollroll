@@ -192,6 +192,10 @@ test("a README button's focus ring is the opaque accent ink, as GlimStone draws 
   assert.doesNotMatch(rule[1], /color-mix|transparent/);
 });
 
+test("a README button's name keeps its descenders inside its clip", () => {
+  assert.match(read('styles', 'settings.css'), /#trs-cfg \.trs-rbtn-name \{[^}]*overflow: hidden;[^}]*padding-block: \.15em; margin-block: -\.15em;/);
+});
+
 test('Info names the GlimStone version the plugin is built on and links each version to its release', () => {
   const page = read('tollroll.page');
   const { targets } = JSON.parse(fs.readFileSync(path.join(ROOT, '..', 'glimstone.json'), 'utf8'));
