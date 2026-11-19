@@ -225,3 +225,12 @@ test('every point that needs you stands on a surface of its own, with no line ro
   const settings = read('styles', 'settings.css');
   assert.match(settings, /#trs-advice \.trs-row\s*\{[^}]*background:\s*var\(--trs-field\)[^}]*border-radius:\s*var\(--trs-r-ctl\)/);
 });
+
+test('every glyph takes the colour of the text around it', () => {
+  const ctx = { window: {} };
+  require('node:vm').runInNewContext(read('scripts', 'glyphs.js'), ctx);
+  for (const [name, svg] of Object.entries(ctx.window.TollRollGlyphs)) {
+    assert.match(/^<svg[^>]*>/.exec(svg)[0], /\sfill="currentColor"/, name);
+    assert.doesNotMatch(svg, /fill="(?!currentColor|none)[^"]*"/, name);
+  }
+});
