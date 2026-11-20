@@ -1,39 +1,20 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended",
-    "helpers:pinGitHubActionDigests",
-    ":semanticCommits",
-    ":dependencyDashboard",
-    ":enableVulnerabilityAlertsWithLabel(security)"
+    "local>junkerderprovinz/junkerderprovinz//renovate/base"
   ],
-  "timezone": "Europe/Vienna",
-  "schedule": ["before 6am on monday"],
-  "labels": ["dependencies"],
-  "prHourlyLimit": 4,
-  "prConcurrentLimit": 6,
-  "postUpdateOptions": ["gomodTidy"],
+  "postUpdateOptions": [
+    "gomodTidy"
+  ],
   "packageRules": [
     {
-      "description": "GitHub Actions: auto-merge minor/patch/digest",
-      "matchManagers": ["github-actions"],
-      "matchUpdateTypes": ["minor", "patch", "digest"],
-      "automerge": true,
-      "automergeType": "branch",
-      "commitMessagePrefix": "ci:",
-      "labels": ["github-actions"]
-    },
-    {
-      "description": "GitHub Actions major: manual PRs",
-      "matchManagers": ["github-actions"],
-      "matchUpdateTypes": ["major"],
-      "commitMessagePrefix": "ci:",
-      "labels": ["github-actions", "major-update"]
-    },
-    {
       "description": "The family's own module moves with its apps, by hand",
-      "matchManagers": ["gomod"],
-      "matchPackageNames": ["github.com/junkerderprovinz/parleyport/kit"],
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchPackageNames": [
+        "github.com/junkerderprovinz/parleyport/kit"
+      ],
       "enabled": false
     }
   ]
