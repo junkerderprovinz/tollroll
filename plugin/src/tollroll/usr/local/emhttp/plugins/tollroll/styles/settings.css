@@ -211,6 +211,8 @@ html:is(.Theme--white, .Theme--azure) .trs-hero { --trs-hero-sil: 30%; }
 #trs-cfg .trs-rbtn:focus-visible { outline: none !important; box-shadow: inset 0 0 0 3px var(--tt-accent-ink, #FCC419) !important; }
 #trs-cfg .trs-rbtn-mark { position: absolute; top: 50%; left: 14px; width: 32px; height: 25px; translate: 0 -50%; display: flex; }
 #trs-cfg :is(.trs-rbtn-mark, .trs-rbtn-art) svg { display: block; width: 100%; height: 100%; }
+/* The tile's middle rarely falls on a whole pixel, and the SVG's own clip would shave a shape drawn to the box. */
+#trs-cfg .trs-rbtn-mark svg { overflow: visible; }
 #trs-cfg .trs-rbtn-art { position: absolute; inset: 0; }
 #trs-cfg .trs-rbtn-text { position: absolute; top: 0; bottom: 0; left: 53px; right: 10px; display: flex; flex-direction: column; justify-content: center; line-height: 1.15; }
 /* As on the channel tiles, the name's clip reaches past its line so the descenders stay whole. */

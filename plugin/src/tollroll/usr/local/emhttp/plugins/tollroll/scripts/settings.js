@@ -247,7 +247,7 @@
     test: function (channel) {
       return post('notify_test', { channel: channel }).then(function (r) { return { ok: !!r.ok, code: r.error }; });
     }
-  }, { t: L, lang: lang, kinds: KINDS, marks: window.GlimNotifyMarks, classes: { input: 'trs-in', button: 'trs-btn', switch: 'trs-switch' }, saved: saved });
+  }, { t: L, lang: lang, kinds: KINDS, marks: window.GlimNotifyMarks, classes: { button: 'trs-btn' }, saved: saved });
 
   /* The hub: quiet hours, a mute until a time, the daily summary and all
    * quiet, taking over the apps' notifications and the level of each app,
