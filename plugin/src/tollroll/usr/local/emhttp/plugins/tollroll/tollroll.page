@@ -21,18 +21,24 @@ $h = function ($k) use ($L) { return htmlspecialchars(isset($L[$k]) ? $L[$k] : $
 $trs_e = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES); };
 $trs_ver = '';
 if (preg_match('/<!ENTITY\s+version\s+"([^"]+)"/', (string)@file_get_contents('/var/log/plugins/tollroll.plg'), $trs_m)) $trs_ver = $trs_m[1];
-$trs_glimstone = '4.7.0';
-/* A version links to its release page. A build without a release behind it shows its name alone. */
-$trs_ver_link = function ($ver, $repo) use ($trs_e) {
-  $v = preg_replace('/^v/', '', (string)$ver);
-  if (!preg_match('/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/', $v)) return '<span class="trs-ver">'.$trs_e($v !== '' ? $v : '?').'</span>';
-  return '<a class="trs-ver" href="'.$trs_e($repo.'/releases/tag/v'.$v).'" target="_blank" rel="noopener noreferrer">'.$trs_e($v).'</a>';
+$trs_glimstone = '4.8.2';
+$trs_u = include '/usr/local/emhttp/plugins/tollroll/include/update.php';
+$trs_update = $trs_u();
+/* A version is plain text, never a button, and opens its project's newest
+   release, so it never leads to a tag a later release folded away. A build
+   that is not a release says so and links nowhere. */
+$trs_num = function ($ver, $repo) use ($trs_e, $L) {
+  $v = preg_replace('/^v(?=\d)/', '', trim((string)$ver));
+  if (!preg_match('/^\d+(\.\d+)+$/', $v)) return '<span class="trs-ver">'.$trs_e(str_replace('{version}', $v !== '' ? $v : '?', $L['s_vc_unreleased'])).'</span>';
+  return '<a class="trs-ver" href="'.$trs_e($repo.'/releases/latest').'" target="_blank" rel="noopener noreferrer">'.$trs_e($v).'</a>';
 };
 $trs_marks = include '/usr/local/emhttp/plugins/tollroll/include/marks.php';
 /* An explanation sits in a bubble behind GlimStone's (i), drawn by notify-card.css and notify-card.js, so the cards stay short. */
-$trs_info = function ($k) use ($h) {
-  return '<span class="glim-nc-info trs-info" tabindex="0" role="img" aria-label="'.$h($k).'" data-tip="'.$h($k).'"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="4.6" r="0.9" fill="currentColor"/><path d="M8 7v4.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span>';
+$trs_info_text = function ($text) use ($trs_e) {
+  return '<span class="glim-nc-info trs-info" tabindex="0" role="img" aria-label="'.$trs_e($text).'" data-tip="'.$trs_e($text).'"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="4.6" r="0.9" fill="currentColor"/><path d="M8 7v4.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span>';
 };
+$trs_info = function ($k) use ($L, $trs_info_text) { return $trs_info_text(isset($L[$k]) ? $L[$k] : $k); };
+$trs_app = function ($k) use ($L) { return str_replace('{app}', 'TollRoll', $L[$k]); };
 /* A button in the shape of the README's buttons, as on ShipLog's Info tab. */
 $trs_rbtn = function ($brand, $name, $href) use ($trs_marks, $trs_e) {
   $inner = $brand === 'coffee'
@@ -139,16 +145,29 @@ $trs_rbtn = function ($brand, $name, $href) use ($trs_marks, $trs_e) {
 
       <div class="trs-pane" role="tabpanel" id="trs-pane-info" aria-labelledby="trs-tab-info" hidden>
         <section class="trs-card" aria-labelledby="trs-h-version">
-          <h3 class="trs-h"><span id="trs-h-version"><?=$h('s_version')?></span></h3>
-          <div class="trs-row">
-            <div class="trs-lbl"><span class="trs-name">TollRoll</span></div>
-            <div class="trs-ctl"><?=$trs_ver_link($trs_ver, 'https://github.com/junkerderprovinz/tollroll')?></div>
+          <h3 class="trs-h"><span id="trs-h-version"><?=$h('s_vc_title')?></span><?=$trs_info_text($trs_app('s_vc_hint'))?></h3>
+          <div class="trs-vhead">
+            <span class="trs-vapp">TollRoll</span>
+            <?=$trs_num($trs_ver, 'https://github.com/junkerderprovinz/tollroll')?>
           </div>
-          <div class="trs-row">
-            <div class="trs-lbl"><span class="trs-name">GlimStone</span></div>
-            <?php /* GlimStone folds its patch tags into the next minor, so its number opens the newest release. */ ?>
-            <div class="trs-ctl"><a class="trs-ver" href="https://github.com/junkerderprovinz/glimstone/releases/latest" target="_blank" rel="noopener noreferrer"><?=$trs_e($trs_glimstone)?></a></div>
+          <div class="trs-vfoot" id="trs-update" data-trs-state="<?=$trs_e(json_encode($trs_update))?>" data-trs-version="<?=$trs_e($trs_ver)?>">
+            <p class="trs-vstate" id="trs-vstate" role="status"><span class="trs-vline" id="trs-vline"></span><span class="trs-vnote" id="trs-vnote"></span></p>
+            <div class="trs-vact">
+              <button type="button" class="trs-btn" id="trs-whatsnew"><span class="trs-vdot" aria-hidden="true"></span><span class="trs-gl" data-glyph="IconWhatsNew"></span><span class="trs-l"><?=$h('s_vc_whats_new')?></span></button>
+              <button type="button" class="trs-btn" id="trs-check"><span class="trs-gl" data-glyph="IconSync"></span><span class="trs-l"><?=$h('s_vc_check')?></span></button>
+              <button type="button" class="trs-btn trs-btn-accent tt-fm-primary" id="trs-plugins" hidden><span class="trs-gl" data-glyph="IconSync"></span><span class="trs-l"><?=$h('s_vc_plugins')?></span></button>
+            </div>
           </div>
+        </section>
+
+        <section class="trs-card" aria-labelledby="trs-h-components">
+          <h3 class="trs-h"><span id="trs-h-components"><?=$h('s_cc_title')?></span><?=$trs_info_text($trs_app('s_cc_hint'))?></h3>
+          <ul class="trs-vrows">
+            <li class="trs-vrow">
+              <span class="trs-name-i"><span class="trs-name">GlimStone</span><?=$trs_info('s_cc_design')?></span>
+              <?=$trs_num($trs_glimstone, 'https://github.com/junkerderprovinz/glimstone')?>
+            </li>
+          </ul>
         </section>
 
         <section class="trs-card" aria-labelledby="trs-h-help">

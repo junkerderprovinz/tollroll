@@ -3,6 +3,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const fs = require('node:fs');
+const os = require('node:os');
+const { spawnSync } = require('node:child_process');
 
 const ROOT = path.join(__dirname, '..');
 const PLUGIN = path.join(ROOT, 'src', 'tollroll', 'usr', 'local', 'emhttp', 'plugins', 'tollroll');
@@ -178,11 +180,12 @@ test("the Help sentence is GlimStone's own", () => {
   assert.equal(JSON.parse(read('lang', 'de.json')).s_help_body, 'Probleme, Wünsche oder Verbesserungsvorschläge? Mach gern ein Issue auf GitHub auf, oder schau auf Discord vorbei.');
 });
 
-test('the GlimStone version opens the newest release, since its patch tags fold away', () => {
+test('every version opens its newest release, since patch tags fold away', () => {
   const page = read('tollroll.page');
   const row = page.slice(page.indexOf('>GlimStone<'), page.indexOf('id="trs-h-help"'));
-  assert.match(row, /href="https:\/\/github\.com\/junkerderprovinz\/glimstone\/releases\/latest"/);
-  assert.match(row, /\$trs_glimstone\b/);
+  assert.match(row, /\$trs_num\(\$trs_glimstone, 'https:\/\/github\.com\/junkerderprovinz\/glimstone'\)/);
+  assert.match(page, /\$repo\.'\/releases\/latest'/);
+  assert.doesNotMatch(page, /\/releases\/tag\/v/);
 });
 
 test("a README button's focus ring is the opaque accent ink, as GlimStone draws it", () => {
@@ -196,12 +199,85 @@ test("a README button's name keeps its descenders inside its clip", () => {
   assert.match(read('styles', 'settings.css'), /#trs-cfg \.trs-rbtn-name \{[^}]*overflow: hidden;[^}]*padding-block: \.15em; margin-block: -\.15em;/);
 });
 
-test('Info names the GlimStone version the plugin is built on and links each version to its release', () => {
+test('Info names the GlimStone version the plugin is built on, and a version never looks like a button', () => {
   const page = read('tollroll.page');
   const { targets } = JSON.parse(fs.readFileSync(path.join(ROOT, '..', 'glimstone.json'), 'utf8'));
+  assert.ok(targets.every((t) => t.version === '4.8.2'), 'glimstone.json pins every part to 4.8.2');
   assert.ok(page.includes(`$trs_glimstone = '${targets[0].version}';`), `Info does not name GlimStone ${targets[0].version}`);
-  assert.match(page, /\/releases\/tag\/v/);
-  assert.doesNotMatch(page, /class="button[^"]*trs-ver/, 'a version is a plain link');
+  assert.equal((page.match(/<\?=\$trs_num\(/g) || []).length, 2, 'the app and GlimStone show their number through $trs_num');
+  assert.doesNotMatch(page, /class="[^"]*(button|trs-btn)[^"]*trs-ver/, 'a version is plain text');
+  const css = read('styles', 'settings.css');
+  const rest = /\.trs-page a\.trs-ver \{([^}]*)\}/.exec(css);
+  assert.ok(rest, 'no rule for a linked version');
+  for (const want of ['background: none', 'border: 0', 'padding: 0', 'color: inherit', 'text-decoration: none']) assert.ok(rest[1].includes(want), want);
+  assert.match(css, /#trs-cfg a\.trs-ver \{ color: inherit !important; text-decoration: none !important; \}/);
+  assert.match(css, /#trs-cfg a\.trs-ver:focus-visible \{ color: var\(--trs-focus\) !important; \}/);
+  assert.match(css, /@media \(hover: hover\) \{[^}]*\}\s*#trs-cfg a\.trs-ver:hover \{ color: var\(--trs-focus\) !important; \}/);
+  assert.doesNotMatch(css, /trs-ver[^{]*\{[^}]*underline/);
+});
+
+test('the Info tab holds Version, Components, Help and About, in that order', () => {
+  const page = read('tollroll.page');
+  const pane = page.slice(page.indexOf('id="trs-pane-info"'), page.indexOf('<script>', page.indexOf('id="trs-pane-info"')));
+  const cards = [...pane.matchAll(/<section class="trs-card" aria-labelledby="trs-h-(\w+)">/g)].map((m) => m[1]);
+  assert.deepEqual(cards, ['version', 'components', 'help', 'about']);
+  assert.equal(JSON.parse(read('lang', 'en.json')).s_about, 'About');
+});
+
+test("the Version and Components cards speak every language with GlimStone's words", () => {
+  const blanks = { s_vc_hint: '{app}', s_vc_checked: '{when}', s_vc_available: '{version}', s_vc_unreleased: '{version}', s_cc_hint: '{app}' };
+  const keys = ['s_vc_title', 's_vc_hint', 's_vc_whats_new', 's_vc_check', 's_vc_checking', 's_vc_current', 's_vc_checked',
+    's_vc_available', 's_vc_failed', 's_vc_plugins', 's_vc_unreleased', 's_cc_title', 's_cc_hint', 's_cc_design'];
+  for (const l of LANGS) {
+    const t = JSON.parse(read('lang', l + '.json'));
+    for (const k of keys) {
+      assert.ok(t[k], `${l}: ${k}`);
+      if (blanks[k]) assert.ok(t[k].includes(blanks[k]), `${l}: ${k} keeps ${blanks[k]}`);
+    }
+  }
+});
+
+test("the update state is what Unraid's Plugins tab shows", (t) => {
+  const php = spawnSync('php', ['-v']);
+  if (php.error) {
+    if (process.env.CI) assert.fail('php is not installed');
+    t.skip('php is not installed');
+    return;
+  }
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'trs-update-'));
+  const plg = (name, v) => {
+    const p = path.join(dir, name);
+    fs.writeFileSync(p, `<!DOCTYPE PLUGIN [
+  <!ENTITY version   "${v}">
+]>
+`);
+    return p;
+  };
+  const installed = plg('installed.plg', '1.2.1');
+  const state = (fetched) => {
+    const code = `$U = include ${JSON.stringify(path.join(PLUGIN, 'include', 'update.php'))}; echo json_encode($U(${JSON.stringify(installed)}, ${JSON.stringify(fetched)}));`;
+    const r = spawnSync('php', ['-r', code], { encoding: 'utf8' });
+    assert.equal(r.status, 0, r.stderr);
+    return JSON.parse(r.stdout);
+  };
+  assert.deepEqual(state(path.join(dir, 'missing.plg')), { kind: 'unchecked' });
+  assert.deepEqual(state(plg('newer.plg', '1.2.2')), { kind: 'available', version: '1.2.2' });
+  const same = state(plg('same.plg', '1.2.1'));
+  assert.equal(same.kind, 'current');
+  assert.equal(typeof same.checkedAt, 'number');
+  // Unraid compares with strcmp, so it offers nothing at the x.9 to x.10 step.
+  assert.equal(state(plg('ten.plg', '1.10.0')).kind, 'current');
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test("Check for updates runs the check of Unraid's Plugins tab, and the action leads there", () => {
+  const src = read('server', 'update-check.php');
+  assert.ok(src.includes("exec('/usr/local/sbin/plugin check tollroll.plg 2>&1', $out, $rc);"));
+  assert.ok(src.includes("if ($_SERVER['REQUEST_METHOD'] !== 'POST') {"), 'a GET is not checked for the CSRF token');
+  const js = read('scripts', 'settings.js');
+  assert.match(js, /fetch\('\/plugins\/tollroll\/server\/update-check\.php', \{ method: 'POST'/);
+  assert.match(js, /getElementById\('trs-plugins'\)\.addEventListener\('click', function \(\) \{ location\.href = '\/Plugins'; \}\);/);
+  assert.match(read('tollroll.page'), /<button type="button" class="trs-btn trs-btn-accent tt-fm-primary" id="trs-plugins" hidden>/);
 });
 
 test("with TowerTorch every row, view, option and tab lights in its hover", () => {

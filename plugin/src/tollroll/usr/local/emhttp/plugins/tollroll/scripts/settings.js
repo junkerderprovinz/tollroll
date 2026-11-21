@@ -55,6 +55,7 @@
       document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
     });
     try { localStorage.setItem(TAB_KEY, tab.getAttribute('data-trs-tab')); } catch (e) { /* kept until the page reloads */ }
+    if (tab.getAttribute('data-trs-tab') === 'info') infoOpened();
     if (focus) tab.focus();
   }
 
@@ -326,6 +327,61 @@
     hubForm();
     get('board&lang=' + encodeURIComponent(lang)).then(function (b) { drawLevels(b.apps || []); });
   });
+
+  /* The Version card. Where TollRoll's updates stand comes from Unraid's
+   * plugin manager, and Check for updates runs the check its Plugins tab runs.
+   * Until Unraid has checked once since boot, opening Info runs that check. */
+  var upd = document.getElementById('trs-update'), updCheck = document.getElementById('trs-check');
+  var updState = JSON.parse(upd.getAttribute('data-trs-state') || '{}');
+  function ago(at) {
+    var f = new Intl.RelativeTimeFormat(lang, { numeric: 'auto' });
+    var v = Math.round(at - Date.now() / 1000);
+    var steps = [['second', 60], ['minute', 60], ['hour', 24], ['day', Infinity]];
+    for (var i = 0; i < steps.length; i++) {
+      if (Math.abs(v) < steps[i][1]) return f.format(steps[i][0] === 'second' ? 0 : v, steps[i][0]);
+      v = Math.round(v / steps[i][1]);
+    }
+  }
+  // While an update waits, What's new opens that version's notes.
+  function notesFor(v) {
+    var repo = 'https://github.com/junkerderprovinz/tollroll/releases';
+    return /^\d+(\.\d+)+$/.test(v) ? repo + '/tag/v' + v : repo;
+  }
+  function showUpdate(s) {
+    updState = s;
+    var line = L.s_vc_checking, tone = 'neutral', note = '';
+    if (s.kind === 'current') {
+      line = L.s_vc_current; tone = 'ok';
+      if (s.checkedAt) note = L.s_vc_checked.replace('{when}', ago(s.checkedAt));
+    } else if (s.kind === 'available') {
+      line = L.s_vc_available.replace('{version}', s.version); tone = 'warn';
+    } else if (s.kind === 'failed') {
+      line = L.s_vc_failed; tone = 'fail'; note = s.reason || '';
+    }
+    document.getElementById('trs-vstate').setAttribute('data-tone', tone);
+    document.getElementById('trs-vline').textContent = line;
+    document.getElementById('trs-vnote').textContent = note;
+    var busy = s.kind === 'checking' || s.kind === 'unchecked';
+    updCheck.hidden = s.kind === 'available';
+    updCheck.disabled = busy;
+    if (busy) updCheck.setAttribute('aria-busy', 'true'); else updCheck.removeAttribute('aria-busy');
+    document.getElementById('trs-plugins').hidden = s.kind !== 'available';
+  }
+  function checkUpdate() {
+    showUpdate({ kind: 'checking' });
+    var body = new URLSearchParams({ csrf_token: window.csrf_token || '' });
+    fetch('/plugins/tollroll/server/update-check.php', { method: 'POST', body: body, headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(showUpdate, function (e) { showUpdate({ kind: 'failed', reason: String(e) }); });
+  }
+  function infoOpened() { if (updState.kind === 'unchecked') checkUpdate(); }
+  updCheck.addEventListener('click', checkUpdate);
+  document.getElementById('trs-whatsnew').addEventListener('click', function () {
+    window.open(notesFor(updState.kind === 'available' ? updState.version : upd.getAttribute('data-trs-version')), '_blank', 'noopener');
+  });
+  document.getElementById('trs-plugins').addEventListener('click', function () { location.href = '/Plugins'; });
+  showUpdate(updState);
+  if (!document.getElementById('trs-pane-info').hidden) infoOpened();
 
   document.querySelectorAll('[data-glyph]').forEach(function (n) { n.innerHTML = GLYPH[n.dataset.glyph] || ''; });
 })();
