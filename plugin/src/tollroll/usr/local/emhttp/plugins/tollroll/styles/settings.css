@@ -220,9 +220,28 @@ html:is(.Theme--white, .Theme--azure) .trs-hero { --trs-hero-sil: 30%; }
 /* The one action is filled with the accent, the heading's colour. */
 .trs-btn.trs-btn-accent { background: var(--trs-head) !important; color: var(--trs-head-ink) !important; }
 .trs-btn.trs-btn-accent:hover { background: color-mix(in srgb, var(--trs-head) 85%, currentColor) !important; }
-/* The dot before "What's new": green while something is unseen, grey once nothing is. */
+/* The dot before "What's new", grey while nothing is unseen. */
 .trs-vdot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--trs-dim); }
-.trs-vdot[data-unseen] { background: var(--trs-ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--trs-ok) 25%, transparent); }
+
+/* The release notes window, in the form of the channel picker drawn by
+   notify-card.css. It is as wide as the picker and sets its body as reading
+   text. The link to the release page and Close stand apart without a margin,
+   since TowerTorch sets the margins of every button with !important. */
+.glim-nc-win.trs-win-notes { width: min(760px, calc(100vw - 32px)); }
+.trs-win-notes .glim-nc-win-act { justify-content: space-between; }
+.trs-win-notes .trs-notes { overflow-wrap: anywhere; line-height: 1.55; }
+.trs-win-notes .trs-notes:focus { outline: none; }
+.trs-win-notes .trs-notes:focus-visible { outline: var(--tt-focus-ring-width, 2px) solid var(--nc-w-focus); outline-offset: 2px; }
+.trs-win-notes .trs-notes > :first-child { margin-top: 0; }
+.trs-win-notes .trs-notes-h { margin: 18px 0 6px; font-size: 16px; font-weight: 700; }
+.trs-win-notes .trs-notes :is(p, li) { text-align: start; }
+.trs-win-notes .trs-notes p { margin: 0 0 10px; }
+.trs-win-notes .trs-notes :is(ul, ol) { margin: 0 0 10px; padding-inline-start: 20px; }
+.trs-win-notes .trs-notes li { margin: 5px 0; }
+.trs-win-notes .trs-notes code { padding: 1px 5px; border-radius: calc(var(--nc-w-r-ctl) / 2); background: var(--nc-w-raised); font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12px; }
+.trs-win-notes .trs-notes pre { margin: 0 0 10px; padding: 10px 12px; overflow-x: auto; border-radius: var(--nc-w-r-ctl); background: var(--nc-w-raised); }
+.trs-win-notes .trs-notes pre code { padding: 0; background: none; }
+.trs-win-notes .trs-notes a { color: var(--nc-w-focus); }
 
 /* The Components card: a name with its (i) at the start, its number at the end. */
 .trs-vrows { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }

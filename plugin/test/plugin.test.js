@@ -225,9 +225,10 @@ test('the Info tab holds Version, Components, Help and About, in that order', ()
 });
 
 test("the Version and Components cards speak every language with GlimStone's words", () => {
-  const blanks = { s_vc_hint: '{app}', s_vc_checked: '{when}', s_vc_available: '{version}', s_vc_unreleased: '{version}', s_cc_hint: '{app}' };
+  const blanks = { s_vc_hint: '{app}', s_vc_checked: '{when}', s_vc_available: '{version}', s_vc_unreleased: '{version}', s_cc_hint: '{app}', s_notes_title: '{version}' };
   const keys = ['s_vc_title', 's_vc_hint', 's_vc_whats_new', 's_vc_check', 's_vc_checking', 's_vc_current', 's_vc_checked',
-    's_vc_available', 's_vc_failed', 's_vc_plugins', 's_vc_unreleased', 's_cc_title', 's_cc_hint', 's_cc_design'];
+    's_vc_available', 's_vc_failed', 's_vc_plugins', 's_vc_unreleased', 's_cc_title', 's_cc_hint', 's_cc_design',
+    's_notes_title', 's_notes_loading', 's_notes_none', 's_notes_failed', 's_notes_github'];
   for (const l of LANGS) {
     const t = JSON.parse(read('lang', l + '.json'));
     for (const k of keys) {
@@ -278,6 +279,86 @@ test("Check for updates runs the check of Unraid's Plugins tab, and the action l
   assert.match(js, /fetch\('\/plugins\/tollroll\/server\/update-check\.php', \{ method: 'POST'/);
   assert.match(js, /getElementById\('trs-plugins'\)\.addEventListener\('click', function \(\) \{ location\.href = '\/Plugins'; \}\);/);
   assert.match(read('tollroll.page'), /<button type="button" class="trs-btn trs-btn-accent tt-fm-primary" id="trs-plugins" hidden>/);
+});
+
+test("What's new reads the notes of the running release, or of the waiting one, from the plg", (t) => {
+  if (spawnSync('php', ['-v']).error) {
+    if (process.env.CI) assert.fail('php is not installed');
+    t.skip('php is not installed');
+    return;
+  }
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'trs-notes-'));
+  const plg = (name, v) => {
+    const p = path.join(dir, name);
+    fs.writeFileSync(p, `<?xml version='1.0' standalone='yes'?>
+<!DOCTYPE PLUGIN [
+  <!ENTITY name      "tollroll">
+  <!ENTITY version   "${v}">
+]>
+<PLUGIN name="&name;">
+<CHANGES>
+What TollRoll does.
+
+### 1.2.2
+The newer one.
+
+🐛 **Fixed**
+- **A fix.** Under Settings &gt; TollRoll.
+
+### 1.2.1
+The running one.
+
+✨ **Added**
+- **A feature.** With &amp; and \`code\`.
+- **Bold alone.**
+
+### 1.2.0
+An older one.
+</CHANGES>
+</PLUGIN>
+`);
+    return p;
+  };
+  const notes = (installed, fetched) => {
+    const code = `$N = include ${JSON.stringify(path.join(PLUGIN, 'include', 'notes.php'))}; echo json_encode($N(${JSON.stringify(installed)}, ${JSON.stringify(fetched)}));`;
+    const r = spawnSync('php', ['-r', code], { encoding: 'utf8' });
+    assert.equal(r.status, 0, r.stderr);
+    return JSON.parse(r.stdout);
+  };
+  const missing = path.join(dir, 'missing.plg');
+  assert.deepEqual(notes(plg('installed.plg', '1.2.1'), missing),
+    { version: '1.2.1', notes: 'The running one.\n\n## ✨ Added\n- **A feature.** With & and `code`.\n- **Bold alone.**' });
+  const newer = notes(plg('installed.plg', '1.2.1'), plg('fetched.plg', '1.2.2'));
+  assert.equal(newer.version, '1.2.2');
+  assert.equal(newer.notes, 'The newer one.\n\n## 🐛 Fixed\n- **A fix.** Under Settings > TollRoll.');
+  assert.equal(notes(plg('build.plg', '1.2.1.fix.c7d03cf'), missing).version, '1.2.2', 'a build that is not a release reads the newest block');
+  assert.deepEqual(notes(plg('bare.plg', '1.2.3'), missing), { version: '1.2.3', notes: '' });
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test("What's new opens a window of the plugin with the notes from TollRoll's own server", () => {
+  const page = read('tollroll.page');
+  assert.match(page, /<button type="button" class="trs-btn" id="trs-whatsnew" aria-haspopup="dialog"><span class="trs-vdot" aria-hidden="true"><\/span>/);
+  assert.ok(page.indexOf("scripts/release-notes.js')?>") < page.indexOf("scripts/settings.js')?>"), 'the notes are drawn by a script that loads after the page\'s');
+  const js = read('scripts', 'settings.js');
+  assert.match(js, /fetch\('\/plugins\/tollroll\/server\/release-notes\.php', \{ headers: \{ Accept: 'application\/json' \} \}\)/);
+  assert.doesNotMatch(js, /api\.github\.com|window\.open\(notesFor/, 'What\'s new still leads the browser to GitHub');
+  assert.match(js, /news\.addEventListener\('click', openNotes\);/);
+  // The foot holds the link to the release page at its start and Close at its end.
+  assert.match(js, /act\.appendChild\(link\);\n\s+act\.appendChild\(shut\);/);
+  assert.match(js, /var box = el\('div', 'glim-nc-win trs-win-notes'\);\n\s+box\.setAttribute\('role', 'dialog'\);\n\s+box\.setAttribute\('aria-modal', 'true'\);/);
+  assert.match(js, /notes\.tabIndex = 0;/, 'long notes scroll, and the keyboard needs a way in');
+  const src = read('server', 'release-notes.php');
+  assert.ok(src.includes("$notes = include '/usr/local/emhttp/plugins/tollroll/include/notes.php';") && !src.includes('curl'));
+  const css = read('styles', 'settings.css');
+  assert.ok(css.includes('.glim-nc-win.trs-win-notes { width: min(760px, calc(100vw - 32px)); }'), 'the window is wide enough to read');
+  assert.ok(css.includes('.trs-win-notes .glim-nc-win-act { justify-content: space-between; }'), 'the link leans on a margin TowerTorch overrides');
+});
+
+test('the dot before What\'s new stays grey, since TollRoll marks no changes', () => {
+  const css = read('styles', 'settings.css');
+  assert.ok(css.includes('/* The dot before "What\'s new", grey while nothing is unseen. */\n.trs-vdot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--trs-dim); }'));
+  assert.doesNotMatch(css, /data-unseen/);
 });
 
 test("with TowerTorch every row, view, option and tab lights in its hover", () => {

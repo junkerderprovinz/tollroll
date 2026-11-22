@@ -153,7 +153,7 @@ $trs_rbtn = function ($brand, $name, $href) use ($trs_marks, $trs_e) {
           <div class="trs-vfoot" id="trs-update" data-trs-state="<?=$trs_e(json_encode($trs_update))?>" data-trs-version="<?=$trs_e($trs_ver)?>">
             <p class="trs-vstate" id="trs-vstate" role="status"><span class="trs-vline" id="trs-vline"></span><span class="trs-vnote" id="trs-vnote"></span></p>
             <div class="trs-vact">
-              <button type="button" class="trs-btn" id="trs-whatsnew"><span class="trs-vdot" aria-hidden="true"></span><span class="trs-gl" data-glyph="IconWhatsNew"></span><span class="trs-l"><?=$h('s_vc_whats_new')?></span></button>
+              <button type="button" class="trs-btn" id="trs-whatsnew" aria-haspopup="dialog"><span class="trs-vdot" aria-hidden="true"></span><span class="trs-gl" data-glyph="IconWhatsNew"></span><span class="trs-l"><?=$h('s_vc_whats_new')?></span></button>
               <button type="button" class="trs-btn" id="trs-check"><span class="trs-gl" data-glyph="IconSync"></span><span class="trs-l"><?=$h('s_vc_check')?></span></button>
               <button type="button" class="trs-btn trs-btn-accent tt-fm-primary" id="trs-plugins" hidden><span class="trs-gl" data-glyph="IconSync"></span><span class="trs-l"><?=$h('s_vc_plugins')?></span></button>
             </div>
@@ -215,4 +215,5 @@ $trs_rbtn = function ($brand, $name, $href) use ($trs_marks, $trs_e) {
 <script src="<?autov('/plugins/tollroll/scripts/notify-marks.js')?>"></script>
 <script src="<?autov('/plugins/tollroll/scripts/notify-card.js')?>"></script>
 <script src="<?autov('/plugins/tollroll/scripts/time-field.js')?>"></script>
+<script src="<?autov('/plugins/tollroll/scripts/release-notes.js')?>"></script>
 <script src="<?autov('/plugins/tollroll/scripts/settings.js')?>"></script>

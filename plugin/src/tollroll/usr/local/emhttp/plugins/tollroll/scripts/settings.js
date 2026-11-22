@@ -342,11 +342,6 @@
       v = Math.round(v / steps[i][1]);
     }
   }
-  // While an update waits, What's new opens that version's notes.
-  function notesFor(v) {
-    var repo = 'https://github.com/junkerderprovinz/tollroll/releases';
-    return /^\d+(\.\d+)+$/.test(v) ? repo + '/tag/v' + v : repo;
-  }
   function showUpdate(s) {
     updState = s;
     var line = L.s_vc_checking, tone = 'neutral', note = '';
@@ -376,12 +371,94 @@
   }
   function infoOpened() { if (updState.kind === 'unchecked') checkUpdate(); }
   updCheck.addEventListener('click', checkUpdate);
-  document.getElementById('trs-whatsnew').addEventListener('click', function () {
-    window.open(notesFor(updState.kind === 'available' ? updState.version : upd.getAttribute('data-trs-version')), '_blank', 'noopener');
-  });
+  var news = document.getElementById('trs-whatsnew');
+  news.addEventListener('click', openNotes);
   document.getElementById('trs-plugins').addEventListener('click', function () { location.href = '/Plugins'; });
   showUpdate(updState);
   if (!document.getElementById('trs-pane-info').hidden) infoOpened();
+
+  /* What's new opens the notes of the running version, or of the new one
+   * while an update waits, as the plg on the server carries them, in the
+   * window form of the channel picker. Escape and the scrim close it, and the
+   * focus goes back to What's new. */
+  var RELEASES = 'https://github.com/junkerderprovinz/tollroll/releases';
+  function isRelease(v) { return /^\d+(\.\d+)+$/.test(v || ''); }
+  function winButton(cls, glyphName, text) {
+    var b = el('button', 'glim-nc-win-btn ' + cls);
+    b.type = 'button';
+    var g = el('span', 'glim-nc-g');
+    g.setAttribute('aria-hidden', 'true');
+    g.innerHTML = GLYPH[glyphName] || '';
+    b.appendChild(g);
+    b.appendChild(el('span', 'glim-nc-l', text));
+    return b;
+  }
+  function openNotes() {
+    var page = RELEASES;
+    var title = el('h2', 'glim-nc-win-title');
+    title.id = 'trs-notes-t';
+    var notes = el('div', 'trs-notes');
+    notes.tabIndex = 0;
+    var body = el('div', 'glim-nc-win-body');
+    body.appendChild(notes);
+    var link = winButton('trs-win-link', 'IconExternalLink', L.s_notes_github);
+    var shut = winButton('trs-win-close', 'IconClose', L.nc_close);
+    var act = el('div', 'glim-nc-win-act');
+    act.appendChild(link);
+    act.appendChild(shut);
+    var box = el('div', 'glim-nc-win trs-win-notes');
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.setAttribute('aria-labelledby', title.id);
+    box.tabIndex = -1;
+    [title, body, act].forEach(function (n) { box.appendChild(n); });
+    var scrim = el('div', 'glim-nc-scrim');
+    var wins = el('div', 'glim-nc-wins');
+    wins.appendChild(scrim);
+    wins.appendChild(box);
+    document.body.appendChild(wins);
+
+    function named(v) {
+      title.textContent = isRelease(v) ? L.s_notes_title.replace('{version}', v) : L.s_vc_whats_new;
+      page = isRelease(v) ? RELEASES + '/tag/v' + v : RELEASES;
+    }
+    function say(text) {
+      notes.textContent = '';
+      notes.appendChild(el('p', 'trs-win-text', text));
+    }
+    function close() {
+      if (!wins.parentNode) return;
+      wins.parentNode.removeChild(wins);
+      document.removeEventListener('keydown', onKey, true);
+      news.focus();
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); return; }
+      if (e.key !== 'Tab') return;
+      var stops = [notes, link, shut], first = stops[0], last = stops[stops.length - 1];
+      if (!box.contains(document.activeElement)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+      else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+    link.addEventListener('click', function () { window.open(page, '_blank', 'noopener'); });
+    shut.addEventListener('click', close);
+    scrim.addEventListener('click', close);
+    document.addEventListener('keydown', onKey, true);
+
+    named(updState.kind === 'available' ? updState.version : upd.getAttribute('data-trs-version'));
+    say(L.s_notes_loading);
+    notes.focus();
+    fetch('/plugins/tollroll/server/release-notes.php', { headers: { Accept: 'application/json' } })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (n) {
+        if (!wins.parentNode) return;
+        if (isRelease(n.version)) named(n.version);
+        if (!String(n.notes || '').trim()) return say(L.s_notes_none);
+        notes.textContent = '';
+        window.TollRollNotes.render(n.notes, notes);
+      })
+      .catch(function () { if (wins.parentNode) say(L.s_notes_failed); });
+  }
 
   document.querySelectorAll('[data-glyph]').forEach(function (n) { n.innerHTML = GLYPH[n.dataset.glyph] || ''; });
 })();
