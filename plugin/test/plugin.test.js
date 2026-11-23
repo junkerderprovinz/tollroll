@@ -202,18 +202,37 @@ test("a README button's name keeps its descenders inside its clip", () => {
 test('Info names the GlimStone version the plugin is built on, and a version never looks like a button', () => {
   const page = read('tollroll.page');
   const { targets } = JSON.parse(fs.readFileSync(path.join(ROOT, '..', 'glimstone.json'), 'utf8'));
-  assert.ok(targets.every((t) => t.version === '4.8.2'), 'glimstone.json pins every part to 4.8.2');
+  assert.ok(targets.every((t) => t.version === '4.9.0'), 'glimstone.json pins every part to 4.9.0');
   assert.ok(page.includes(`$trs_glimstone = '${targets[0].version}';`), `Info does not name GlimStone ${targets[0].version}`);
   assert.equal((page.match(/<\?=\$trs_num\(/g) || []).length, 2, 'the app and GlimStone show their number through $trs_num');
   assert.doesNotMatch(page, /class="[^"]*(button|trs-btn)[^"]*trs-ver/, 'a version is plain text');
   const css = read('styles', 'settings.css');
   const rest = /\.trs-page a\.trs-ver \{([^}]*)\}/.exec(css);
   assert.ok(rest, 'no rule for a linked version');
-  for (const want of ['background: none', 'border: 0', 'padding: 0', 'color: inherit', 'text-decoration: none']) assert.ok(rest[1].includes(want), want);
+  for (const want of ['background: none', 'border: 0', 'color: inherit', 'text-decoration: none']) assert.ok(rest[1].includes(want), want);
   assert.match(css, /#trs-cfg a\.trs-ver \{ color: inherit !important; text-decoration: none !important; \}/);
   assert.match(css, /#trs-cfg a\.trs-ver:focus-visible \{ color: var\(--trs-focus\) !important; \}/);
   assert.match(css, /@media \(hover: hover\) \{[^}]*\}\s*#trs-cfg a\.trs-ver:hover \{ color: var\(--trs-focus\) !important; \}/);
   assert.doesNotMatch(css, /trs-ver[^{]*\{[^}]*underline/);
+});
+
+test('a version number is a 24px target that keeps the line at its height', () => {
+  const rest = /\.trs-page a\.trs-ver \{([^}]*)\}/.exec(read('styles', 'settings.css'));
+  assert.ok(rest, 'no rule for a linked version');
+  assert.match(rest[1], /padding: 2px 0;/);
+  assert.match(rest[1], /margin: -2px 0;/);
+});
+
+test('a long build number drops under the app name, and a component row breaks before its number', () => {
+  const css = read('styles', 'settings.css');
+  const head = /\.trs-vhead \{([^}]*)\}/.exec(css)[1];
+  assert.match(head, /flex-wrap: wrap;/);
+  const num = /\.trs-vhead \.trs-ver \{([^}]*)\}/.exec(css);
+  assert.ok(num, 'no rule for the number in the head');
+  for (const want of ['min-width: 0', 'margin-inline-start: auto', 'overflow-wrap: anywhere']) assert.ok(num[1].includes(want), want);
+  const row = /\.trs-vrow \{([^}]*)\}/.exec(css)[1];
+  assert.match(row, /flex-wrap: wrap;/);
+  assert.match(css, /\.trs-vrow > \.trs-ver \{[^}]*margin-inline-start: auto;/);
 });
 
 test('the Info tab holds Version, Components, Help and About, in that order', () => {
@@ -226,7 +245,7 @@ test('the Info tab holds Version, Components, Help and About, in that order', ()
 
 test("the Version and Components cards speak every language with GlimStone's words", () => {
   const blanks = { s_vc_hint: '{app}', s_vc_checked: '{when}', s_vc_available: '{version}', s_vc_unreleased: '{version}', s_cc_hint: '{app}', s_notes_title: '{version}' };
-  const keys = ['s_vc_title', 's_vc_hint', 's_vc_whats_new', 's_vc_check', 's_vc_checking', 's_vc_current', 's_vc_checked',
+  const keys = ['s_vc_title', 's_vc_hint', 's_vc_whats_new', 's_vc_check', 's_vc_checking', 's_vc_unchecked', 's_vc_current', 's_vc_checked',
     's_vc_available', 's_vc_failed', 's_vc_plugins', 's_vc_unreleased', 's_cc_title', 's_cc_hint', 's_cc_design',
     's_notes_title', 's_notes_loading', 's_notes_none', 's_notes_failed', 's_notes_github'];
   for (const l of LANGS) {

@@ -13,7 +13,7 @@ const TABS = ['general', 'notify', 'fortress', 'info'];
 
 // Runs settings.js with just enough of a page for the tabs, the General and
 // notification cards, and a fortress card that only keeps what it was given.
-function page(answers, stored) {
+function page(answers, stored, update) {
   const doc = { activeElement: null };
   class Node {
     constructor() { this.listeners = {}; this.attrs = {}; this.value = ''; this.className = ''; this.text = ''; this.hidden = false; }
@@ -30,6 +30,7 @@ function page(answers, stored) {
   }
   const byId = {};
   const node = (id) => byId[id] || (byId[id] = new Node());
+  if (update) node('trs-update').setAttribute('data-trs-state', JSON.stringify(update));
   const tabs = TABS.map((name, i) => {
     const t = node('trs-tab-' + name);
     Object.assign(t.attrs, { 'data-trs-tab': name, 'aria-controls': 'trs-pane-' + name, 'aria-selected': String(i === 0) });
@@ -49,7 +50,12 @@ function page(answers, stored) {
   const gets = [];
   const posts = [];
   const reply = (body) => Promise.resolve({ json: () => Promise.resolve(body) });
+  const checks = [];
   function fetch(url, opt) {
+    if (url.includes('update-check.php')) {
+      checks.push(url);
+      return reply(answers.update || {});
+    }
     if (opt && opt.method === 'POST') {
       const p = Object.fromEntries(opt.body);
       posts.push({ path: p.path, data: JSON.parse(p.data) });
@@ -74,7 +80,7 @@ function page(answers, stored) {
   const window = { TollRollCore: core, TRS_T: en, TRL_LANG: 'en', TollRollGlyphs: {}, csrf_token: 't', fetch, GlimFortressCard, GlimNotifyCard, GlimNotifyMarks: {}, GlimTimeField, matchMedia };
   const ctx = vm.createContext({ window, document, fetch, URLSearchParams, location, localStorage, setTimeout, clearTimeout });
   vm.runInContext(fs.readFileSync(path.join(PLUGIN, 'scripts', 'settings.js'), 'utf8'), ctx);
-  return { card: mounted, notifyCard, timeFields, fortEl: byId['trs-fort'], byId, tabs, store, gets, posts, location, focused: () => doc.activeElement };
+  return { card: mounted, notifyCard, timeFields, fortEl: byId['trs-fort'], byId, tabs, store, gets, posts, checks, location, focused: () => doc.activeElement };
 }
 
 // The script builds its objects in its own realm.
@@ -252,4 +258,34 @@ test('the channels card gets every kind TollRoll sends to and reaches the servic
 test("the hub's times are GlimStone's time fields, each named for the reader", () => {
   const p = page({});
   assert.deepEqual(p.timeFields.map(([b, label]) => [b, label]), [[p.byId['trs-q-from'], en.s_quiet_from], [p.byId['trs-q-to'], en.s_quiet_to], [p.byId['trs-d-at'], en.s_digest_at], [p.byId['trs-m-at'], en.s_mute]]);
+});
+
+const updateLine = (p) => [p.byId['trs-vline'].textContent, p.byId['trs-vstate'].getAttribute('data-tone')];
+
+test('before the first check the Version card says so and offers the check', () => {
+  const p = page({}, {}, { kind: 'unchecked' });
+  assert.deepEqual(updateLine(p), [en.s_vc_unchecked, 'neutral']);
+  const check = p.byId['trs-check'];
+  assert.equal(check.hidden, false);
+  assert.equal(check.disabled, false);
+  assert.equal(check.getAttribute('aria-busy'), null);
+});
+
+test('up to date needs a check behind it', () => {
+  assert.deepEqual(updateLine(page({}, {}, { kind: 'current' })), [en.s_vc_unchecked, 'neutral']);
+  const p = page({}, {}, { kind: 'current', checkedAt: Date.now() / 1000 - 120 });
+  assert.deepEqual(updateLine(p), [en.s_vc_current, 'ok']);
+  assert.match(p.byId['trs-vnote'].textContent, /^Last checked /);
+});
+
+test('opening Info runs the first check, and the card shows what it found', async () => {
+  const p = page({ update: { kind: 'available', version: '9.9.9' } }, {}, { kind: 'unchecked' });
+  assert.equal(p.checks.length, 0, 'nothing is checked while Info is closed');
+  p.tabs[3].fire('click');
+  assert.deepEqual(updateLine(p), [en.s_vc_checking, 'neutral']);
+  assert.equal(p.byId['trs-check'].getAttribute('aria-busy'), 'true');
+  await settle();
+  assert.equal(p.checks.length, 1);
+  assert.deepEqual(updateLine(p), [en.s_vc_available.replace('{version}', '9.9.9'), 'warn']);
+  assert.equal(p.byId['trs-plugins'].hidden, false);
 });

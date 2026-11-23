@@ -345,9 +345,12 @@
   function showUpdate(s) {
     updState = s;
     var line = L.s_vc_checking, tone = 'neutral', note = '';
-    if (s.kind === 'current') {
+    // Up to date is a finding, so it needs a check behind it.
+    if (s.kind === 'unchecked' || (s.kind === 'current' && !s.checkedAt)) {
+      line = L.s_vc_unchecked;
+    } else if (s.kind === 'current') {
       line = L.s_vc_current; tone = 'ok';
-      if (s.checkedAt) note = L.s_vc_checked.replace('{when}', ago(s.checkedAt));
+      note = L.s_vc_checked.replace('{when}', ago(s.checkedAt));
     } else if (s.kind === 'available') {
       line = L.s_vc_available.replace('{version}', s.version); tone = 'warn';
     } else if (s.kind === 'failed') {
@@ -356,7 +359,7 @@
     document.getElementById('trs-vstate').setAttribute('data-tone', tone);
     document.getElementById('trs-vline').textContent = line;
     document.getElementById('trs-vnote').textContent = note;
-    var busy = s.kind === 'checking' || s.kind === 'unchecked';
+    var busy = s.kind === 'checking';
     updCheck.hidden = s.kind === 'available';
     updCheck.disabled = busy;
     if (busy) updCheck.setAttribute('aria-busy', 'true'); else updCheck.removeAttribute('aria-busy');
