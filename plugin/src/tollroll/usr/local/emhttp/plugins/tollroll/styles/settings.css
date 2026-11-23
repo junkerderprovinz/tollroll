@@ -25,6 +25,7 @@
   --trs-btn-hover: color-mix(in srgb, currentColor 17%, transparent);
   --trs-ok: #3fae6a;
   --trs-err: #e05252;
+  --trs-warn: #ff832b;
   --trs-r-card: 4px;
   --trs-r-ctl: 4px;
   --trs-r-pill: 4px;
@@ -33,7 +34,7 @@
   line-height: 1.45;
   padding-bottom: 24px;
 }
-html:is(.Theme--white, .Theme--azure) .trs-page { --trs-ok: #0e6027; --trs-err: #da1e28; }
+html:is(.Theme--white, .Theme--azure) .trs-page { --trs-ok: #0e6027; --trs-err: #da1e28; --trs-warn: #ba4e00; }
 .trs-page *, .trs-page *::before, .trs-page *::after { box-sizing: border-box; }
 .trs-page [hidden] { display: none !important; }
 
@@ -196,10 +197,55 @@ html:is(.Theme--white, .Theme--azure) .trs-hero { --trs-hero-sil: 30%; }
 .trs-field-err:empty { display: none; }
 
 /* The Info tab's cards: the versions, the way to ask for help and the way to
-   give, as on ShipLog's. A version is a plain link to its release. */
+   give, as on ShipLog's. A version is text, never a button: no ground, no
+   frame, no underline. One that opens its release takes the accent's ink
+   under the pointer and on keyboard focus, and only then. */
 .trs-prose { margin: 4px 0 8px; text-align: start; }
-.trs-ver { font-variant-numeric: tabular-nums lining-nums; }
-.trs-page a.trs-ver { color: var(--trs-focus); }
+.trs-ver { flex: none; font-variant-numeric: tabular-nums lining-nums; }
+.trs-page a.trs-ver { margin: 0; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; color: inherit; text-decoration: none; }
+
+/* The Version card: the app and its number, then one last row with where the
+   updates stand at its start and the buttons at its end. On a narrow card the
+   buttons drop under the words. */
+.trs-vhead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 6px 0; font-size: var(--tt-text-body, 14px); }
+.trs-vapp { min-width: 0; font-weight: 600; }
+.trs-vfoot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-height: 44px; padding: 6px 0; }
+.trs-vstate { display: flex; flex: 1 1 8rem; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; min-width: 0; margin: 0; color: var(--trs-dim); text-align: start; }
+.trs-vstate[data-tone="ok"] .trs-vline { color: var(--trs-ok); }
+.trs-vstate[data-tone="warn"] .trs-vline { color: var(--trs-warn); }
+.trs-vstate[data-tone="fail"] .trs-vline { color: var(--trs-err); }
+.trs-vnote:empty { display: none; }
+.trs-vact { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin-inline-start: auto; }
+.trs-vact .trs-btn[aria-busy="true"] { cursor: progress; }
+/* The one action is filled with the accent, the heading's colour. */
+.trs-btn.trs-btn-accent { background: var(--trs-head) !important; color: var(--trs-head-ink) !important; }
+.trs-btn.trs-btn-accent:hover { background: color-mix(in srgb, var(--trs-head) 85%, currentColor) !important; }
+/* The dot before "What's new", grey while nothing is unseen. */
+.trs-vdot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--trs-dim); }
+
+/* The release notes window, in the form of the channel picker drawn by
+   notify-card.css. It is as wide as the picker and sets its body as reading
+   text. The link to the release page and Close stand apart without a margin,
+   since TowerTorch sets the margins of every button with !important. */
+.glim-nc-win.trs-win-notes { width: min(760px, calc(100vw - 32px)); }
+.trs-win-notes .glim-nc-win-act { justify-content: space-between; }
+.trs-win-notes .trs-notes { overflow-wrap: anywhere; line-height: 1.55; }
+.trs-win-notes .trs-notes:focus { outline: none; }
+.trs-win-notes .trs-notes:focus-visible { outline: var(--tt-focus-ring-width, 2px) solid var(--nc-w-focus); outline-offset: 2px; }
+.trs-win-notes .trs-notes > :first-child { margin-top: 0; }
+.trs-win-notes .trs-notes-h { margin: 18px 0 6px; font-size: 16px; font-weight: 700; }
+.trs-win-notes .trs-notes :is(p, li) { text-align: start; }
+.trs-win-notes .trs-notes p { margin: 0 0 10px; }
+.trs-win-notes .trs-notes :is(ul, ol) { margin: 0 0 10px; padding-inline-start: 20px; }
+.trs-win-notes .trs-notes li { margin: 5px 0; }
+.trs-win-notes .trs-notes code { padding: 1px 5px; border-radius: calc(var(--nc-w-r-ctl) / 2); background: var(--nc-w-raised); font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12px; }
+.trs-win-notes .trs-notes pre { margin: 0 0 10px; padding: 10px 12px; overflow-x: auto; border-radius: var(--nc-w-r-ctl); background: var(--nc-w-raised); }
+.trs-win-notes .trs-notes pre code { padding: 0; background: none; }
+.trs-win-notes .trs-notes a { color: var(--nc-w-focus); }
+
+/* The Components card: a name with its (i) at the start, its number at the end. */
+.trs-vrows { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.trs-vrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 6px 0; }
 
 /* The give buttons, TowerTorch's README buttons unchanged: the mark and the
    name on a dark tile that takes the brand's colour under the pointer. */
@@ -211,6 +257,8 @@ html:is(.Theme--white, .Theme--azure) .trs-hero { --trs-hero-sil: 30%; }
 #trs-cfg .trs-rbtn:focus-visible { outline: none !important; box-shadow: inset 0 0 0 3px var(--tt-accent-ink, #FCC419) !important; }
 #trs-cfg .trs-rbtn-mark { position: absolute; top: 50%; left: 14px; width: 32px; height: 25px; translate: 0 -50%; display: flex; }
 #trs-cfg :is(.trs-rbtn-mark, .trs-rbtn-art) svg { display: block; width: 100%; height: 100%; }
+/* The tile's middle rarely falls on a whole pixel, and the SVG's own clip would shave a shape drawn to the box. */
+#trs-cfg .trs-rbtn-mark svg { overflow: visible; }
 #trs-cfg .trs-rbtn-art { position: absolute; inset: 0; }
 #trs-cfg .trs-rbtn-text { position: absolute; top: 0; bottom: 0; left: 53px; right: 10px; display: flex; flex-direction: column; justify-content: center; line-height: 1.15; }
 /* As on the channel tiles, the name's clip reaches past its line so the descenders stay whole. */
@@ -248,6 +296,7 @@ html.tt-popups-on .trs-page {
   --trs-focus: var(--tt-accent-ink, #FCC419);
   --trs-ok: var(--tt-ok-ink, #6fdc8c);
   --trs-err: var(--tt-err-ink, #ff8389);
+  --trs-warn: var(--tt-warn-ink, #ff832b);
   --trs-r-card: var(--tt-radius-card, 20px);
   --trs-r-ctl: var(--tt-radius-control, 12px);
   --trs-r-pill: var(--tt-radius-pill, 9999px);
@@ -271,8 +320,11 @@ html.tt-popups-on .trs-page .trs-tab:not([aria-selected="true"]):hover { backgro
 @layer tollroll-settings {
   #trs-cfg input.trs-switch { margin: 0 !important; }
   #trs-cfg a.trs-rbtn { color: var(--tt-text, #e6e6e6) !important; filter: none !important; }
+  #trs-cfg a.trs-ver { color: inherit !important; text-decoration: none !important; }
+  #trs-cfg a.trs-ver:focus-visible { color: var(--trs-focus) !important; }
   @media (hover: hover) {
     #trs-cfg .trs-rbtn-unit:hover a.trs-rbtn { color: var(--trs-give-ink) !important; }
+    #trs-cfg a.trs-ver:hover { color: var(--trs-focus) !important; }
   }
   .content:has(#trs-cfg) > div.title { display: none !important; }
   #trs-cfg :is(.trs-tab, .trs-btn, .trs-switch):focus-visible {
