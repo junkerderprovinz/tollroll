@@ -5,7 +5,7 @@
  *   tollroll-banner-logo.svg / .png  text-free, tollroll-dunkel.svg on white (support thread)
  *
  * The README serves the light and dark banner as a <picture> pair. The wordmark
- * (Bree Serif Light) and the claim (Bree Light) become SVG paths, so the file
+ * (Bree Serif Regular) and the claim (Bree Light) become SVG paths, so the file
  * carries no font and renders the same in resvg and in a browser.
  *
  * Needs opentype.js and @resvg/resvg-js installed globally, and the house fonts
@@ -44,7 +44,7 @@ const THEMES = [
 
 // The house typeface is licensed, so it is read from a local folder and never committed.
 const fonts = process.env.HOUSE_FONTS ?? join(process.env.LOCALAPPDATA ?? tmpdir(), "halleluja-fonts");
-const font = opentype.parse(readFileSync(join(fonts, "bree-serif-light.ttf")).buffer);
+const font = opentype.parse(readFileSync(join(fonts, "bree-serif-regular.ttf")).buffer);
 const claimFont = opentype.parse(readFileSync(join(fonts, "bree-light.ttf")).buffer);
 
 // A master as it is, with the ink box measured from a render rather than taken from
