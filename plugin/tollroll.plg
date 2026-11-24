@@ -33,6 +33,26 @@ One dashboard tile for the apps of your fortress: a row per app with how it is
 doing, and one log with the lines of all of them, filtered by a click. It joins
 the fortress with its phrase and reads the status report every member serves.
 
+### 1.2.2
+Info shows where TollRoll's updates stand, What's new opens in a window, and every notification channel gets Edit and an on/off switch.
+
+✨ **Added**
+- **Version in Info.** It shows TollRoll's number and where its updates stand, as the Plugins tab sees them. Check for updates runs the same check the Plugins tab runs, and once a new version is out, Update in the Plugins tab takes you there. Until Unraid has checked once, the card says Not checked yet.
+- **What's new opens in a window.** It holds the notes of the version you run, or of the new one while it waits in the Plugins tab. The notes come from the plugin on your server, so your browser asks GitHub for nothing.
+- **Components in Info.** The GlimStone version TollRoll is built on has a card of its own.
+- **Edit and switch off a channel.** Edit opens a channel's fields in the same window you added it in, with a switch to turn it off, and an Off channel says so on its row.
+
+🎨 **Design**
+- **Channels as connection rows.** Each channel shows its service's mark, its name and what it sends, then Test, Edit and Remove.
+- **Version numbers are plain text.** A number opens its project's newest release, and on a phone a long one moves under the name.
+- **GlimStone 4.9.0.**
+
+⚡ **Improved**
+- **kit 1.1.0.** Your fortress membership, channels and settings carry over as they are.
+
+🌐 **Translations**
+- **Every new text in all 26 languages Unraid offers.**
+
 ### 1.2.1
 Names in the channel window and on the buttons in Info keep their descenders.
 
