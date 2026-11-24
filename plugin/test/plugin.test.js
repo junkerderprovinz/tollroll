@@ -96,7 +96,7 @@ test('the newest released changes block matches its release notes', () => {
   for (const line of block.match(/^(?!- )\S+ \*\*.+$/gm)) assert.ok(labels.includes(line), line);
   // The release workflow turns the labels into headings for the release page.
   const notes = fs.readFileSync(path.join(ROOT, '..', '.github', 'release-notes', `v${version}.md`), 'utf8');
-  assert.equal(notes.trim(), block.trim().replace(/^(\S+) \*\*(.+)\*\*$/gm, '## $1 $2'));
+  assert.equal(notes.trim(), block.trim().replace(/^(?!- )(\S+) \*\*(.+)\*\*$/gm, '## $1 $2'));
 });
 
 test('the tile keeps its English title as its identity', () => {
