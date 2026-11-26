@@ -33,6 +33,27 @@ One dashboard tile for the apps of your fortress: a row per app with how it is
 doing, and one log with the lines of all of them, filtered by a click. It joins
 the fortress with its phrase and reads the status report every member serves.
 
+### 1.2.3
+Each notification channel switches on and off in its row, and joining the fortress again works after you removed a member.
+
+🎨 **Design**
+- **Built on GlimStone 4.9.2,** each channel's on/off switch moves from its window into its row, next to Send a test, Edit and Remove, and flipping it saves right away. A test shows how it went on its button and in the channel's line, and a channel without an address says so.
+- **A switch the service refuses opens the channel's form** with the reason, so you can fix the channel there.
+- **A time field you reach with Tab shows it with a step in its fill** instead of a ring, like the other fields.
+
+⚡ **Improved**
+- **ParleyPort 1.3.8.** The fortress and notification parts come from ParleyPort now. Your fortress membership, channels and settings carry over as they are.
+- **Send a test also works on a channel that is switched off.**
+
+🐛 **Fixed**
+- **Joining the fortress again with the same words works after you removed a member.** TollRoll started that join without what it knew of the other members, so a removal that reached one of them a moment later could make both sides turn each other away.
+- **The tile no longer shows an app as away right after it reconnects or gets a new name.** TollRoll keeps asking for a few seconds while it comes back, and shows a renamed app at once.
+- **The time field no longer wears Unraid's orange button frame** on a server without the theme plugin.
+- **A channel you remove comes back when the save fails.** It vanished from the page although nothing was saved.
+
+🌐 **Translations**
+- **No address yet and Switched off in all 26 languages.**
+
 ### 1.2.2
 Info shows where TollRoll's updates stand, What's new opens in a window, and every notification channel gets Edit and an on/off switch.
 
