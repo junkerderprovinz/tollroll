@@ -74,6 +74,7 @@
   "nc_edit": "Muokkaa",
   "nc_edit_title": "Muokkaa kanavaa",
   "nc_off": "Pois päältä",
+  "nc_no_address": "Ei vielä osoitetta",
   "nc_fail_invalid": "Jotain puuttuu, tai osoite ei ole kelvollinen.",
   "nc_fail_moved": "Tallennettu salaisuus kuuluu osoitteelle, jonka kanssa se tallennettiin. Kirjoita se uudelleen.",
   "nc_fail_canceled": "Testi peruttiin.",

@@ -74,6 +74,7 @@
   "nc_edit": "Rediger",
   "nc_edit_title": "Rediger kanalen",
   "nc_off": "Slået fra",
+  "nc_no_address": "Ingen adresse endnu",
   "nc_fail_invalid": "Noget mangler, eller en adresse er ikke gyldig.",
   "nc_fail_moved": "Den gemte hemmelighed hører til den adresse, den blev gemt med. Skriv den igen.",
   "nc_fail_canceled": "Testen blev annulleret.",

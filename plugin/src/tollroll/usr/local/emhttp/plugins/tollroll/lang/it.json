@@ -76,6 +76,7 @@
   "nc_edit": "Modifica",
   "nc_edit_title": "Modifica il canale",
   "nc_off": "Disattivato",
+  "nc_no_address": "Ancora nessun indirizzo",
   "nc_fail_invalid": "Manca qualcosa, oppure un indirizzo non è valido.",
   "nc_fail_moved": "Il segreto salvato appartiene all'indirizzo con cui è stato salvato. Inseriscilo di nuovo.",
   "nc_fail_canceled": "Il test è stato annullato.",

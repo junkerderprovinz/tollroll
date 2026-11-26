@@ -78,6 +78,7 @@
   "nc_edit": "Edytuj",
   "nc_edit_title": "Edytuj kanał",
   "nc_off": "Wyłączony",
+  "nc_no_address": "Brak adresu",
   "nc_fail_invalid": "Czegoś brakuje albo któryś adres jest nieprawidłowy.",
   "nc_fail_moved": "Zapisany sekret należy do adresu, z którym został zapisany. Wpisz go ponownie.",
   "nc_fail_canceled": "Test został anulowany.",

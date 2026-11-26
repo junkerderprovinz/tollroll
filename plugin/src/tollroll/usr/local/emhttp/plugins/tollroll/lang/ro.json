@@ -76,6 +76,7 @@
   "nc_edit": "Editează",
   "nc_edit_title": "Editează canalul",
   "nc_off": "Dezactivat",
+  "nc_no_address": "Încă nicio adresă",
   "nc_fail_invalid": "Lipsește ceva sau o adresă nu e validă.",
   "nc_fail_moved": "Secretul salvat aparține adresei cu care a fost salvat. Scrie-l din nou.",
   "nc_fail_canceled": "Testul a fost anulat.",

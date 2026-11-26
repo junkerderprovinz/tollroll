@@ -74,6 +74,7 @@
   "nc_edit": "Rediger",
   "nc_edit_title": "Rediger kanalen",
   "nc_off": "Slått av",
+  "nc_no_address": "Ingen adresse ennå",
   "nc_fail_invalid": "Noe mangler, eller en adresse er ikke gyldig.",
   "nc_fail_moved": "Den lagrede hemmeligheten hører til adressen den ble lagret med. Skriv den inn på nytt.",
   "nc_fail_canceled": "Testen ble avbrutt.",

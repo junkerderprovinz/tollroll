@@ -74,6 +74,7 @@
   "nc_edit": "Bearbeiten",
   "nc_edit_title": "Kanal bearbeiten",
   "nc_off": "Ausgeschaltet",
+  "nc_no_address": "Noch keine Adresse",
   "nc_fail_invalid": "Etwas fehlt, oder eine Adresse ist keine.",
   "nc_fail_moved": "Das gespeicherte Geheimnis gehört zu der Adresse, mit der es gespeichert wurde. Gib es noch einmal ein.",
   "nc_fail_canceled": "Der Test wurde abgebrochen.",

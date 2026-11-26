@@ -72,6 +72,7 @@
   "nc_edit": "Sửa",
   "nc_edit_title": "Sửa kênh",
   "nc_off": "Đã tắt",
+  "nc_no_address": "Chưa có địa chỉ",
   "nc_fail_invalid": "Còn thiếu thông tin, hoặc có địa chỉ không hợp lệ.",
   "nc_fail_moved": "Bí mật đã lưu thuộc về địa chỉ đã lưu cùng nó. Hãy nhập lại.",
   "nc_fail_canceled": "Lần gửi thử đã bị hủy.",

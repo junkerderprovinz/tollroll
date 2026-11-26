@@ -74,6 +74,7 @@
   "nc_edit": "Redigera",
   "nc_edit_title": "Redigera kanalen",
   "nc_off": "Avstängd",
+  "nc_no_address": "Ingen adress än",
   "nc_fail_invalid": "Något saknas, eller så är en adress ogiltig.",
   "nc_fail_moved": "Den sparade hemligheten hör till adressen den sparades med. Skriv in den igen.",
   "nc_fail_canceled": "Testet avbröts.",

@@ -76,6 +76,7 @@
   "nc_edit": "Editar",
   "nc_edit_title": "Editar el canal",
   "nc_off": "Desactivado",
+  "nc_no_address": "Aún sin dirección",
   "nc_fail_invalid": "Falta algo, o una dirección no es válida.",
   "nc_fail_moved": "El secreto guardado pertenece a la dirección con la que se guardó. Escríbelo de nuevo.",
   "nc_fail_canceled": "Se canceló la prueba.",

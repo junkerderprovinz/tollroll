@@ -74,6 +74,7 @@
   "nc_edit": "Bewerken",
   "nc_edit_title": "Kanaal bewerken",
   "nc_off": "Uitgeschakeld",
+  "nc_no_address": "Nog geen adres",
   "nc_fail_invalid": "Er ontbreekt iets, of een adres is geen geldig adres.",
   "nc_fail_moved": "Het opgeslagen geheim hoort bij het adres waarmee het is opgeslagen. Typ het opnieuw.",
   "nc_fail_canceled": "De test is afgebroken.",

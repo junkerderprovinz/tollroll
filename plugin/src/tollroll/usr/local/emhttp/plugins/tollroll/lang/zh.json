@@ -72,6 +72,7 @@
   "nc_edit": "编辑",
   "nc_edit_title": "编辑渠道",
   "nc_off": "已关闭",
+  "nc_no_address": "尚无地址",
   "nc_fail_invalid": "缺少某项内容，或某个地址无效。",
   "nc_fail_moved": "已保存的机密属于保存它时的地址。请重新输入。",
   "nc_fail_canceled": "测试已取消。",
