@@ -351,9 +351,11 @@ func (s *Service) join(words string) error {
 
 // keepKey copies the membership kept in dir to next, where kit.Join finds
 // the member key and joins under it. The members taken out come along and
-// stay named if the phrase is the same.
+// stay named if the phrase is the same. The fortress's state comes along as
+// well: without it the tile meets every member anew, and once it hears of a
+// removal it takes them all for newcomers and shuts them out.
 func keepKey(dir, next string) error {
-	for _, name := range []string{"fortress.json", removedFile} {
+	for _, name := range []string{"fortress.json", "state.json", removedFile} {
 		raw, err := os.ReadFile(filepath.Join(dir, name)) //nolint:gosec // G304: the operator names the directory
 		if errors.Is(err, fs.ErrNotExist) {
 			continue

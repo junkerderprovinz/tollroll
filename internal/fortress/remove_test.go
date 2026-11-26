@@ -178,6 +178,36 @@ func TestTheSamePhraseKeepsWhoWasRemovedAndAnotherForgetsIt(t *testing.T) {
 	}
 }
 
+// A join goes into a fresh directory. Without the fortress's state there the
+// tile would pin every member anew, and a removal it hears of afterwards
+// would make them all newcomers that it and they shut out.
+func TestJoiningAgainBringsTheFortressStateAlong(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "fortress")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	kept := map[string]string{
+		"fortress.json": `{"member":"key"}`,
+		"state.json":    `{"group":"g","members":{"alpha":{}}}`,
+		removedFile:     `{"group":"g","members":[{"app":"bravo"}]}`,
+	}
+	for name, body := range kept {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(body), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	next := dir + ".new"
+	if err := keepKey(dir, next); err != nil {
+		t.Fatal(err)
+	}
+	for name, body := range kept {
+		got, err := os.ReadFile(filepath.Join(next, name))
+		if err != nil || string(got) != body {
+			t.Errorf("%s in the new directory: %q, %v", name, got, err)
+		}
+	}
+}
+
 func TestFollowingANewPhraseForgetsWhoWasRemoved(t *testing.T) {
 	url := relayServer(t)
 	s := openService(t, filepath.Join(t.TempDir(), "fortress"), url)
