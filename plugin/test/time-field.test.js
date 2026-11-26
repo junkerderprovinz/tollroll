@@ -2,6 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
+const fs = require('node:fs');
 
 const tf = require(path.join(__dirname, '..', 'src', 'tollroll', 'usr', 'local', 'emhttp', 'plugins', 'tollroll', 'scripts', 'time-field.js'));
 
@@ -48,4 +49,11 @@ test('the field shows its value with the clock and says what it is', () => {
   assert.equal(b.children[1].textContent, '22:00');
   assert.deepEqual(b.classes, ['glim-tf-field']);
   assert.equal(fired.length, 0, 'setting the value is no change of the reader');
+});
+
+test('the field shows the focus as a step up its fill, as a text field does, and draws no ring', () => {
+  const css = fs.readFileSync(path.join(__dirname, '..', 'src', 'tollroll', 'usr', 'local', 'emhttp', 'plugins', 'tollroll', 'styles', 'time-field.css'), 'utf8');
+  assert.match(css, /button\.glim-tf-field:is\(:hover, :focus-visible, \[aria-expanded="true"\]\) \{ background-color: var\(--tf-field-hover\) !important; \}/);
+  assert.match(css, /button\.glim-tf-field:focus-visible \{ outline: none !important; \}/);
+  assert.doesNotMatch(css, /glim-tf-field:focus-visible \{[^}]*outline: 2px/);
 });

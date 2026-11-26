@@ -202,7 +202,7 @@ test("a README button's name keeps its descenders inside its clip", () => {
 test('Info names the GlimStone version the plugin is built on, and a version never looks like a button', () => {
   const page = read('tollroll.page');
   const { targets } = JSON.parse(fs.readFileSync(path.join(ROOT, '..', 'glimstone.json'), 'utf8'));
-  assert.ok(targets.every((t) => t.version === '4.9.0'), 'glimstone.json pins every part to 4.9.0');
+  assert.ok(targets.every((t) => t.version === '4.9.2'), 'glimstone.json pins every part to 4.9.2');
   assert.ok(page.includes(`$trs_glimstone = '${targets[0].version}';`), `Info does not name GlimStone ${targets[0].version}`);
   assert.equal((page.match(/<\?=\$trs_num\(/g) || []).length, 2, 'the app and GlimStone show their number through $trs_num');
   assert.doesNotMatch(page, /class="[^"]*(button|trs-btn)[^"]*trs-ver/, 'a version is plain text');
