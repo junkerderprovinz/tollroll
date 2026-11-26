@@ -3,7 +3,7 @@
   <!ENTITY name      "tollroll">
   <!ENTITY slug      "tollroll">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "1.2.2">
+  <!ENTITY version   "1.2.3">
   <!ENTITY launch    "Settings/tollroll">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/tollroll/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
@@ -191,7 +191,7 @@ find &plgPath; -maxdepth 1 -name '*.txz' ! -name '&txz;' -delete 2>/dev/null || 
      dropped. -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>7550ea36311d767f248a51151648e74e5105e0e1b14bc901a2c2a4dd1584ca73</SHA256>
+  <SHA256>7b93dea88febe39ab770cdfc2fe186be604c075a06eda5fca91b1aebc44f11e3</SHA256>
 </FILE>
 
 <!-- Post-install: start the service. It runs on every boot as well, since
